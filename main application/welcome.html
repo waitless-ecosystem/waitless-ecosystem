@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome - QR Connect</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container glass-effect">
+        <header class="app-header">
+            <h1>Welcome to QR Connect</h1>
+            <p>Your portal to instant service information</p>
+        </header>
+
+        <div class="tab-content active" style="text-align: center; padding: 1rem;">
+            <div class="qr-box" style="border-style: solid; margin-bottom: 2rem;">
+                <div style="font-size: 4rem;">📱</div>
+            </div>
+            
+            <div class="result-group">
+                <p style="font-size: 1.1rem; color: var(--text-main); margin-bottom: 1.5rem;">
+                    To get full details of your services, please scan your QR code.
+                </p>
+                <button onclick="location.href='qrscan.html'" class="login-btn">
+                    Start Scanning
+                </button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
