@@ -12,6 +12,11 @@ const authUserEl = document.getElementById('auth-user');
 const selectionRow = document.getElementById('selection-row');
 
 const orgLogoutBtn = document.getElementById('org-logout');
+const signInBtn = document.getElementById('sign-in-btn');
+const signInModal = document.getElementById('sign-in-modal');
+const signInForm = document.getElementById('sign-in-form');
+const signInCancel = document.getElementById('sign-in-cancel');
+const signInMsg = document.getElementById('sign-in-msg');
 
 let orgs = {};
 let counters = {};
@@ -249,20 +254,48 @@ orgLogoutBtn.addEventListener('click', async ()=>{
   await auth.signOut();
 });
 
+// Show/hide sign-in modal helpers
+function showSignInModal(){ if(signInModal){ signInModal.setAttribute('aria-hidden','false'); signInMsg.textContent=''; document.getElementById('sign-email').focus(); } }
+function hideSignInModal(){ if(signInModal){ signInModal.setAttribute('aria-hidden','true'); } }
+
+if(signInBtn){ signInBtn.addEventListener('click', ()=> showSignInModal()); }
+if(signInCancel){ signInCancel.addEventListener('click', ()=> hideSignInModal()); }
+
+if(signInForm){
+  signInForm.addEventListener('submit', async (ev)=>{
+    ev.preventDefault();
+    const email = document.getElementById('sign-email').value.trim();
+    const password = document.getElementById('sign-password').value;
+    if(!email || !password){ signInMsg.textContent = 'Please enter email and password.'; return; }
+    signInMsg.textContent = 'Signing in...';
+    try{
+      await auth.signInWithEmailAndPassword(email, password);
+      signInMsg.textContent = '';
+      hideSignInModal();
+    }catch(err){
+      console.error('Sign-in failed', err);
+      signInMsg.textContent = err.message || 'Sign-in failed';
+    }
+  });
+}
+
 auth.onAuthStateChanged(async user=>{
   if(!user){
     setStatus('Not signed in');
     setAuthUserLabel(null, null);
     orgLogoutBtn.style.display='none';
+    if(signInBtn) signInBtn.style.display = 'inline-block';
     setSelectionVisibility(true);
     showOrgSelector();
     orgSelect.innerHTML = '<option value="">-- Sign in first --</option>'; orgSelect.disabled = true;
     counterSelect.innerHTML = '<option value="">-- Select counter --</option>'; counterSelect.disabled = true;
     refreshOrgsBtn.disabled = true;
+    hideSignInModal();
     return;
   }
 
   orgLogoutBtn.style.display='inline-block';
+  if(signInBtn) signInBtn.style.display = 'none';
 
   try{
     const profSnap = await db.ref(`users/${user.uid}`).once('value');

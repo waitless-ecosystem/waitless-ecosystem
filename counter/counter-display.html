@@ -32,6 +32,15 @@
       .token-number{min-height:160px;font-size:5rem}
       .token .actions button{min-height:64px;font-size:1rem}
     }
+    /* Sign-in modal */
+    .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(7,12,20,0.35);z-index:60}
+    .modal[aria-hidden="false"]{display:flex}
+    .modal-content{background:#fff;padding:18px;border-radius:10px;min-width:320px;max-width:420px;box-shadow:0 12px 32px rgba(10,20,40,0.12)}
+    .modal-content h3{margin:0 0 10px 0}
+    .modal-content label{display:block;margin-top:8px;font-size:0.9rem}
+    .modal-content input{width:100%;margin-top:6px}
+    .modal-actions{display:flex;gap:8px;margin-top:12px}
+    .msg{margin-top:8px;color:#922;min-height:20px}
   </style>
 </head>
 <body>
@@ -47,6 +56,7 @@
           <div id="auth-user" class="small">Not signed in</div>
         </div>
         <button id="org-logout" class="ghost" style="display:none">Sign Out</button>
+        <button id="sign-in-btn" class="ghost">Sign In</button>
       </div>
     </div>
 
@@ -63,6 +73,24 @@
     <div id="status" class="muted">Not connected</div>
 
     <div id="tokens" class="tokens"></div>
+  </div>
+
+  <!-- Sign-in Modal -->
+  <div id="sign-in-modal" class="modal" aria-hidden="true">
+    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="sign-in-title">
+      <h3 id="sign-in-title">Operator Sign In</h3>
+      <form id="sign-in-form">
+        <label for="sign-email">Email</label>
+        <input id="sign-email" type="email" required />
+        <label for="sign-password">Password</label>
+        <input id="sign-password" type="password" required />
+        <div class="modal-actions">
+          <button type="submit" id="sign-in-submit">Sign in</button>
+          <button type="button" id="sign-in-cancel">Cancel</button>
+        </div>
+        <div id="sign-in-msg" class="msg"></div>
+      </form>
+    </div>
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
