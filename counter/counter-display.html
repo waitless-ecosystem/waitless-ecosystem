@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Counter Live — EcoSystem (Counter)</title>
+  <link rel="stylesheet" href="../styles.css" />
+  <style>
+    /* Improved, touch-friendly counter UI */
+    body{font-family:Inter,Arial,Helvetica,sans-serif;background:#eef3f8;padding:18px}
+    .panel{max-width:1100px;margin:0 auto;background:#fff;padding:22px;border-radius:12px;box-shadow:0 10px 30px rgba(10,20,40,0.06)}
+    .header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+    .title{font-size:1.3rem;font-weight:700}
+    .row{display:flex;gap:12px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+    select,input{padding:12px;border:1px solid #dbe6ef;border-radius:10px;font-size:1rem}
+    .tokens{display:grid;gap:14px;margin-top:12px}
+    .token{display:grid;grid-template-columns:1fr 240px;gap:18px;align-items:stretch;padding:20px;border-radius:14px;border:1px solid #eef6ff;background:linear-gradient(180deg,#ffffff,#fbfdff)}
+    .token .actions{display:flex;flex-direction:column;gap:12px;justify-content:center}
+    .token .actions button{width:100%;min-height:78px;font-size:1.1rem;font-weight:800;border-radius:12px;border:0;cursor:pointer}
+    .btn-serve{background:linear-gradient(180deg,#19a34a,#0a8f47);color:#fff}
+    .btn-noshow{background:linear-gradient(180deg,#ff6b6b,#ff5252);color:#fff}
+    .muted{color:#6b7785;font-size:13px}
+    .token-number{display:flex;align-items:center;justify-content:center;min-height:220px;font-size:7rem;font-weight:900;line-height:1;color:#0b1220;text-align:center}
+    .token-empty{padding:32px;text-align:center;font-size:1.1rem;color:#4b5563}
+    .token-stage{display:flex;flex-direction:column;justify-content:center;gap:10px}
+    .token-meta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;color:#6b7785}
+    .controls{display:flex;gap:10px;align-items:center}
+    .big-select{min-width:260px}
+    .ghost{background:transparent;border:1px solid #d0d7de;padding:10px;border-radius:8px}
+    @media (max-width:700px){
+      .token{grid-template-columns:1fr}
+      .token-number{min-height:160px;font-size:5rem}
+      .token .actions button{min-height:64px;font-size:1rem}
+    }
+    /* Sign-in modal */
+    .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(7,12,20,0.35);z-index:60}
+    .modal[aria-hidden="false"]{display:flex}
+    .modal-content{background:#fff;padding:18px;border-radius:10px;min-width:320px;max-width:420px;box-shadow:0 12px 32px rgba(10,20,40,0.12)}
+    .modal-content h3{margin:0 0 10px 0}
+    .modal-content label{display:block;margin-top:8px;font-size:0.9rem}
+    .modal-content input{width:100%;margin-top:6px}
+    .modal-actions{display:flex;gap:8px;margin-top:12px}
+    .msg{margin-top:8px;color:#922;min-height:20px}
+  </style>
+</head>
+<body>
+  <div class="panel active">
+    <div class="header">
+      <div>
+        <div class="title">Counter Live Display</div>
+        <div class="muted">Operator view — simplified and touch-friendly</div>
+      </div>
+      <div class="controls">
+        <div style="text-align:right">
+          <div class="muted small">Signed in as</div>
+          <div id="auth-user" class="small">Not signed in</div>
+        </div>
+        <button id="org-logout" class="ghost" style="display:none">Sign Out</button>
+        <button id="sign-in-btn" class="ghost">Sign In</button>
+      </div>
+    </div>
+
+    <div id="selection-row" class="row">
+      <label for="org-select">Organization</label>
+      <select id="org-select" class="big-select" disabled><option value="">-- Sign in first --</option></select>
+
+      <label for="counter-select">Counter</label>
+      <select id="counter-select" class="big-select" disabled><option value="">-- Select counter --</option></select>
+
+      <button id="refresh-orgs" class="ghost" disabled>Refresh</button>
+    </div>
+
+    <div id="status" class="muted">Not connected</div>
+
+    <div id="tokens" class="tokens"></div>
+  </div>
+
+  <!-- Sign-in Modal -->
+  <div id="sign-in-modal" class="modal" aria-hidden="true">
+    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="sign-in-title">
+      <h3 id="sign-in-title">Operator Sign In</h3>
+      <form id="sign-in-form">
+        <label for="sign-email">Email</label>
+        <input id="sign-email" type="email" required />
+        <label for="sign-password">Password</label>
+        <input id="sign-password" type="password" required />
+        <div class="modal-actions">
+          <button type="submit" id="sign-in-submit">Sign in</button>
+          <button type="button" id="sign-in-cancel">Cancel</button>
+        </div>
+        <div id="sign-in-msg" class="msg"></div>
+      </form>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="../firebase-config.js"></script>
+  <script src="counter-display.js"></script>
+</body>
+</html>

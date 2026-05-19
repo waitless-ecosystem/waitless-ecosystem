@@ -1,25 +1,15 @@
 /**
- * KIOSK Management Script
- * Admin panel for creating, managing, and monitoring KIOSK accounts
- * Handles PIN management, activity logging, and reporting
+ * KIOSK Management Script v2 - Full CRUD, PIN Management, and Reporting
  */
 
-// Firebase Auth/DB are already initialized and available (loaded via `kiosk-db.js`).
-
-// UI Elements
 const messageEl = document.getElementById('message');
 const tabButtons = document.querySelectorAll('.tab');
 const tabs = document.querySelectorAll('[id$="-tab"]');
 const newKioskBtn = document.getElementById('new-kiosk-btn');
 const backBtn = document.getElementById('back-btn');
+const orgSelectSuper = document.getElementById('org-select-super');
 const kioskModal = document.getElementById('new-kiosk-modal');
-const closeModalBtn = document.getElementById('close-modal');
-const cancelModalBtn = document.getElementById('cancel-modal');
-const newKioskForm = document.getElementById('new-kiosk-form');
 const editKioskModal = document.getElementById('edit-kiosk-modal');
-const closeEditModalBtn = document.getElementById('close-edit-modal');
-const cancelEditModalBtn = document.getElementById('cancel-edit-modal');
-const editKioskForm = document.getElementById('edit-kiosk-form');
 const kioskContainer = document.getElementById('kiosks-container');
 const totalKiosksEl = document.getElementById('total-kiosks');
 const activeKiosksEl = document.getElementById('active-kiosks');
@@ -30,22 +20,19 @@ const generateReportBtn = document.getElementById('generate-report-btn');
 const reportContainer = document.getElementById('report-container');
 const filterActivityBtn = document.getElementById('filter-activity-btn');
 const activityContainer = document.getElementById('activity-container');
+const newKioskForm = document.getElementById('new-kiosk-form');
+const editKioskForm = document.getElementById('edit-kiosk-form');
 
-// State
 let currentUser = null;
 let organizationId = null;
 let kiosks = {};
 let unsubscribeKiosks = null;
-
-// ============================================================
-// MESSAGE DISPLAY
-// ============================================================
+let reportChart = null;
 
 function showMessage(text, type = 'info', duration = 5000) {
   messageEl.textContent = text;
   messageEl.className = `message ${type}`;
   messageEl.classList.remove('hidden');
-
   if (duration > 0) {
     setTimeout(() => {
       messageEl.classList.add('hidden');
@@ -54,13 +41,26 @@ function showMessage(text, type = 'info', duration = 5000) {
   }
 }
 
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function openModal(modal) {
+  modal.classList.add('active');
+  modal.setAttribute('aria-hidden', 'false');
+}
+
+function closeModal(modal) {
+  modal.classList.remove('active');
+  modal.setAttribute('aria-hidden', 'true');
+}
+
 // ============================================================
-// AUTHENTICATION CHECK
+// AUTHENTICATION
 // ============================================================
 
-/**
- * Check authentication and load organization data
- */
 auth.onAuthStateChanged(async (user) => {
   if (!user) {
     window.location.href = '../../index.html';
@@ -69,11 +69,10 @@ auth.onAuthStateChanged(async (user) => {
 
   try {
     currentUser = user;
-    organizationId = user.uid;
-
-    // Approved organization users and superadmins can manage kiosks.
-    const snap = await db.ref(`users/${organizationId}`).once('value');
+    const snap = await db.ref(`users/${user.uid}`).once('value');
     const profile = snap.val() || {};
+    const role = profile.role;
+    const isSuperadmin = await waitlessIsSuperadmin(user, profile);
 
     const canAccess = await waitlessCanAccessOrganizationTools(user, profile);
     if (!canAccess) {
@@ -85,10 +84,17 @@ auth.onAuthStateChanged(async (user) => {
     }
 
     initializeUI();
-    loadKiosks();
+
+    if (role === 'superadmin' || isSuperadmin) {
+      if (orgSelectSuper) orgSelectSuper.style.display = '';
+      await loadOrganizationsForSuperadmin();
+    } else {
+      organizationId = user.uid;
+      await loadKiosks();
+    }
   } catch (err) {
     console.error('Auth error:', err);
-    showMessage('Authentication error: ' + err.message, 'error');
+    showMessage('Error: ' + err.message, 'error');
   }
 });
 
@@ -97,35 +103,50 @@ auth.onAuthStateChanged(async (user) => {
 // ============================================================
 
 function initializeUI() {
-  // Tab switching
   tabButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const tabName = btn.dataset.tab;
-      switchTab(tabName);
-    });
+    btn.addEventListener('click', () => switchTab(btn.dataset.tab));
   });
 
-  // Modal handlers
-  newKioskBtn.addEventListener('click', () => openModal(kioskModal));
-  closeModalBtn.addEventListener('click', () => closeModal(kioskModal));
-  cancelModalBtn.addEventListener('click', () => closeModal(kioskModal));
-  closeEditModalBtn.addEventListener('click', () => closeModal(editKioskModal));
-  cancelEditModalBtn.addEventListener('click', () => closeModal(editKioskModal));
+  newKioskBtn.addEventListener('click', () => {
+    if (!organizationId) {
+      showMessage('Please select an organization first', 'error');
+      return;
+    }
+    document.getElementById('kiosk-name').value = '';
+    document.getElementById('kiosk-description').value = '';
+    document.getElementById('kiosk-pin').value = '';
+    openModal(kioskModal);
+  });
 
-  // Back button
+  document.getElementById('close-modal').addEventListener('click', () => closeModal(kioskModal));
+  document.getElementById('cancel-modal').addEventListener('click', () => closeModal(kioskModal));
+  document.getElementById('close-edit-modal').addEventListener('click', () => closeModal(editKioskModal));
+  document.getElementById('cancel-edit-modal').addEventListener('click', () => closeModal(editKioskModal));
+
   backBtn.addEventListener('click', () => {
     window.location.href = '../dashboard.html';
   });
 
-  // Forms
+  if (orgSelectSuper) {
+    orgSelectSuper.addEventListener('change', async () => {
+      organizationId = orgSelectSuper.value || null;
+      if (unsubscribeKiosks) { unsubscribeKiosks(); unsubscribeKiosks = null; }
+      if (!organizationId) {
+        kiosks = {};
+        renderKiosks();
+        updateStats();
+        return;
+      }
+      await loadKiosks();
+    });
+  }
+
   newKioskForm.addEventListener('submit', handleCreateKiosk);
   editKioskForm.addEventListener('submit', handleEditKiosk);
 
-  // Report actions
   generateReportBtn.addEventListener('click', handleGenerateReport);
   filterActivityBtn.addEventListener('click', handleFilterActivity);
 
-  // Close modals on background click
   kioskModal.addEventListener('click', (e) => {
     if (e.target === kioskModal) closeModal(kioskModal);
   });
@@ -135,21 +156,17 @@ function initializeUI() {
 }
 
 // ============================================================
-// TAB MANAGEMENT
+// TAB SWITCHING
 // ============================================================
 
 function switchTab(tabName) {
-  // Update active tab button
   tabButtons.forEach(btn => {
     btn.classList.toggle('active', btn.dataset.tab === tabName);
   });
-
-  // Update active tab content
   tabs.forEach(tab => {
     tab.classList.toggle('hidden', !tab.id.startsWith(tabName));
   });
 
-  // Load tab-specific data
   if (tabName === 'credentials') {
     loadCredentialsTab();
   } else if (tabName === 'activity') {
@@ -160,22 +177,67 @@ function switchTab(tabName) {
 }
 
 // ============================================================
-// KIOSK LOADING & DISPLAY
+// LOAD ORGANIZATIONS
 // ============================================================
 
-/**
- * Load all KIOSKs for organization
- */
+async function loadOrganizationsForSuperadmin() {
+  if (!orgSelectSuper) return;
+  orgSelectSuper.innerHTML = '';
+  try {
+    const snap = await db.ref('users').once('value');
+    const users = snap.val() || {};
+    const entries = Object.entries(users)
+      .filter(([_, profile]) => profile && profile.role === 'approved');
+
+    const placeholder = document.createElement('option');
+    placeholder.value = '';
+    placeholder.textContent = 'Select organization...';
+    orgSelectSuper.appendChild(placeholder);
+
+    entries.forEach(([uid, profile]) => {
+      const opt = document.createElement('option');
+      opt.value = uid;
+      opt.textContent = (profile.organizationName || profile.name || profile.email || uid);
+      orgSelectSuper.appendChild(opt);
+    });
+
+    orgSelectSuper.disabled = false;
+
+    if (entries.length > 0) {
+      orgSelectSuper.value = entries[0][0];
+      organizationId = entries[0][0];
+      await loadKiosks();
+    } else {
+      kiosks = {};
+      renderKiosks();
+      updateStats();
+      showMessage('No approved organizations found', 'info');
+    }
+  } catch (err) {
+    console.error('Error loading organizations:', err);
+    showMessage('Failed to load organizations: ' + err.message, 'error');
+  }
+}
+
+// ============================================================
+// KIOSK LOADING
+// ============================================================
+
 async function loadKiosks() {
   try {
-    // Set up real-time listener
+    if (!organizationId) {
+      showMessage('Please select an organization', 'info');
+      return;
+    }
+
+    if (unsubscribeKiosks) { unsubscribeKiosks(); unsubscribeKiosks = null; }
+    
     unsubscribeKiosks = kioskDB.listenKiosks(organizationId, (data) => {
-      kiosks = data;
+      kiosks = data || {};
       renderKiosks();
       updateStats();
     });
 
-    // Initial load
     kiosks = await kioskDB.getAllKiosks(organizationId);
     renderKiosks();
     updateStats();
@@ -185,9 +247,10 @@ async function loadKiosks() {
   }
 }
 
-/**
- * Render KIOSK cards
- */
+// ============================================================
+// RENDER KIOSKS
+// ============================================================
+
 function renderKiosks() {
   kioskContainer.innerHTML = '';
 
@@ -208,9 +271,6 @@ function renderKiosks() {
   });
 }
 
-/**
- * Create KIOSK card element
- */
 function createKioskCard(kioskId, kiosk) {
   const card = document.createElement('div');
   card.className = 'kiosk-card';
@@ -252,10 +312,10 @@ function createKioskCard(kioskId, kiosk) {
     </div>
 
     <div class="kiosk-card-actions">
-      <button class="button button-secondary button-small" onclick="openEditKiosk('${escapeHtml(kioskId)}')">
+      <button class="button button-secondary button-small" type="button" onclick="window.openEditKioskGlobal('${escapeHtml(kioskId)}')">
         Edit
       </button>
-      <button class="button button-danger button-small" onclick="deleteKiosk('${escapeHtml(kioskId)}')">
+      <button class="button button-danger button-small" type="button" onclick="window.deleteKioskGlobal('${escapeHtml(kioskId)}')">
         Delete
       </button>
     </div>
@@ -264,9 +324,6 @@ function createKioskCard(kioskId, kiosk) {
   return card;
 }
 
-/**
- * Update statistics display
- */
 function updateStats() {
   const kioskList = Object.entries(kiosks);
   const total = kioskList.length;
@@ -279,17 +336,14 @@ function updateStats() {
 }
 
 // ============================================================
-// KIOSK CRUD OPERATIONS
+// CREATE KIOSK
 // ============================================================
 
-/**
- * Handle create KIOSK form submission
- */
 async function handleCreateKiosk(e) {
   e.preventDefault();
 
   const name = document.getElementById('kiosk-name').value.trim();
-  const pin = document.getElementById('kiosk-pin').value;
+  const pin = document.getElementById('kiosk-pin').value.trim();
 
   if (!name) {
     showMessage('KIOSK name is required', 'error');
@@ -301,10 +355,16 @@ async function handleCreateKiosk(e) {
     return;
   }
 
+  if (!organizationId) {
+    showMessage('Organization not selected', 'error');
+    return;
+  }
+
   try {
+    showMessage('Creating KIOSK...', 'info', 0);
     const kioskId = await kioskDB.createKiosk(organizationId, name);
     await kioskAuthDB.createKioskUser(organizationId, kioskId, pin);
-
+    
     showMessage('KIOSK created successfully', 'success');
     closeModal(kioskModal);
     newKioskForm.reset();
@@ -314,10 +374,11 @@ async function handleCreateKiosk(e) {
   }
 }
 
-/**
- * Open edit KIOSK modal
- */
-function openEditKiosk(kioskId) {
+// ============================================================
+// EDIT KIOSK
+// ============================================================
+
+window.openEditKioskGlobal = function(kioskId) {
   const kiosk = kiosks[kioskId];
   if (!kiosk) {
     showMessage('KIOSK not found', 'error');
@@ -330,11 +391,8 @@ function openEditKiosk(kioskId) {
   document.getElementById('edit-kiosk-status').value = kiosk.status || 'active';
 
   openModal(editKioskModal);
-}
+};
 
-/**
- * Handle edit KIOSK form submission
- */
 async function handleEditKiosk(e) {
   e.preventDefault();
 
@@ -349,12 +407,12 @@ async function handleEditKiosk(e) {
   }
 
   try {
+    showMessage('Updating KIOSK...', 'info', 0);
     await kioskDB.updateKiosk(organizationId, kioskId, {
       name,
       description,
       status
     });
-
     showMessage('KIOSK updated successfully', 'success');
     closeModal(editKioskModal);
   } catch (err) {
@@ -363,30 +421,29 @@ async function handleEditKiosk(e) {
   }
 }
 
-/**
- * Delete KIOSK
- */
-async function deleteKiosk(kioskId) {
-  if (!confirm('Are you sure you want to delete this KIOSK?')) {
+// ============================================================
+// DELETE KIOSK
+// ============================================================
+
+window.deleteKioskGlobal = async function(kioskId) {
+  if (!confirm(`Delete KIOSK "${escapeHtml(kiosks[kioskId]?.name || kioskId)}"?`)) {
     return;
   }
 
   try {
+    showMessage('Deleting KIOSK...', 'info', 0);
     await kioskDB.deleteKiosk(organizationId, kioskId);
     showMessage('KIOSK deleted successfully', 'success');
   } catch (err) {
     console.error('Error deleting KIOSK:', err);
     showMessage('Failed to delete KIOSK: ' + err.message, 'error');
   }
-}
+};
 
 // ============================================================
-// CREDENTIALS TAB
+// CREDENTIALS TAB (PIN MANAGEMENT)
 // ============================================================
 
-/**
- * Load credentials tab
- */
 function loadCredentialsTab() {
   credentialsTableEl.innerHTML = '';
 
@@ -397,11 +454,11 @@ function loadCredentialsTab() {
   }
 
   kioskList.forEach(([kioskId, kiosk]) => {
-    const row = document.createElement('tr');
     const createdDate = kiosk.createdAt
       ? new Date(kiosk.createdAt).toLocaleDateString()
       : 'Unknown';
 
+    const row = document.createElement('tr');
     row.innerHTML = `
       <td>${escapeHtml(kiosk.name)}</td>
       <td><span class="status-badge status-${kiosk.status || 'active'}">
@@ -409,7 +466,7 @@ function loadCredentialsTab() {
       </span></td>
       <td>${createdDate}</td>
       <td>
-        <button class="button button-secondary button-small" onclick="openPinResetDialog('${escapeHtml(kioskId)}')">
+        <button class="button button-secondary button-small" type="button" onclick="window.openPinResetDialog('${escapeHtml(kioskId)}')">
           Reset PIN
         </button>
       </td>
@@ -418,11 +475,14 @@ function loadCredentialsTab() {
   });
 }
 
-/**
- * Open PIN reset dialog
- */
-function openPinResetDialog(kioskId) {
-  const newPin = prompt('Enter new PIN (4-6 digits):');
+window.openPinResetDialog = function(kioskId) {
+  const kiosk = kiosks[kioskId];
+  if (!kiosk) {
+    showMessage('KIOSK not found', 'error');
+    return;
+  }
+
+  const newPin = prompt(`Enter new PIN for "${escapeHtml(kiosk.name)}" (4-6 digits):`);
   if (!newPin) return;
 
   if (!/^\d{4,6}$/.test(newPin)) {
@@ -431,13 +491,11 @@ function openPinResetDialog(kioskId) {
   }
 
   resetKioskPin(kioskId, newPin);
-}
+};
 
-/**
- * Reset KIOSK PIN
- */
 async function resetKioskPin(kioskId, newPin) {
   try {
+    showMessage('Resetting PIN...', 'info', 0);
     const kioskUserId = `kiosk_${kioskId}`;
     await kioskAuthDB.updateKioskPin(kioskUserId, newPin);
     showMessage('PIN reset successfully', 'success');
@@ -451,22 +509,23 @@ async function resetKioskPin(kioskId, newPin) {
 // ACTIVITY TAB
 // ============================================================
 
-/**
- * Load activity tab
- */
 async function loadActivityTab() {
   try {
+    if (!organizationId) {
+      activityContainer.innerHTML = '<p class="empty-state">Select an organization</p>';
+      return;
+    }
+
+    showMessage('Loading activity logs...', 'info', 0);
     const logs = await kioskTokenDB.getKioskActivityLogs(organizationId);
     renderActivityLogs(logs);
+    showMessage('', 'info', 0);
   } catch (err) {
     console.error('Error loading activity logs:', err);
     showMessage('Failed to load activity logs: ' + err.message, 'error');
   }
 }
 
-/**
- * Handle filter activity
- */
 async function handleFilterActivity() {
   const startDate = new Date(document.getElementById('activity-start-date').value).getTime();
   const endDate = new Date(document.getElementById('activity-end-date').value).getTime();
@@ -484,15 +543,13 @@ async function handleFilterActivity() {
       })
     );
     renderActivityLogs(filtered);
+    showMessage(`Filtered ${Object.keys(filtered).length} activities`, 'success', 3000);
   } catch (err) {
     console.error('Error filtering activity:', err);
     showMessage('Failed to filter activity: ' + err.message, 'error');
   }
 }
 
-/**
- * Render activity logs
- */
 function renderActivityLogs(logs) {
   const logList = Object.values(logs).sort((a, b) => b.timestamp - a.timestamp);
 
@@ -526,9 +583,6 @@ function renderActivityLogs(logs) {
 // REPORTS TAB
 // ============================================================
 
-/**
- * Populate report KIOSK select
- */
 function populateReportKioskSelect() {
   reportKioskSelect.innerHTML = '<option value="">All KIOSKs</option>';
 
@@ -540,9 +594,6 @@ function populateReportKioskSelect() {
   });
 }
 
-/**
- * Handle generate report
- */
 async function handleGenerateReport() {
   const kioskId = reportKioskSelect.value || null;
   const reportDate = document.getElementById('report-date').value;
@@ -552,7 +603,13 @@ async function handleGenerateReport() {
     return;
   }
 
+  if (!organizationId) {
+    showMessage('Organization not selected', 'error');
+    return;
+  }
+
   try {
+    showMessage('Generating report...', 'info', 0);
     const startOfDay = new Date(reportDate).getTime();
     const endOfDay = startOfDay + 24 * 60 * 60 * 1000;
 
@@ -563,20 +620,26 @@ async function handleGenerateReport() {
     });
 
     renderReport(report, reportDate);
+    showMessage('Report generated', 'success');
   } catch (err) {
     console.error('Error generating report:', err);
     showMessage('Failed to generate report: ' + err.message, 'error');
   }
 }
 
-/**
- * Render report
- */
 function renderReport(report, date) {
-  let html = `<h4>Report for ${date}</h4>`;
-  html += '<table><thead><tr><th>KIOSK</th><th>Tokens Generated</th><th>Success Rate</th><th>Failed Attempts</th></tr></thead><tbody>';
+  const reportData = Object.entries(report);
 
-  Object.entries(report).forEach(([kioskId, stats]) => {
+  if (reportData.length === 0) {
+    reportContainer.innerHTML = `<p class="empty-state">No data for ${date}</p>`;
+    return;
+  }
+
+  // Table
+  let html = `<h4>Report for ${date}</h4>`;
+  html += '<table><thead><tr><th>KIOSK</th><th>Tokens</th><th>Success Rate</th><th>Failed</th></tr></thead><tbody>';
+
+  reportData.forEach(([kioskId, stats]) => {
     html += `
       <tr>
         <td>${escapeHtml(stats.kioskName)}</td>
@@ -587,30 +650,50 @@ function renderReport(report, date) {
     `;
   });
 
-  html += '</tbody></table>';
+  html += '</tbody></table><div id="report-chart-container" style="margin-top: 20px;"><canvas id="report-chart"></canvas></div>';
   reportContainer.innerHTML = html;
-}
 
-// ============================================================
-// MODAL UTILITIES
-// ============================================================
+  // Chart
+  const canvasEl = document.getElementById('report-chart');
+  if (canvasEl && reportData.length > 0) {
+    if (reportChart) reportChart.destroy();
+    
+    const labels = reportData.map(([_, s]) => s.kioskName);
+    const tokens = reportData.map(([_, s]) => s.tokensGeneratedPeriod);
+    const failed = reportData.map(([_, s]) => s.failedAttempts);
 
-function openModal(modal) {
-  modal.classList.add('active');
-}
-
-function closeModal(modal) {
-  modal.classList.remove('active');
-}
-
-// ============================================================
-// UTILITY FUNCTIONS
-// ============================================================
-
-function escapeHtml(text) {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
+    reportChart = new Chart(canvasEl, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'Tokens Generated',
+            data: tokens,
+            backgroundColor: '#4f6bed',
+            borderColor: '#415fdd',
+            borderWidth: 1
+          },
+          {
+            label: 'Failed Attempts',
+            data: failed,
+            backgroundColor: '#ea5b76',
+            borderColor: '#d9415e',
+            borderWidth: 1
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'top' }
+        },
+        scales: {
+          y: { beginAtZero: true }
+        }
+      }
+    });
+  }
 }
 
 // ============================================================
@@ -620,5 +703,8 @@ function escapeHtml(text) {
 window.addEventListener('beforeunload', () => {
   if (unsubscribeKiosks) {
     unsubscribeKiosks();
+  }
+  if (reportChart) {
+    reportChart.destroy();
   }
 });

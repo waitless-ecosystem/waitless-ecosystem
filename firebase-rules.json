@@ -97,13 +97,14 @@
       "$kioskId": {
         ".read": "auth != null && (auth.uid === $kioskId || auth.token.kiosk === true)",
         ".write": "auth != null && (root.child('users').child(auth.uid).exists() || auth.token.superadmin === true || auth.uid === 'tcWCQtILJNcahfAQA3qakrUP9Nv1' || auth.token.email === 'contact.pasan@gmail.com' || root.child('users').child(auth.uid).child('role').val() === 'superadmin')",
+        ".write": "auth != null && (root.child('users').child(auth.uid).exists() || auth.token.superadmin === true || auth.uid === 'tcWCQtILJNcahfAQA3qakrUP9Nv1' || auth.token.email === 'contact.pasan@gmail.com' || root.child('users').child(auth.uid).child('role').val() === 'superadmin')",
 
         "role": {
-          ".write": "root.child('users').child(auth.uid).exists()"
+          ".write": "root.child('users').child(auth.uid).exists() || auth.token.superadmin === true || auth.uid === 'tcWCQtILJNcahfAQA3qakrUP9Nv1' || auth.token.email === 'contact.pasan@gmail.com'"
         },
 
         "organizationId": {
-          ".write": "root.child('users').child(auth.uid).exists()"
+          ".write": "root.child('users').child(auth.uid).exists() || auth.token.superadmin === true || auth.uid === 'tcWCQtILJNcahfAQA3qakrUP9Nv1' || auth.token.email === 'contact.pasan@gmail.com'"
         }
       }
     }
