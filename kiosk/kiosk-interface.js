@@ -462,7 +462,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   setInterval(updateClock, 1000);
 
   // Check session timeout periodically
-  setInterval(checkSessionTimeout, INACTIVITY_CHECK_MS);
+  // DISABLED: setInterval(checkSessionTimeout, INACTIVITY_CHECK_MS);
 
   // Load services
   await loadServices();
