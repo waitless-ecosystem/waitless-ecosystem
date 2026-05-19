@@ -1,4 +1,4 @@
-// Counter Live display script
+// Counter Live display script (moved to /counter)
 if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const auth = firebase.auth();
@@ -50,7 +50,7 @@ async function loadOrgs(){
     Object.entries(orgs).forEach(([uid, profile])=>{
       const opt = document.createElement('option');
       opt.value = uid;
-      opt.textContent = (profile.organizationName || profile.name || profile.email || uid) + ' — ' + uid;
+      opt.textContent = (profile.organizationName || profile.name || profile.email || uid);
       orgSelect.appendChild(opt);
     });
 
@@ -74,7 +74,7 @@ async function loadCounters(orgId){
     Object.entries(counters).forEach(([cid, c])=>{
       const opt = document.createElement('option');
       opt.value = cid;
-      opt.textContent = (c.name || cid) + ' — ' + cid;
+      opt.textContent = (c.name || cid);
       counterSelect.appendChild(opt);
     });
     counterSelect.disabled = false;
@@ -95,12 +95,10 @@ async function listenForTokens(orgId, counterId){
   tokensEl.innerHTML = '';
   setStatus('Listening for tokens...');
 
-  // Listen once at the organization queue root, then filter to the selected counter.
   const allQueueRef = db.ref(`users/${orgId}/queue`);
   const allListener = allQueueRef.on('value', snap=>{ renderTokens(orgId, counterId); });
   activeListeners.push(()=>allQueueRef.off('value', allListener));
 
-  // Initial render
   await renderTokens(orgId, counterId);
 }
 
@@ -109,7 +107,6 @@ async function renderTokens(orgId, counterId){
   tokensEl.innerHTML = '';
   try{
     if(currentRunId !== renderRunId) return;
-    // Collect tokens for services assigned to this counter OR tokens assigned to this counter
     const queueSnap = await db.ref(`users/${orgId}/queue`).once('value');
     const queue = queueSnap.val() || {};
     if(currentRunId !== renderRunId) return;
@@ -126,7 +123,6 @@ async function renderTokens(orgId, counterId){
       });
     });
 
-    // Filter tokens: include those assigned to this counter OR tokens for services assigned to this counter
     const assignSnap = await db.ref(`users/${orgId}/assignments/${counterId}`).once('value');
     const assignment = assignSnap.val() || { services: [] };
     const serviceIds = Array.isArray(assignment.services) ? assignment.services : Object.values(assignment.services || {});
@@ -136,12 +132,11 @@ async function renderTokens(orgId, counterId){
 
     if(currentRunId !== renderRunId) return;
 
-    // Sort by timestamp and show only the next active token
     visible.sort((a,b)=> (a.timestamp||0) - (b.timestamp||0));
     const activeToken = visible[0] || null;
 
     if(!activeToken){
-      tokensEl.innerHTML = '<div class="token-empty muted">No ongoing token for this counter.</div>';
+      tokensEl.innerHTML = '<div class="token-empty">No ongoing token for this counter.</div>';
       setStatus('No ongoing token for the selected counter');
       return;
     }
@@ -158,7 +153,7 @@ async function renderTokens(orgId, counterId){
 
     const metaEl = document.createElement('div');
     metaEl.className = 'token-meta';
-    metaEl.innerHTML = `<span>${activeToken.serviceName || activeToken.serviceId}</span><span>${activeToken.kioskName || ''}</span><span>Status: ${activeToken.status || 'waiting'}</span>`;
+    metaEl.innerHTML = `<strong style="font-size:1.05rem">${activeToken.serviceName || activeToken.serviceId}</strong><div style="font-size:0.95rem;color:#475569">${activeToken.kioskName || ''}</div><div style="font-size:0.9rem;color:#6b7280">Status: ${activeToken.status || 'waiting'}</div>`;
 
     stage.appendChild(numberEl);
     stage.appendChild(metaEl);
@@ -251,9 +246,8 @@ auth.onAuthStateChanged(async user=>{
     const profile = profSnap.val();
     setAuthUserLabel(user, profile);
     if(profile && profile.role === 'approved'){
-      // Bind this org to the signed-in user
       orgSelect.innerHTML = '';
-      const opt = document.createElement('option'); opt.value = user.uid; opt.textContent = (profile.organizationName||profile.name||profile.email||user.uid) + ' — ' + user.uid;
+      const opt = document.createElement('option'); opt.value = user.uid; opt.textContent = (profile.organizationName||profile.name||profile.email||user.uid);
       orgSelect.appendChild(opt);
       orgSelect.disabled = true;
       chosenOrg = user.uid;
@@ -264,7 +258,6 @@ auth.onAuthStateChanged(async user=>{
     }
   }catch(err){ console.error(err); }
 
-  // Fallback: load all orgs
   setSelectionVisibility(true);
   await loadOrgs();
 });
