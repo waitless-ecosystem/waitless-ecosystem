@@ -39,6 +39,28 @@ function setSelectionVisibility(visible){
   }
 }
 
+function hideOrgSelectorKeepCounter() {
+  // hide org label + select, keep counter select visible in the row
+  const orgLabel = document.querySelector("label[for='org-select']");
+  if (orgLabel) orgLabel.style.display = 'none';
+  if (orgSelect) orgSelect.style.display = 'none';
+  // ensure counter select and refresh remain visible
+  const counterLabel = document.querySelector("label[for='counter-select']");
+  if (counterLabel) counterLabel.style.display = '';
+  if (counterSelect) counterSelect.style.display = '';
+  if (refreshOrgsBtn) refreshOrgsBtn.style.display = '';
+}
+
+function showOrgSelector() {
+  const orgLabel = document.querySelector("label[for='org-select']");
+  if (orgLabel) orgLabel.style.display = '';
+  if (orgSelect) orgSelect.style.display = '';
+  const counterLabel = document.querySelector("label[for='counter-select']");
+  if (counterLabel) counterLabel.style.display = '';
+  if (counterSelect) counterSelect.style.display = '';
+  if (refreshOrgsBtn) refreshOrgsBtn.style.display = '';
+}
+
 async function loadOrgs(){
   setStatus('Loading organizations...');
   try{
@@ -233,6 +255,7 @@ auth.onAuthStateChanged(async user=>{
     setAuthUserLabel(null, null);
     orgLogoutBtn.style.display='none';
     setSelectionVisibility(true);
+    showOrgSelector();
     orgSelect.innerHTML = '<option value="">-- Sign in first --</option>'; orgSelect.disabled = true;
     counterSelect.innerHTML = '<option value="">-- Select counter --</option>'; counterSelect.disabled = true;
     refreshOrgsBtn.disabled = true;
@@ -253,7 +276,10 @@ auth.onAuthStateChanged(async user=>{
       chosenOrg = user.uid;
       await loadCounters(chosenOrg);
       setStatus('Organization loaded for account');
+      // Hide the organization selector (organization is the signed-in user)
+      // but keep the counter selector visible so operator can pick a counter.
       setSelectionVisibility(true);
+      hideOrgSelectorKeepCounter();
       return;
     }
   }catch(err){ console.error(err); }
