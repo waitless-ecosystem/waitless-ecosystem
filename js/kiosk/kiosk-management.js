@@ -629,14 +629,15 @@ async function handleGenerateReport() {
 
 function renderReport(report, date) {
   const reportData = Object.entries(report);
+  const safeDate = escapeHtml(String(date));
 
   if (reportData.length === 0) {
-    reportContainer.innerHTML = `<p class="empty-state">No data for ${date}</p>`;
+    reportContainer.innerHTML = `<p class="empty-state">No data for ${safeDate}</p>`;
     return;
   }
 
   // Table
-  let html = `<h4>Report for ${date}</h4>`;
+  let html = `<h4>Report for ${safeDate}</h4>`;
   html += '<table><thead><tr><th>KIOSK</th><th>Tokens</th><th>Success Rate</th><th>Failed</th></tr></thead><tbody>';
 
   reportData.forEach(([kioskId, stats]) => {
