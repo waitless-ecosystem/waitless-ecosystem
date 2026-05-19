@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Token - QR Connect</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+    <style>
+        /* ── Token Page Styles ── */
+        .token-page {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        /* Big token number display */
+        .token-hero {
+            text-align: center;
+            padding: 2rem 1rem;
+            background: linear-gradient(135deg, rgba(99,102,241,0.2), rgba(192,132,252,0.15));
+            border-radius: 20px;
+            border: 1px solid rgba(99,102,241,0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        .token-hero::before {
+            content: '';
+            position: absolute;
+            top: -40px; right: -40px;
+            width: 120px; height: 120px;
+            border-radius: 50%;
+            background: rgba(99,102,241,0.1);
+        }
+        .token-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: #818cf8;
+            margin-bottom: 0.5rem;
+        }
+        .token-number {
+            font-size: 5rem;
+            font-weight: 700;
+            line-height: 1;
+            background: linear-gradient(to right, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 0.05em;
+        }
+        .token-service-name {
+            margin-top: 0.75rem;
+            font-size: 1rem;
+            color: var(--text-muted);
+        }
+
+        /* Status badge */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.3rem 0.9rem;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            margin-top: 1rem;
+        }
+        .status-badge.waiting  { background: rgba(251,191,36,0.15); color: #fbbf24; border: 1px solid rgba(251,191,36,0.3); }
+        .status-badge.serving  { background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid rgba(16,185,129,0.3); }
+        .status-badge.done     { background: rgba(148,163,184,0.15); color: #94a3b8; border: 1px solid rgba(148,163,184,0.3); }
+        .status-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+            animation: pulse-dot 1.5s ease-in-out infinite;
+        }
+        .status-badge.done .status-dot { animation: none; }
+        @keyframes pulse-dot {
+            0%,100% { opacity: 1; } 50% { opacity: 0.3; }
+        }
+
+        /* Queue position card */
+        .queue-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        .stat-card {
+            background: rgba(15,23,42,0.5);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.2rem;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 2.4rem;
+            font-weight: 700;
+            color: var(--text-main);
+            line-height: 1;
+        }
+        .stat-value.highlight { color: #818cf8; }
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 0.4rem;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        /* Now serving banner */
+        .now-serving-banner {
+            background: rgba(16,185,129,0.1);
+            border: 1px solid rgba(16,185,129,0.3);
+            border-radius: 14px;
+            padding: 1rem 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .now-serving-icon { font-size: 1.8rem; }
+        .now-serving-text { flex: 1; }
+        .now-serving-text .label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #10b981;
+            font-weight: 600;
+        }
+        .now-serving-text .number {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        /* Your turn alert */
+        .your-turn {
+            background: linear-gradient(135deg, rgba(16,185,129,0.25), rgba(16,185,129,0.1));
+            border: 1.5px solid #10b981;
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
+            animation: glow 2s ease-in-out infinite;
+        }
+        @keyframes glow {
+            0%,100% { box-shadow: 0 0 0 rgba(16,185,129,0); }
+            50%      { box-shadow: 0 0 24px rgba(16,185,129,0.3); }
+        }
+        .your-turn .emoji { font-size: 2.5rem; }
+        .your-turn h2 { color: #10b981; font-size: 1.4rem; margin-top: 0.5rem; }
+        .your-turn p  { color: var(--text-muted); font-size: 0.9rem; margin-top: 0.3rem; }
+
+        /* Counter assigned info */
+        .counter-info {
+            background: rgba(99,102,241,0.1);
+            border: 1px solid rgba(99,102,241,0.3);
+            border-radius: 14px;
+            padding: 1rem 1.2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .counter-info .clabel {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+        }
+        .counter-info .cvalue {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #818cf8;
+        }
+
+        /* Error/loading states */
+        .state-msg {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+        .state-msg .icon { font-size: 2.5rem; margin-bottom: 0.5rem; }
+
+        /* Done state */
+        .done-card {
+            text-align: center;
+            padding: 2rem 1rem;
+            background: rgba(148,163,184,0.07);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+        }
+        .done-card .emoji { font-size: 3rem; }
+        .done-card h2 { margin-top: 0.75rem; color: var(--text-main); }
+        .done-card p  { color: var(--text-muted); margin-top: 0.4rem; font-size: 0.9rem; }
+
+        /* Back btn */
+        .back-btn {
+            display: inline-block;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            text-decoration: none;
+            padding: 0.4rem 0;
+        }
+        .back-btn:hover { color: var(--text-main); }
+
+        /* Spinner animation */
+        .spinner-text { animation: fade-in-out 1.5s ease infinite; }
+        @keyframes fade-in-out {
+            0%,100%{ opacity:0.4; } 50%{ opacity:1; }
+        }
+
+        /* hidden util */
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <div id="app-page" class="app-container glass-effect">
+
+        <header class="app-header">
+            <div class="header-top">
+                <h1>Your Token</h1>
+                <a href="service.html" class="back-btn">← Back</a>
+            </div>
+            <p id="org-display" style="color:var(--text-muted); font-size:0.85rem;"></p>
+        </header>
+
+        <!-- Loading state -->
+        <div id="loading-view" class="state-msg">
+            <div class="icon">⏳</div>
+            <p class="spinner-text">Getting your token...</p>
+        </div>
+
+        <!-- Error state -->
+        <div id="error-view" class="state-msg hidden">
+            <div class="icon">❌</div>
+            <p id="error-msg">Something went wrong.</p>
+            <a href="service.html" style="color:#818cf8; margin-top:1rem; display:inline-block;">Try again</a>
+        </div>
+
+        <!-- Main token view (shown after token is issued) -->
+        <div id="token-view" class="token-page hidden">
+
+            <!-- Big token number -->
+            <div class="token-hero">
+                <div class="token-label">Token Number</div>
+                <div class="token-number" id="token-number-display">—</div>
+                <div class="token-service-name" id="service-name-display"></div>
+                <div id="status-badge" class="status-badge waiting">
+                    <span class="status-dot"></span>
+                    <span id="status-text">Waiting</span>
+                </div>
+            </div>
+
+            <!-- Now Serving -->
+            <div class="now-serving-banner" id="now-serving-section">
+                <div class="now-serving-icon">🔔</div>
+                <div class="now-serving-text">
+                    <div class="label">Now Serving</div>
+                    <div class="number" id="now-serving-number">—</div>
+                </div>
+            </div>
+
+            <!-- Queue stats -->
+            <div class="queue-stats">
+                <div class="stat-card">
+                    <div class="stat-value highlight" id="position-display">—</div>
+                    <div class="stat-label">Your Position</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="ahead-display">—</div>
+                    <div class="stat-label">People Ahead</div>
+                </div>
+            </div>
+
+            <!-- Counter assigned (shown when serving) -->
+            <div class="counter-info hidden" id="counter-section">
+                <div>
+                    <div class="clabel">Please go to</div>
+                    <div class="cvalue" id="counter-name-display">Counter —</div>
+                </div>
+                <span style="font-size:1.5rem;">🏦</span>
+            </div>
+
+            <!-- Your turn alert (shown when it's this customer's turn) -->
+            <div class="your-turn hidden" id="your-turn-section">
+                <div class="emoji">🎉</div>
+                <h2>It's Your Turn!</h2>
+                <p id="your-turn-counter">Please proceed to your counter.</p>
+            </div>
+
+            <!-- Done state -->
+            <div class="done-card hidden" id="done-section">
+                <div class="emoji">✅</div>
+                <h2>Service Complete</h2>
+                <p>Thank you for using our service!</p>
+                <a href="service.html" style="color:#818cf8; margin-top:1rem; display:inline-block;">← Back to Services</a>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script src="token.js"></script>
+</body>
+</html>

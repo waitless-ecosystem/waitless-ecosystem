@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kiosk Services - QR Connect</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Firebase Compat SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+</head>
+<body>
+    <div id="app-page" class="app-container glass-effect">
+        <header class="app-header">
+            <div class="header-top">
+                <h1>Services</h1>
+                <a href="qrscan.html" class="back-btn">← Back</a>
+            </div>
+            <p id="kiosk-display">Identifying Kiosk...</p>
+        </header>
+
+        <main class="services-content">
+            <div id="loading-spinner" class="spinner">Loading Services...</div>
+            
+            <!-- This container will be filled by JavaScript -->
+            <div id="services-list" class="services-grid"></div>
+        </main>
+    </div>
+
+    <!-- Page Logic -->
+    <script src="service.js"></script>
+</body>
+</html>
