@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - QR Connect</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <!-- Firebase Compat SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+</head>
+<body>
+    <div class="login-container glass-effect">
+        <div class="login-content">
+            <header class="login-header">
+                <h1>Create Account</h1>
+                <p>Join QR Connect today</p>
+            </header>
+
+            <form id="signup-form" class="login-form">
+                <div class="form-group">
+                    <label for="signup-email">Email</label>
+                    <input type="email" id="signup-email" placeholder="Enter your email" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="signup-password">Password</label>
+                    <input type="password" id="signup-password" placeholder="Min. 6 characters" required>
+                </div>
+
+                <button type="submit" class="login-btn">Sign Up</button>
+            </form>
+
+            <p class="signup-text">Already have an account? <a href="login.html" id="signup-link">Login here</a></p>
+        </div>
+    </div>
+
+    <script src="../../js/config/firebase-config.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
