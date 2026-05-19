@@ -1,0 +1,12 @@
+{
+  "name": "ecosystem-auth-admin",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Firebase auth UI with superadmin approval panel",
+  "scripts": {
+    "set-superadmin": "node scripts/set-superadmin.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.7.0"
+  }
+}

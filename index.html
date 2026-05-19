@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>EcoSystem — Auth</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="brand">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect width="24" height="24" rx="4" fill="#0366d6"/><path d="M6 12h12" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <h1>EcoSystem</h1>
+    </div>
+
+    <div class="auth-card">
+      <div class="tabs" role="tablist" aria-label="Authentication tabs">
+        <button id="show-login" class="tab active" role="tab">Login</button>
+        <button id="show-register" class="tab" role="tab">Register</button>
+        <button id="show-reset" class="tab" role="tab">Reset</button>
+      </div>
+
+      <div id="auth-sections">
+        <section id="login-section" class="panel active" aria-labelledby="show-login">
+          <h2>Welcome back</h2>
+          <p class="lead">Sign in to continue to EcoSystem.</p>
+          <form id="login-form">
+            <label for="login-email">Email</label>
+            <div class="input-wrap"><input id="login-email" type="email" placeholder="you@example.com" required /></div>
+
+            <label for="login-password">Password</label>
+            <div class="input-wrap">
+              <input id="login-password" type="password" placeholder="••••••••" required />
+              <button type="button" class="pwd-toggle" data-target="#login-password" aria-label="Show password">👁️</button>
+            </div>
+
+            <button class="primary" type="submit">Sign in</button>
+          </form>
+          <p class="muted small">No account? <a href="#" id="show-register-link">Create one</a></p>
+        </section>
+
+        <section id="register-section" class="panel" aria-labelledby="show-register">
+          <h2>Create account</h2>
+          <p class="lead">Get started with EcoSystem.</p>
+          <form id="register-form">
+            <label for="register-email">Email</label>
+            <div class="input-wrap"><input id="register-email" type="email" placeholder="you@example.com" required /></div>
+
+            <label for="register-password">Password</label>
+            <div class="input-wrap">
+              <input id="register-password" type="password" placeholder="Choose a password" required />
+              <button type="button" class="pwd-toggle" data-target="#register-password" aria-label="Show password">👁️</button>
+            </div>
+
+            <button class="primary" type="submit">Create account</button>
+          </form>
+          <p class="muted small">Already have an account? <a href="#" id="show-login-link">Sign in</a></p>
+        </section>
+
+        <section id="reset-section" class="panel" aria-labelledby="show-reset">
+          <h2>Reset password</h2>
+          <p class="lead">We will send a password reset email.</p>
+          <form id="reset-form">
+            <label for="reset-email">Email</label>
+            <div class="input-wrap"><input id="reset-email" type="email" placeholder="you@example.com" required /></div>
+            <button class="primary ghost" type="submit">Send reset email</button>
+          </form>
+          <p class="muted small"><a href="#" id="back-to-login">Back to sign in</a></p>
+        </section>
+
+        <section id="profile-section" class="panel" aria-hidden="true">
+          <h2>Your profile</h2>
+          <div id="profile-info"></div>
+          <div id="admin-panel" class="admin-panel hidden" aria-live="polite">
+            <h3>Admin Panel</h3>
+            <p class="lead small">Approve or reject newly created accounts.</p>
+            <button id="refresh-pending" class="primary ghost" type="button">Refresh pending users</button>
+            <div id="pending-list" class="pending-list"></div>
+          </div>
+          <button id="signout" class="primary">Sign out</button>
+        </section>
+      </div>
+
+      <div id="message" class="message" role="status" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

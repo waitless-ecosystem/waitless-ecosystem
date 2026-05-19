@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KIOSK Management - Admin Panel</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f5f5f5;
+      color: #333;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .header h1 {
+      font-size: 28px;
+      color: #667eea;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .button-primary {
+      background: #667eea;
+      color: white;
+    }
+
+    .button-primary:hover {
+      background: #5568d3;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    .button-secondary {
+      background: #f5f5f5;
+      color: #333;
+      border: 1px solid #ddd;
+    }
+
+    .button-secondary:hover {
+      background: #e8e8e8;
+    }
+
+    .button-danger {
+      background: #ff5252;
+      color: white;
+    }
+
+    .button-danger:hover {
+      background: #ff1744;
+    }
+
+    .button-small {
+      padding: 6px 12px;
+      font-size: 12px;
+    }
+
+    .message {
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      border-left: 4px solid;
+    }
+
+    .message.success {
+      background: #e8f5e9;
+      border-left-color: #4caf50;
+      color: #2e7d32;
+    }
+
+    .message.error {
+      background: #ffebee;
+      border-left-color: #ff5252;
+      color: #c62828;
+    }
+
+    .message.info {
+      background: #e3f2fd;
+      border-left-color: #2196f3;
+      color: #1565c0;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      border-bottom: 2px solid #e0e0e0;
+      background: white;
+      padding: 10px 20px;
+      border-radius: 8px;
+    }
+
+    .tab {
+      padding: 10px 20px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      border-bottom: 3px solid transparent;
+      color: #999;
+      transition: all 0.2s;
+    }
+
+    .tab.active {
+      color: #667eea;
+      border-bottom-color: #667eea;
+    }
+
+    .tab-content {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Form Styles */
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: inherit;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    /* KIOSK List */
+    .kiosks-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+    }
+
+    .kiosk-card {
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      transition: all 0.2s;
+    }
+
+    .kiosk-card:hover {
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+      transform: translateY(-2px);
+    }
+
+    .kiosk-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      margin-bottom: 15px;
+    }
+
+    .kiosk-card-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #333;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .status-active {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+
+    .status-inactive {
+      background: #f5f5f5;
+      color: #999;
+    }
+
+    .kiosk-card-info {
+      margin-bottom: 15px;
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #f0f0f0;
+      font-size: 13px;
+    }
+
+    .info-row strong {
+      color: #667eea;
+    }
+
+    .kiosk-card-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 1px solid #f0f0f0;
+    }
+
+    /* Table Styles */
+    .table-container {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    table th {
+      background: #f5f5f5;
+      padding: 12px;
+      text-align: left;
+      font-weight: 600;
+      border-bottom: 2px solid #e0e0e0;
+      font-size: 13px;
+      color: #666;
+    }
+
+    table td {
+      padding: 12px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    table tr:hover {
+      background: #fafafa;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 8px;
+      padding: 30px;
+      max-width: 500px;
+      width: 90%;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from {
+        transform: translateY(-50px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .modal-header {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #999;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .stat-card {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      border-left: 4px solid #667eea;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: #999;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: #667eea;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #999;
+    }
+
+    .loading-spinner {
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #667eea;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 15px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: #999;
+    }
+
+    .empty-state-icon {
+      font-size: 48px;
+      margin-bottom: 15px;
+    }
+
+    @media (max-width: 768px) {
+      .header {
+        flex-direction: column;
+        gap: 15px;
+      }
+
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+
+      .kiosks-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+
+      table {
+        font-size: 12px;
+      }
+
+      table th, table td {
+        padding: 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <h1>⚙️ KIOSK Management</h1>
+      <div class="header-actions">
+        <button class="button button-primary" id="new-kiosk-btn">+ New KIOSK</button>
+        <button class="button button-secondary" id="back-btn">← Back to Dashboard</button>
+      </div>
+    </div>
+
+    <!-- Message -->
+    <div id="message" class="message hidden"></div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" data-tab="kiosks">KIOSK Terminals</button>
+      <button class="tab" data-tab="credentials">PIN Management</button>
+      <button class="tab" data-tab="activity">Activity Logs</button>
+      <button class="tab" data-tab="reports">Reports</button>
+    </div>
+
+    <!-- Tabs Content -->
+
+    <!-- KIOSK Terminals Tab -->
+    <div id="kiosks-tab" class="tab-content">
+      <div class="stats-grid" id="kiosk-stats">
+        <div class="stat-card">
+          <div class="stat-label">Total KIOSKs</div>
+          <div class="stat-value" id="total-kiosks">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Active KIOSKs</div>
+          <div class="stat-value" id="active-kiosks">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Tokens Generated</div>
+          <div class="stat-value" id="total-tokens">0</div>
+        </div>
+      </div>
+
+      <div id="kiosks-container" class="kiosks-grid">
+        <div class="empty-state">
+          <div class="empty-state-icon">📱</div>
+          <p>No KIOSKs created yet</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- PIN Management Tab -->
+    <div id="credentials-tab" class="tab-content hidden">
+      <h3 style="margin-bottom: 20px;">PIN Management</h3>
+      
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>KIOSK Name</th>
+              <th>Status</th>
+              <th>Created</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="credentials-table">
+            <tr>
+              <td colspan="4" class="empty-state">No KIOSKs available</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Activity Logs Tab -->
+    <div id="activity-tab" class="tab-content hidden">
+      <h3 style="margin-bottom: 20px;">KIOSK Activity Logs</h3>
+      
+      <div class="form-row" style="margin-bottom: 20px; gap: 10px;">
+        <input type="date" id="activity-start-date" placeholder="Start Date">
+        <input type="date" id="activity-end-date" placeholder="End Date">
+        <button class="button button-primary" id="filter-activity-btn" style="width: 100%;">Filter</button>
+      </div>
+
+      <div id="activity-container" class="table-container">
+        <p class="empty-state">No activity logs to display</p>
+      </div>
+    </div>
+
+    <!-- Reports Tab -->
+    <div id="reports-tab" class="tab-content hidden">
+      <h3 style="margin-bottom: 20px;">KIOSK Reports</h3>
+      
+      <div class="form-row" style="margin-bottom: 20px;">
+        <select id="report-kiosk">
+          <option value="">All KIOSKs</option>
+        </select>
+        <input type="date" id="report-date" />
+        <button class="button button-primary" id="generate-report-btn" style="width: 100%;">Generate Report</button>
+      </div>
+
+      <div id="report-container">
+        <p class="empty-state">Generate a report to view data</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- New KIOSK Modal -->
+  <div id="new-kiosk-modal" class="modal">
+    <div class="modal-content">
+      <button class="modal-close" id="close-modal">&times;</button>
+      <div class="modal-header">Create New KIOSK</div>
+
+      <form id="new-kiosk-form">
+        <div class="form-group">
+          <label for="kiosk-name">KIOSK Name *</label>
+          <input type="text" id="kiosk-name" required placeholder="e.g., Front Desk Kiosk 1">
+        </div>
+
+        <div class="form-group">
+          <label for="kiosk-description">Description</label>
+          <textarea id="kiosk-description" placeholder="Optional description" rows="3"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="kiosk-pin">PIN Code (4-6 digits) *</label>
+          <input type="password" id="kiosk-pin" pattern="\\d{4,6}" required placeholder="1234">
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="button button-primary">Create KIOSK</button>
+          <button type="button" class="button button-secondary" id="cancel-modal">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit KIOSK Modal -->
+  <div id="edit-kiosk-modal" class="modal">
+    <div class="modal-content">
+      <button class="modal-close" id="close-edit-modal">&times;</button>
+      <div class="modal-header">Edit KIOSK</div>
+
+      <form id="edit-kiosk-form">
+        <input type="hidden" id="edit-kiosk-id">
+
+        <div class="form-group">
+          <label for="edit-kiosk-name">KIOSK Name *</label>
+          <input type="text" id="edit-kiosk-name" required>
+        </div>
+
+        <div class="form-group">
+          <label for="edit-kiosk-description">Description</label>
+          <textarea id="edit-kiosk-description" rows="3"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="edit-kiosk-status">Status</label>
+          <select id="edit-kiosk-status">
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="button button-primary">Save Changes</button>
+          <button type="button" class="button button-secondary" id="cancel-edit-modal">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Firebase Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+  <script src="firebase-config.js"></script>
+  <script>
+    // Initialize Firebase
+    if(!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+  </script>
+  <script src="kiosk-db.js"></script>
+  <script src="kiosk-management.js"></script>
+</body>
+</html>
