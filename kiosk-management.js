@@ -12,6 +12,7 @@ const tabButtons = document.querySelectorAll('.tab');
 const tabs = document.querySelectorAll('[id$="-tab"]');
 const newKioskBtn = document.getElementById('new-kiosk-btn');
 const backBtn = document.getElementById('back-btn');
+const orgSelectSuper = document.getElementById('org-select-super');
 const kioskModal = document.getElementById('new-kiosk-modal');
 const closeModalBtn = document.getElementById('close-modal');
 const cancelModalBtn = document.getElementById('cancel-modal');
@@ -83,8 +84,21 @@ auth.onAuthStateChanged(async (user) => {
       return;
     }
 
+    currentUser = user;
     initializeUI();
-    loadKiosks();
+
+    if (role === 'superadmin') {
+      // show org selector and allow picking any org to manage
+      if (orgSelectSuper) orgSelectSuper.style.display = '';
+      await loadOrganizationsForSuperadmin();
+      // default: no organization selected until superadmin picks one
+      kiosks = {};
+      renderKiosks();
+      updateStats();
+    } else {
+      organizationId = user.uid;
+      await loadKiosks();
+    }
   } catch (err) {
     console.error('Auth error:', err);
     showMessage('Authentication error: ' + err.message, 'error');
@@ -115,6 +129,23 @@ function initializeUI() {
   backBtn.addEventListener('click', () => {
     window.location.href = 'dashboard.html';
   });
+
+  // Superadmin org select
+  if (orgSelectSuper) {
+    orgSelectSuper.addEventListener('change', async () => {
+      const orgId = orgSelectSuper.value || null;
+      // unsubscribe previous listeners
+      if (unsubscribeKiosks) { unsubscribeKiosks(); unsubscribeKiosks = null; }
+      organizationId = orgId;
+      if (!orgId) {
+        kiosks = {};
+        renderKiosks();
+        updateStats();
+        return;
+      }
+      await loadKiosks();
+    });
+  }
 
   // Forms
   newKioskForm.addEventListener('submit', handleCreateKiosk);
@@ -163,13 +194,46 @@ function switchTab(tabName) {
 // ============================================================
 
 /**
+ * Load list of organizations for superadmin
+ */
+async function loadOrganizationsForSuperadmin(){
+  if(!orgSelectSuper) return;
+  orgSelectSuper.innerHTML = '';
+  try{
+    const snap = await db.ref('users').once('value');
+    const users = snap.val() || {};
+    const entries = Object.entries(users);
+    const placeholder = document.createElement('option');
+    placeholder.value = '';
+    placeholder.textContent = 'Select organization...';
+    orgSelectSuper.appendChild(placeholder);
+    entries.forEach(([uid, profile])=>{
+      const opt = document.createElement('option');
+      opt.value = uid;
+      opt.textContent = (profile.organizationName || profile.name || profile.email || uid) + ' (' + (profile.role||'') + ')';
+      orgSelectSuper.appendChild(opt);
+    });
+    orgSelectSuper.disabled = false;
+  }catch(err){
+    console.error('Failed to load organizations for superadmin', err);
+    showMessage('Failed to load organizations: ' + err.message, 'error');
+  }
+}
+
+/**
  * Load all KIOSKs for organization
  */
 async function loadKiosks() {
   try {
+    if (!organizationId) {
+      showMessage('Please select an organization to manage', 'info');
+      return;
+    }
+
     // Set up real-time listener
+    if (unsubscribeKiosks) { unsubscribeKiosks(); unsubscribeKiosks = null; }
     unsubscribeKiosks = kioskDB.listenKiosks(organizationId, (data) => {
-      kiosks = data;
+      kiosks = data || {};
       renderKiosks();
       updateStats();
     });
