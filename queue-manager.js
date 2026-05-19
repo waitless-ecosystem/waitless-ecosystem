@@ -110,6 +110,7 @@ const servicesDB = {
       name: name.trim(),
       description: description.trim(),
       estimatedTime: parseInt(estimatedTime) || 0,
+      status: 'active',
       createdAt: firebase.database.ServerValue.TIMESTAMP
     });
     return id;

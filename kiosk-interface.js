@@ -15,8 +15,13 @@ const servicesContainer = document.getElementById('services-container');
 const servicesView = document.getElementById('services-view');
 const tokenView = document.getElementById('token-view');
 const tokenNumberEl = document.getElementById('token-number');
+const tokenUniqueIdEl = document.getElementById('token-unique-id');
 const tokenServiceEl = document.getElementById('token-service');
+const tokenCounterEl = document.getElementById('token-counter');
 const tokenPositionEl = document.getElementById('token-position');
+const tokenKioskEl = document.getElementById('token-kiosk');
+const tokenOrganizationEl = document.getElementById('token-organization');
+const tokenQrEl = document.getElementById('token-qr');
 const newTokenBtn = document.getElementById('new-token-btn');
 const resetBtn = document.getElementById('reset-btn');
 const logoutBtn = document.getElementById('logout-btn');
@@ -30,6 +35,8 @@ let organizationId = null;
 let services = {};
 let selectedServiceId = null;
 let selectedServiceName = null;
+let selectedCounterId = null;
+let selectedCounterName = null;
 let lastTokenNumber = null;
 let sessionStartTime = null;
 let inactivityTimeout = null;
@@ -55,6 +62,39 @@ function showMessage(text, type = 'info', duration = 5000) {
   }
 }
 
+function clearTokenDisplay() {
+  if (tokenNumberEl) tokenNumberEl.textContent = 'A000';
+  if (tokenUniqueIdEl) tokenUniqueIdEl.textContent = 'TOKEN_...';
+  if (tokenServiceEl) tokenServiceEl.textContent = 'Service';
+  if (tokenCounterEl) tokenCounterEl.textContent = 'Auto';
+  if (tokenPositionEl) tokenPositionEl.textContent = '1st';
+  if (tokenKioskEl) tokenKioskEl.textContent = kioskName || 'KIOSK Terminal';
+  if (tokenOrganizationEl) tokenOrganizationEl.textContent = organizationId || 'Organization';
+  if (tokenQrEl) tokenQrEl.innerHTML = '<div style="color:#999;font-size:12px;text-align:center;">QR will appear here</div>';
+}
+
+function renderQrCode(payload) {
+  if (!tokenQrEl) return;
+  tokenQrEl.innerHTML = '';
+
+  if (window.QRCode) {
+    new QRCode(tokenQrEl, {
+      text: payload,
+      width: 192,
+      height: 192,
+      correctLevel: QRCode.CorrectLevel.M
+    });
+    return;
+  }
+
+  const fallback = document.createElement('div');
+  fallback.style.fontSize = '12px';
+  fallback.style.color = '#666';
+  fallback.style.textAlign = 'center';
+  fallback.textContent = payload;
+  tokenQrEl.appendChild(fallback);
+}
+
 // ============================================================
 // SESSION MANAGEMENT
 // ============================================================
@@ -78,12 +118,14 @@ async function initializeSession() {
 
   kioskNameDisplay.textContent = kioskName || 'KIOSK Terminal';
   kioskIdDisplay.textContent = kioskId;
+  clearTokenDisplay();
 
   // Load organization name if possible
   if (orgNameDisplay) {
     try {
-      const snap = await db.ref(`users/${organizationId}/profile/name`).once('value');
-      const orgName = snap.val();
+      const snap = await db.ref(`users/${organizationId}`).once('value');
+      const orgProfile = snap.val() || {};
+      const orgName = orgProfile.name || orgProfile.organizationName || orgProfile.email || organizationId;
       orgNameDisplay.textContent = orgName ? `Organization: ${orgName}` : '';
     } catch (err) {
       orgNameDisplay.textContent = '';
@@ -149,13 +191,14 @@ function logout() {
  */
 async function loadServices() {
   try {
-    const snap = await db
-      .ref(`users/${organizationId}/services`)
-      .orderByChild('status')
-      .equalTo('active')
-      .once('value');
-    
-    services = snap.val() || {};
+    const snap = await db.ref(`users/${organizationId}/services`).once('value');
+    const allServices = snap.val() || {};
+    services = Object.fromEntries(
+      Object.entries(allServices).filter(([_, service]) => {
+        const status = (service && service.status) || 'active';
+        return status === 'active';
+      })
+    );
 
     if (Object.keys(services).length === 0) {
       showMessage('No services available', 'error');
@@ -209,7 +252,13 @@ function renderServices() {
 function setUpServiceListener() {
   const ref = db.ref(`users/${organizationId}/services`);
   ref.on('value', (snap) => {
-    services = snap.val() || {};
+    const allServices = snap.val() || {};
+    services = Object.fromEntries(
+      Object.entries(allServices).filter(([_, service]) => {
+        const status = (service && service.status) || 'active';
+        return status === 'active';
+      })
+    );
     renderServices();
   });
 }
@@ -224,6 +273,8 @@ function setUpServiceListener() {
 async function selectService(serviceId, serviceName) {
   selectedServiceId = serviceId;
   selectedServiceName = serviceName;
+  selectedCounterId = null;
+  selectedCounterName = null;
 
   // Disable service selection during token generation
   document.querySelectorAll('.service-card').forEach(card => {
@@ -271,11 +322,19 @@ async function generateToken() {
  */
 async function displayToken(tokenData, serviceName) {
   tokenNumberEl.textContent = tokenData.tokenNumber;
+  tokenUniqueIdEl.textContent = tokenData.tokenId;
   tokenServiceEl.textContent = serviceName;
+  tokenCounterEl.textContent = tokenData.assignedCounterName || 'Unassigned';
+  tokenKioskEl.textContent = kioskName || 'KIOSK Terminal';
+  tokenOrganizationEl.textContent = organizationId || 'Organization';
 
   // Get queue position
   const queueLength = await kioskTokenDB.getQueueLength(organizationId, selectedServiceId);
   tokenPositionEl.textContent = `${queueLength} in queue`;
+
+  if (tokenData.qrPayload) {
+    renderQrCode(tokenData.qrPayload);
+  }
 
   // Switch views
   servicesView.classList.add('hidden');
@@ -351,6 +410,9 @@ newTokenBtn.addEventListener('click', (e) => {
   servicesView.classList.remove('hidden');
   selectedServiceId = null;
   selectedServiceName = null;
+  selectedCounterId = null;
+  selectedCounterName = null;
+  clearTokenDisplay();
 });
 
 /**
@@ -364,6 +426,9 @@ resetBtn.addEventListener('click', (e) => {
   servicesView.classList.remove('hidden');
   selectedServiceId = null;
   selectedServiceName = null;
+  selectedCounterId = null;
+  selectedCounterName = null;
+  clearTokenDisplay();
 });
 
 /**

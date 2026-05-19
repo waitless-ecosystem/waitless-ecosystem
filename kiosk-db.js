@@ -230,6 +230,35 @@ const kioskAuthDB = {
 
 const kioskTokenDB = {
   /**
+   * Resolve the best counter for a service.
+   * Prefers an active counter assigned to the service.
+   */
+  async resolveAssignedCounter(organizationId, serviceId) {
+    if (!organizationId || !serviceId) return null;
+
+    const [assignmentsSnap, countersSnap] = await Promise.all([
+      db.ref(`users/${organizationId}/assignments`).once('value'),
+      db.ref(`users/${organizationId}/counters`).once('value')
+    ]);
+
+    const assignments = assignmentsSnap.val() || {};
+    const counters = countersSnap.val() || {};
+
+    const candidates = Object.entries(assignments)
+      .filter(([counterId, assignment]) => {
+        const serviceIds = Array.isArray(assignment?.services) ? assignment.services : [];
+        return serviceIds.includes(serviceId) && counters[counterId] && counters[counterId].status === 'active';
+      })
+      .map(([counterId]) => ({
+        counterId,
+        counterName: counters[counterId]?.name || counterId
+      }))
+      .sort((a, b) => String(a.counterName).localeCompare(String(b.counterName)));
+
+    return candidates[0] || null;
+  },
+
+  /**
    * Generate token with KIOSK tracking using transaction
    * Ensures atomic operation and prevents race conditions
    * @param {string} organizationId - Organization ID
@@ -245,6 +274,7 @@ const kioskTokenDB = {
 
     const tokenNumber = this.generateTokenNumber();
     const tokenId = this.generateTokenId();
+    const generatedAt = new Date().toISOString();
 
     // Verify service exists and is active
     const servicePath = `users/${organizationId}/services/${serviceId}`;
@@ -252,42 +282,90 @@ const kioskTokenDB = {
     const serviceData = serviceSnap.val();
     if (!serviceData) throw new Error('Service not found');
 
-    // Use transaction to ensure atomicity
-    const queueRef = db.ref(`users/${organizationId}/queue/${serviceId}/${tokenId}`);
-    
+    const assignedCounter = await this.resolveAssignedCounter(organizationId, serviceId);
+    const assignedCounterId = assignedCounter ? assignedCounter.counterId : null;
+    const assignedCounterName = assignedCounter ? assignedCounter.counterName : 'Unassigned';
+
+    const qrPayload = JSON.stringify({
+      version: 1,
+      organizationId,
+      kioskId,
+      kioskName,
+      serviceId,
+      serviceName: serviceData.name || '',
+      tokenId,
+      tokenNumber,
+      assignedCounterId,
+      assignedCounterName,
+      generatedAt
+    });
+
+    const queueTokenData = {
+      id: tokenId,
+      tokenNumber,
+      serviceId,
+      serviceName: serviceData.name || '',
+      timestamp: firebase.database.ServerValue.TIMESTAMP,
+      status: 'waiting',
+      assignedCounterId,
+      assignedCounterName,
+      kioskId,
+      kioskName,
+      organizationId,
+      qrPayload
+    };
+
+    const historyTokenData = {
+      id: tokenId,
+      tokenNumber,
+      serviceId,
+      serviceName: serviceData.name || '',
+      counterId: assignedCounterId,
+      counterName: assignedCounterName,
+      kioskId,
+      kioskName,
+      organizationId,
+      status: 'waiting',
+      date: generatedAt.slice(0, 10),
+      generatedAt,
+      qrPayload,
+      timestamp: firebase.database.ServerValue.TIMESTAMP
+    };
+
     try {
-      await db.ref().transaction(async () => {
-        // Create token in queue
-        const tokenData = {
-          id: tokenId,
-          tokenNumber,
-          serviceId,
-          timestamp: firebase.database.ServerValue.TIMESTAMP,
-          status: 'waiting',
-          assignedCounterId: null,
-          kioskId, // Critical for tracking
-          kioskName, // Denormalized for reporting
-          organizationId
-        };
+      const updates = {};
+      updates[`users/${organizationId}/queue/${serviceId}/${tokenId}`] = queueTokenData;
+      updates[`users/${organizationId}/tokens/${tokenId}`] = historyTokenData;
 
-        await queueRef.set(tokenData);
+      await db.ref().update(updates);
 
-        // Log activity
-        await this.logKioskActivity(organizationId, kioskId, 'token_generated', {
-          tokenNumber,
-          serviceId,
-          tokenId
-        });
-
-        // Increment KIOSK token counter
-        await db.ref(`users/${organizationId}/kiosks/${kioskId}/tokensGenerated`).transaction(current => {
-          return (current || 0) + 1;
-        });
-
-        return tokenData;
+      // Log activity
+      await this.logKioskActivity(organizationId, kioskId, 'token_generated', {
+        tokenNumber,
+        serviceId,
+        serviceName: serviceData.name || '',
+        tokenId,
+        counterId: assignedCounterId,
+        counterName: assignedCounterName
       });
 
-      return { tokenId, tokenNumber };
+      // Increment KIOSK token counter
+      await db.ref(`users/${organizationId}/kiosks/${kioskId}/tokensGenerated`).transaction(current => {
+        return (current || 0) + 1;
+      });
+
+      return {
+        tokenId,
+        tokenNumber,
+        serviceId,
+        serviceName: serviceData.name || '',
+        assignedCounterId,
+        assignedCounterName,
+        kioskId,
+        kioskName,
+        organizationId,
+        qrPayload
+      };
     } catch (err) {
       console.error('Token generation failed:', err);
       await this.logKioskActivity(organizationId, kioskId, 'token_generation_failed', {

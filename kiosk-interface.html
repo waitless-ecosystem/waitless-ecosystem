@@ -159,6 +159,34 @@
       margin: 20px 0;
     }
 
+    .token-qr-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      margin: 24px 0 10px 0;
+    }
+
+    .token-qr {
+      width: 220px;
+      height: 220px;
+      padding: 14px;
+      border: 1px solid #e0e0e0;
+      border-radius: 16px;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .token-qr-note {
+      font-size: 12px;
+      color: #666;
+      text-align: center;
+      max-width: 340px;
+    }
+
     .token-info {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -183,6 +211,11 @@
       font-size: 18px;
       font-weight: bold;
       color: #333;
+      word-break: break-word;
+    }
+
+    .token-details {
+      margin-top: 20px;
     }
 
     /* Button Actions */
@@ -388,14 +421,38 @@
         <h3 style="margin-bottom: 20px; color: #333;">Step 3: Your Token</h3>
         <div class="token-number" id="token-number">A000</div>
 
+        <div class="token-qr-wrap">
+          <div id="token-qr" class="token-qr"></div>
+          <div class="token-qr-note">Scan this QR code to verify the token and open the stored token details.</div>
+        </div>
+
         <div class="token-info">
+          <div class="info-item">
+            <div class="info-label">Unique ID</div>
+            <div class="info-value" id="token-unique-id">TOKEN_...</div>
+          </div>
           <div class="info-item">
             <div class="info-label">Service</div>
             <div class="info-value" id="token-service">Service</div>
           </div>
           <div class="info-item">
+            <div class="info-label">Assigned Counter</div>
+            <div class="info-value" id="token-counter">Auto</div>
+          </div>
+          <div class="info-item">
             <div class="info-label">Queue Position</div>
             <div class="info-value" id="token-position">1st</div>
+          </div>
+        </div>
+
+        <div class="token-info token-details">
+          <div class="info-item">
+            <div class="info-label">KIOSK</div>
+            <div class="info-value" id="token-kiosk">KIOSK Terminal</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Organization</div>
+            <div class="info-value" id="token-organization">Organization</div>
           </div>
         </div>
       </div>
@@ -423,6 +480,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 
   <script src="firebase-config.js"></script>
   <script>

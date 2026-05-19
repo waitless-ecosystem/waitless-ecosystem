@@ -217,6 +217,6 @@ auth.onAuthStateChanged(async user=>{
     const adminPanel = $('#admin-panel');
     if(adminPanel) adminPanel.classList.add('hidden');
     await renderProfile(null);
-    showSection('#login-section');
+    showSection('#register-section');
   }
 });

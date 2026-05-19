@@ -8,12 +8,12 @@
       ".indexOn": ["role", "createdAt"],
 
       "$uid": {
-        ".read": "auth != null && (auth.uid === $uid || auth.token.superadmin === true || auth.uid === 'tcWCQtILJNcahfAQA3qakrUP9Nv1')",
+        ".read": "auth != null && (auth.uid === $uid || auth.token.superadmin === true || auth.uid === 'tcWCQtILJNcahfAQA3qakrUP9Nv1' || auth.token.email === 'contact.pasan@gmail.com')",
 
-        ".write": "auth != null && (auth.uid === $uid || auth.token.superadmin === true || auth.uid === 'tcWCQtILJNcahfAQA3qakrUP9Nv1')",
+        ".write": "auth != null && (auth.uid === $uid || auth.token.superadmin === true || auth.uid === 'tcWCQtILJNcahfAQA3qakrUP9Nv1' || auth.token.email === 'contact.pasan@gmail.com')",
 
         "role": {
-          ".write": "auth != null && ((auth.uid === $uid && (!data.exists()) && newData.val() === 'pending') || ((auth.token.superadmin === true || auth.uid === 'tcWCQtILJNcahfAQA3qakrUP9Nv1') && (newData.val() === 'approved' || newData.val() === 'rejected' || newData.val() === 'pending')) )"
+          ".write": "auth != null && ((auth.uid === $uid && (!data.exists()) && newData.val() === 'pending') || ((auth.token.superadmin === true || auth.uid === 'tcWCQtILJNcahfAQA3qakrUP9Nv1' || auth.token.email === 'contact.pasan@gmail.com') && (newData.val() === 'approved' || newData.val() === 'rejected' || newData.val() === 'pending')) )"
         },
 
         "cryptoSalt": {
@@ -61,8 +61,8 @@
         },
 
         "kiosks": {
-          ".read": "auth != null && (auth.uid === $uid || auth.token.superadmin === true || auth.uid === 'tcWCQtILJNcahfAQA3qakrUP9Nv1')",
-          ".write": "auth != null && (auth.uid === $uid || auth.token.superadmin === true || auth.uid === 'tcWCQtILJNcahfAQA3qakrUP9Nv1')",
+          ".read": "auth != null && (auth.uid === $uid || auth.token.superadmin === true || auth.uid === 'tcWCQtILJNcahfAQA3qakrUP9Nv1' || auth.token.email === 'contact.pasan@gmail.com')",
+          ".write": "auth != null && (auth.uid === $uid || auth.token.superadmin === true || auth.uid === 'tcWCQtILJNcahfAQA3qakrUP9Nv1' || auth.token.email === 'contact.pasan@gmail.com')",
           ".indexOn": ["status"],
           "$kioskId": {
             ".validate": "newData.hasChildren(['id','name','status'])"
@@ -83,14 +83,14 @@
 
       "$kioskId": {
         ".read": "auth != null && (auth.uid === $kioskId || auth.token.kiosk === true)",
-        ".write": "auth != null && (root.child('users').child(auth.uid).exists())",
+        ".write": "auth != null && (root.child('users').child(auth.uid).exists() || auth.token.superadmin === true || auth.uid === 'tcWCQtILJNcahfAQA3qakrUP9Nv1' || auth.token.email === 'contact.pasan@gmail.com')",
 
         "role": {
-          ".write": "root.child('users').child(auth.uid).exists()"
+          ".write": "root.child('users').child(auth.uid).exists() || auth.token.superadmin === true || auth.uid === 'tcWCQtILJNcahfAQA3qakrUP9Nv1' || auth.token.email === 'contact.pasan@gmail.com'"
         },
 
         "organizationId": {
-          ".write": "root.child('users').child(auth.uid).exists()"
+          ".write": "root.child('users').child(auth.uid).exists() || auth.token.superadmin === true || auth.uid === 'tcWCQtILJNcahfAQA3qakrUP9Nv1' || auth.token.email === 'contact.pasan@gmail.com'"
         }
       }
     }
