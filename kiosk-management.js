@@ -91,10 +91,6 @@ auth.onAuthStateChanged(async (user) => {
       // show org selector and allow picking any org to manage
       if (orgSelectSuper) orgSelectSuper.style.display = '';
       await loadOrganizationsForSuperadmin();
-      // default: no organization selected until superadmin picks one
-      kiosks = {};
-      renderKiosks();
-      updateStats();
     } else {
       organizationId = user.uid;
       await loadKiosks();
@@ -202,7 +198,8 @@ async function loadOrganizationsForSuperadmin(){
   try{
     const snap = await db.ref('users').once('value');
     const users = snap.val() || {};
-    const entries = Object.entries(users);
+    const entries = Object.entries(users)
+      .filter(([_, profile]) => profile && profile.role === 'approved');
     const placeholder = document.createElement('option');
     placeholder.value = '';
     placeholder.textContent = 'Select organization...';
@@ -214,6 +211,17 @@ async function loadOrganizationsForSuperadmin(){
       orgSelectSuper.appendChild(opt);
     });
     orgSelectSuper.disabled = false;
+
+    if (entries.length > 0) {
+      orgSelectSuper.value = entries[0][0];
+      organizationId = entries[0][0];
+      await loadKiosks();
+    } else {
+      kiosks = {};
+      renderKiosks();
+      updateStats();
+      showMessage('No approved organizations found', 'info');
+    }
   }catch(err){
     console.error('Failed to load organizations for superadmin', err);
     showMessage('Failed to load organizations: ' + err.message, 'error');
