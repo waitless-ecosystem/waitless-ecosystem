@@ -349,6 +349,10 @@ async function handleGenerateTokens(e) {
   e.preventDefault();
   resetInactivityTimer();
 
+  if (isGeneratingTokens) {
+    return;
+  }
+
   const serviceIds = Array.from(selectedServiceIds).filter((serviceId) => services[serviceId]);
   if (serviceIds.length === 0) {
     showMessage('Please select at least one service', 'error');
@@ -450,6 +454,34 @@ function displayTokenSummary(tokenResult) {
 
   servicesView.classList.add('hidden');
   tokenView.classList.remove('hidden');
+
+  // Render QR code
+  var qrContainer = document.getElementById('qr-code-container');
+  if (qrContainer) {
+    qrContainer.innerHTML = '';
+    var qrText = tokenResult.qrPayload || JSON.stringify({
+      tokenNumber: tokenResult.tokenNumber,
+      tokenId: tokenResult.tokenId,
+      primaryServiceId: tokenResult.primaryServiceId
+    });
+    if (typeof QRCode !== 'undefined') {
+      try {
+        new QRCode(qrContainer, {
+          text: qrText,
+          width: 180,
+          height: 180,
+          colorDark: '#000000',
+          colorLight: '#ffffff',
+          correctLevel: QRCode.CorrectLevel.M
+        });
+      } catch (qrErr) {
+        console.warn('QR generation failed:', qrErr);
+        qrContainer.innerHTML = '<p class="qr-unavailable">QR code unavailable</p>';
+      }
+    } else {
+      qrContainer.innerHTML = '<p class="qr-unavailable">QR code unavailable</p>';
+    }
+  }
 }
 
 function playNotificationSound() {

@@ -216,6 +216,19 @@ const queueDB = {
   }
 };
 
+// Counter Notifications
+const counterNotificationsDB = {
+  listenAll(callback) {
+    return db.ref(`users/${currentUserUID}/counterNotifications`).on('value', snap => {
+      callback(snap.val() || {});
+    });
+  },
+
+  async markAsRead(counterId, notifId) {
+    await db.ref(`users/${currentUserUID}/counterNotifications/${counterId}/${notifId}/status`).set('read');
+  }
+};
+
 // Tokens (Historical)
 const tokensDB = {
   async log(counterId, serviceId, waitTime = 0, serveTime = 0) {
@@ -508,6 +521,68 @@ function renderQueueStatus(queueData, services) {
 
   el.innerHTML = html;
 }
+
+// Render counter notifications in Queue tab
+function renderCounterNotifications(notifications) {
+  var listEl = $('#notifications-list');
+  if(!listEl) return;
+
+  // Flatten all counters → notifications into a single array
+  var allNotifs = [];
+  Object.entries(notifications).forEach(function([counterId, counterNotifs]) {
+    if(!counterNotifs || typeof counterNotifs !== 'object') return;
+    Object.entries(counterNotifs).forEach(function([notifId, notif]) {
+      if(!notif || typeof notif !== 'object') return;
+      allNotifs.push(Object.assign({}, notif, { _counterId: counterId, _notifId: notifId }));
+    });
+  });
+
+  // Newest first
+  allNotifs.sort(function(a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
+
+  // Update unread badge
+  var unread = allNotifs.filter(function(n) { return n.status === 'unread'; }).length;
+  var badge = $('#notif-unread-badge');
+  if(badge) {
+    badge.textContent = unread;
+    badge.classList.toggle('hidden', unread === 0);
+  }
+
+  if(allNotifs.length === 0) {
+    listEl.innerHTML = '<p class="lead" style="margin-top:8px;">No counter notifications yet.</p>';
+    return;
+  }
+
+  listEl.innerHTML = '';
+  allNotifs.slice(0, 30).forEach(function(notif) {
+    var isUnread = notif.status === 'unread';
+    var serviceLabel = escapeHtml(notif.serviceName || '');
+    if((notif.serviceCount || 1) > 1) {
+      serviceLabel += ' <span class="qm-multi-badge">+' + (notif.serviceCount - 1) + ' more</span>';
+    }
+    var div = document.createElement('div');
+    div.className = 'qm-notif-item' + (isUnread ? ' qm-notif-unread' : '');
+    div.innerHTML =
+      '<span class="qm-notif-token">' + escapeHtml(notif.tokenNumber || '') + '</span>' +
+      '<span class="qm-notif-service">' + serviceLabel + '</span>' +
+      '<span class="qm-notif-counter">' + escapeHtml(notif.counterName || notif.counterId || '') + '</span>' +
+      '<span class="qm-notif-status-badge ' + (isUnread ? 'badge-unread' : 'badge-read') + '">' +
+        escapeHtml(notif.status || 'unread') + '</span>' +
+      (isUnread
+        ? '<button class="qm-notif-read-btn" onclick="markNotifRead(\'' +
+            notif._counterId + '\',\'' + notif._notifId + '\')">Mark Read</button>'
+        : '<span></span>');
+    listEl.appendChild(div);
+  });
+}
+
+window.markNotifRead = async function(counterId, notifId) {
+  try {
+    await counterNotificationsDB.markAsRead(counterId, notifId);
+  } catch(err) {
+    showMessage('Error: ' + err.message, 'error');
+  }
+};
 
 // ============================================================
 // EVENT HANDLERS
@@ -1053,6 +1128,11 @@ async function initializeApp() {
     queueDB.listenAll(data => {
       currentQueueData = data;
       renderQueueStatus(currentQueueData, currentServices);
+    });
+
+    // Real-time counter notifications
+    counterNotificationsDB.listenAll(data => {
+      renderCounterNotifications(data);
     });
 
     initTabs();

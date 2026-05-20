@@ -86,6 +86,11 @@
           ".read": "auth != null && (auth.uid === $uid || auth.token.superadmin === true || auth.uid === 'tcWCQtILJNcahfAQA3qakrUP9Nv1' || auth.token.email === 'contact.pasan@gmail.com' || root.child('users').child(auth.uid).child('role').val() === 'superadmin')",
           ".write": "auth != null && (auth.uid === $uid || auth.token.superadmin === true || auth.uid === 'tcWCQtILJNcahfAQA3qakrUP9Nv1' || auth.token.email === 'contact.pasan@gmail.com' || root.child('users').child(auth.uid).child('role').val() === 'superadmin')",
           ".indexOn": ["timestamp","kioskId"]
+        },
+
+        "counterNotifications": {
+          ".read": "auth != null && (auth.uid === $uid || auth.token.superadmin === true || auth.uid === 'tcWCQtILJNcahfAQA3qakrUP9Nv1' || auth.token.email === 'contact.pasan@gmail.com' || root.child('users').child(auth.uid).child('role').val() === 'superadmin')",
+          ".write": "auth != null && (auth.uid === $uid || auth.token.superadmin === true || auth.uid === 'tcWCQtILJNcahfAQA3qakrUP9Nv1' || auth.token.email === 'contact.pasan@gmail.com' || root.child('users').child(auth.uid).child('role').val() === 'superadmin')"
         }
       }
     },

@@ -253,6 +253,7 @@ const kioskTokenDB = {
     const serviceData = serviceSnap.val();
     if (!serviceData) throw new Error('Service not found');
     const serviceName = options.serviceName || serviceData.name || serviceId;
+    const safeKioskName = kioskName || 'Kiosk Terminal';
 
     try {
       const tokenData = {
@@ -262,7 +263,7 @@ const kioskTokenDB = {
         serviceName,
         organizationId,
         kioskId,
-        kioskName,
+        kioskName: safeKioskName,
         customerUid: auth.currentUser?.uid || `kiosk:${kioskId}`,
         timestamp: firebase.database.ServerValue.TIMESTAMP,
         status: 'waiting',
@@ -289,7 +290,7 @@ const kioskTokenDB = {
         return (current || 0) + 1;
       });
 
-      return { tokenId, tokenNumber, serviceId, serviceName, organizationId, kioskId, kioskName };
+      return { tokenId, tokenNumber, serviceId, serviceName, organizationId, kioskId, kioskName: safeKioskName };
     } catch (err) {
       console.error('Token generation failed:', err);
       await this.logKioskActivity(organizationId, kioskId, 'token_generation_failed', {
@@ -327,30 +328,52 @@ const kioskTokenDB = {
     var serviceData = serviceSnap.val();
     if (!serviceData) throw new Error('Primary service not found');
 
+    var safeKioskName = kioskName || 'Kiosk Terminal';
     var primaryServiceName = opts.primaryServiceName || serviceData.name || primaryServiceId;
 
     var cleanedServices = selectedServices.map(function(s) {
       return {
-        id: s.id,
-        name: s.name,
+        id: s.id || primaryServiceId,
+        name: s.name || s.id || 'Service',
         estimatedTime: Number(s.estimatedTime || 0)
       };
     });
+
+    var selectedServiceIds = cleanedServices.map(function(s) { return s.id; });
+    var selectedServiceNames = cleanedServices.map(function(s) { return s.name; });
+
+    // Build QR payload (JSON string scanned at counter display or printed receipt)
+    var qrData = {
+      version: '1',
+      organizationId: organizationId,
+      kioskId: kioskId,
+      kioskName: safeKioskName,
+      tokenId: tokenId,
+      tokenNumber: tokenNumber,
+      primaryServiceId: primaryServiceId,
+      primaryServiceName: primaryServiceName,
+      selectedServiceIds: selectedServiceIds,
+      selectedServiceNames: selectedServiceNames,
+      serviceCount: cleanedServices.length,
+      generatedAt: Date.now()
+    };
+    var qrPayload = JSON.stringify(qrData);
 
     var tokenData = {
       id: tokenId,
       tokenNumber: tokenNumber,
       organizationId: organizationId,
       kioskId: kioskId,
-      kioskName: kioskName,
+      kioskName: safeKioskName,
       primaryServiceId: primaryServiceId,
       primaryServiceName: primaryServiceName,
       serviceId: primaryServiceId,
       serviceName: primaryServiceName,
       selectedServices: cleanedServices,
-      selectedServiceIds: cleanedServices.map(function(s) { return s.id; }),
-      selectedServiceNames: cleanedServices.map(function(s) { return s.name; }),
+      selectedServiceIds: selectedServiceIds,
+      selectedServiceNames: selectedServiceNames,
       serviceCount: cleanedServices.length,
+      qrPayload: qrPayload,
       timestamp: firebase.database.ServerValue.TIMESTAMP,
       status: 'waiting',
       source: 'kiosk',
@@ -383,6 +406,61 @@ const kioskTokenDB = {
       return (current || 0) + 1;
     });
 
+    // Create counter notifications (non-blocking — token is already saved above)
+    try {
+      var assignmentsSnap = await db.ref('users/' + organizationId + '/assignments').once('value');
+      var assignments = assignmentsSnap.val() || {};
+
+      // Find counters that handle primaryServiceId
+      var assignedCounterIds = [];
+      Object.keys(assignments).forEach(function(cId) {
+        var asgn = assignments[cId];
+        var svcs = asgn && asgn.services;
+        if (Array.isArray(svcs) && svcs.indexOf(primaryServiceId) !== -1) {
+          assignedCounterIds.push(cId);
+        }
+      });
+
+      var notifUpdates = {};
+      var notifBase = {
+        type: 'new_token',
+        tokenId: tokenId,
+        tokenNumber: tokenNumber,
+        serviceId: primaryServiceId,
+        serviceName: primaryServiceName,
+        primaryServiceId: primaryServiceId,
+        primaryServiceName: primaryServiceName,
+        selectedServiceNames: selectedServiceNames,
+        serviceCount: cleanedServices.length,
+        status: 'unread',
+        createdAt: firebase.database.ServerValue.TIMESTAMP,
+        source: 'kiosk'
+      };
+
+      if (assignedCounterIds.length > 0) {
+        // Batch-fetch counter names
+        var countersSnap = await db.ref('users/' + organizationId + '/counters').once('value');
+        var counters = countersSnap.val() || {};
+
+        assignedCounterIds.forEach(function(cId) {
+          var counterName = (counters[cId] && counters[cId].name) || cId;
+          var nId = 'NOTIF_' + tokenId + '_' + cId;
+          notifUpdates['users/' + organizationId + '/counterNotifications/' + cId + '/' + nId] =
+            Object.assign({ id: nId, counterId: cId, counterName: counterName }, notifBase);
+        });
+      } else {
+        // No counter assigned — write to unassigned bucket
+        var nId = 'NOTIF_' + tokenId + '_unassigned';
+        notifUpdates['users/' + organizationId + '/counterNotifications/unassigned/' + nId] =
+          Object.assign({ id: nId, counterId: 'unassigned', counterName: 'Unassigned' }, notifBase);
+      }
+
+      await db.ref().update(notifUpdates);
+    } catch (notifErr) {
+      // Notification failure must not fail the token — token is already committed
+      console.warn('Counter notification creation failed:', notifErr);
+    }
+
     return {
       tokenId: tokenId,
       tokenNumber: tokenNumber,
@@ -390,9 +468,10 @@ const kioskTokenDB = {
       primaryServiceName: primaryServiceName,
       organizationId: organizationId,
       kioskId: kioskId,
-      kioskName: kioskName,
+      kioskName: safeKioskName,
       selectedServices: cleanedServices,
-      serviceCount: cleanedServices.length
+      serviceCount: cleanedServices.length,
+      qrPayload: qrPayload
     };
   },
 
