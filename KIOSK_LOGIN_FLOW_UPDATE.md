@@ -23,7 +23,7 @@ The KIOSK login flow has been updated to **enforce user account authentication f
 
 ## Files Updated
 
-### 1. kiosk-login.html
+### 1. pages/kiosk/kiosk-login.html
 **Changes:**
 - Added step indicator showing 1, 2, 3 progress
 - Added Step 1 view for user email/password login
@@ -47,7 +47,7 @@ The KIOSK login flow has been updated to **enforce user account authentication f
 - `#step1`, `#step2`, `#step3` - Step indicators
 - "Back" button to return from KIOSK selection to login
 
-### 2. kiosk-login.js
+### 2. js/kiosk/kiosk-login.js
 **Complete Rewrite:**
 
 **New Functionality:**
@@ -118,7 +118,7 @@ These rules already enforce:
 ### Customer: Get Token via KIOSK
 
 ```
-1. Navigate to kiosk-login.html
+1. Navigate to pages/kiosk/kiosk-login.html
    ↓
 2. STEP 1 - User Login
    Enter Email: admin@company.com
@@ -138,7 +138,7 @@ These rules already enforce:
    Click Submit Arrow
    ↓
 6. KIOSK authenticated
-   Redirect to kiosk-interface.html
+   Redirect to pages/kiosk/kiosk-interface.html
    ↓
 7. Customer selects service and gets token
 ```
@@ -159,7 +159,7 @@ These rules already enforce:
 
 ### Change Email/Password Requirements
 
-**File:** `kiosk-login.html`
+**File:** `pages/kiosk/kiosk-login.html`
 ```html
 <input type="email" id="user-email" placeholder="your@email.com" required />
 <input type="password" id="user-password" placeholder="Enter password" required />
@@ -167,7 +167,7 @@ These rules already enforce:
 
 ### Add Custom Auth Method
 
-**File:** `kiosk-login.js`
+**File:** `js/kiosk/kiosk-login.js`
 Modify `userAuthForm.addEventListener('submit', ...)` to use custom authentication instead of Firebase Auth:
 
 ```javascript
@@ -276,8 +276,8 @@ This enables:
    - Verify organization structure
 
 3. **Deploy to Production**
-   - Update kiosk-login.html
-   - Update kiosk-login.js
+   - Update pages/kiosk/kiosk-login.html
+   - Update js/kiosk/kiosk-login.js
    - Test with real user accounts
    - Monitor for errors
 
@@ -310,8 +310,8 @@ This enables:
 ## Rollback Plan
 
 If issues occur:
-1. Restore previous kiosk-login.html
-2. Restore previous kiosk-login.js
+1. Restore previous pages/kiosk/kiosk-login.html
+2. Restore previous js/kiosk/kiosk-login.js
 3. Clear browser cache
 4. Reload page
 

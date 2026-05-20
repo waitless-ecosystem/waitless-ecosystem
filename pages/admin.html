@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>EcoSystem Admin</title>
+  <link rel="stylesheet" href="../css/global.css" />
+  <link rel="stylesheet" href="../css/admin.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="brand">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect width="24" height="24" rx="4" fill="#0366d6"/><path d="M6 12h12" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <h1>EcoSystem Admin Panel</h1>
+    </div>
+
+    <div class="auth-card">
+      <section class="panel active">
+        <h2>Super Admin Controls</h2>
+        <p class="lead">Approve accounts, remove accounts, and review pending users.</p>
+
+        <div class="admin-actions-row">
+          <button id="refresh-pending" class="primary ghost" type="button">Refresh pending</button>
+          <button id="refresh-all" class="primary ghost" type="button">Refresh all users</button>
+          <button id="kiosk-mgmt" class="primary ghost" type="button">📱 Manage KIOSKs</button>
+          <button id="kiosk-terminal" class="primary ghost" type="button">🎫 KIOSK Terminal</button>
+          <button id="go-app" class="primary ghost" type="button">Go to app</button>
+          <button id="signout" class="primary" type="button">Sign out</button>
+        </div>
+
+        <div class="admin-panel">
+          <h3>KIOSK Management (Add to Organization)</h3>
+          <p class="muted small admin-kiosk-help">Create a KIOSK under a selected organization and set its PIN.</p>
+
+          <div class="qm-form admin-kiosk-form">
+            <div>
+              <label for="org-select">Organization</label>
+              <select id="org-select"></select>
+            </div>
+
+            <div>
+              <label for="admin-kiosk-name">KIOSK name</label>
+              <input id="admin-kiosk-name" type="text" placeholder="e.g., Front Desk" />
+            </div>
+
+            <div>
+              <label for="admin-kiosk-pin">PIN (4-6 digits)</label>
+              <input id="admin-kiosk-pin" type="password" inputmode="numeric" placeholder="e.g., 1234" />
+            </div>
+          </div>
+
+          <div class="admin-kiosk-actions">
+            <button id="admin-add-kiosk" class="primary" type="button">Add KIOSK</button>
+            <button id="admin-refresh-orgs" class="primary ghost" type="button">Refresh org list</button>
+          </div>
+
+          <div id="admin-kiosk-result" class="muted small admin-kiosk-result"></div>
+        </div>
+
+        <div class="admin-panel">
+          <h3>Pending Accounts</h3>
+          <div id="pending-list" class="pending-list"></div>
+        </div>
+
+        <div class="admin-panel">
+          <h3>All Accounts</h3>
+          <div id="all-users-list" class="pending-list"></div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="../js/config/firebase-config.js"></script>
+  <script src="../js/utils/constants.js"></script>
+  <script src="../js/utils/helpers.js"></script>
+  <script src="../js/admin/admin.js"></script>
+</body>
+</html>

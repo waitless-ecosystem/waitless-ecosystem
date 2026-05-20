@@ -4,36 +4,36 @@
 
 ```
 EcoSystem/
-├── kiosk-db.js                          # Core KIOSK operations (490+ lines)
-├── kiosk-login.html                     # PIN-based authentication UI
-├── kiosk-login.js                       # KIOSK selection & PIN entry logic
-├── kiosk-interface.html                 # Customer service interface
-├── kiosk-interface.js                   # Token generation & UI
-├── kiosk-management.html                # Admin management panel
-├── kiosk-management.js                  # Admin CRUD & reporting
+├── js/kiosk/kiosk-db.js                          # Core KIOSK operations (490+ lines)
+├── pages/kiosk/kiosk-login.html                     # PIN-based authentication UI
+├── js/kiosk/kiosk-login.js                       # KIOSK selection & PIN entry logic
+├── pages/kiosk/kiosk-interface.html                 # Customer service interface
+├── js/kiosk/kiosk-interface.js                   # Token generation & UI
+├── pages/kiosk/kiosk-management.html                # Admin management panel
+├── js/kiosk/kiosk-management.js                  # Admin CRUD & reporting
 ├── KIOSK_SYSTEM_DOCUMENTATION.md        # Full documentation (this file + more)
 ├── firebase-rules.json                  # Updated with KIOSK rules
-├── queue-manager.html                   # Updated with KIOSK analytics
-├── queue-manager.js                     # Updated with KIOSK reporting
-├── admin.html                           # Updated with KIOSK buttons
-└── admin.js                             # Updated with KIOSK navigation
+├── pages/queue-manager.html                   # Updated with KIOSK analytics
+├── js/queue/queue-manager.js                     # Updated with KIOSK reporting
+├── pages/admin.html                           # Updated with KIOSK buttons
+└── js/admin/admin.js                             # Updated with KIOSK navigation
 ```
 
 ## Entry Points
 
 ### For Customers
-1. **URL:** `kiosk-login.html`
+1. **URL:** `pages/kiosk/kiosk-login.html`
 2. **Select KIOSK Terminal** → Enter PIN → Get Token
 3. **Tokens tracked in:** `queue-manager` analytics
 
 ### For Admin
-1. **URL:** `admin.html` → Click "Manage KIOSKs"
+1. **URL:** `pages/admin.html` → Click "Manage KIOSKs"
 2. **Manage:** Create, edit, delete KIOSKs
 3. **Monitor:** Activity logs, reports, PIN management
 4. **Analyze:** Token generation stats per KIOSK
 
 ### For Management Staff
-1. **URL:** `queue-manager.html` → Reports tab
+1. **URL:** `pages/queue-manager.html` → Reports tab
 2. **View:** KIOSK analytics section
 3. **Track:** Total tokens by KIOSK
 4. **Success Rate:** Per KIOSK metrics
@@ -122,19 +122,19 @@ await kioskTokenDB.logKioskActivity(
 ## Configuration
 
 ### Session Timeout
-**File:** `kiosk-interface.js`
+**File:** `js/kiosk/kiosk-interface.js`
 ```javascript
 const SESSION_TIMEOUT_MS = 5 * 60 * 1000; // milliseconds
 ```
 
 ### PIN Length
-**File:** `kiosk-db.js` (kioskAuthDB.createKioskUser)
+**File:** `js/kiosk/kiosk-db.js` (kioskAuthDB.createKioskUser)
 ```javascript
 if (!pinCode || !/^\d{4,6}$/.test(pinCode)) // Change regex
 ```
 
 ### KIOSK Inactive Timeout
-**File:** `kiosk-interface.js`
+**File:** `js/kiosk/kiosk-interface.js`
 ```javascript
 const INACTIVITY_CHECK_MS = 30 * 1000; // Check every 30s
 ```
@@ -143,7 +143,7 @@ const INACTIVITY_CHECK_MS = 30 * 1000; // Check every 30s
 
 ### Admin: Create KIOSK
 ```
-1. Go to admin.html
+1. Go to pages/admin.html
 2. Click "Manage KIOSKs" button
 3. Click "+ New KIOSK"
 4. Enter Name and PIN
@@ -153,7 +153,7 @@ const INACTIVITY_CHECK_MS = 30 * 1000; // Check every 30s
 
 ### Customer: Get Token
 ```
-1. Go to kiosk-login.html
+1. Go to pages/kiosk/kiosk-login.html
 2. Select KIOSK from dropdown
 3. Enter PIN on numeric pad
 4. Select service from cards
@@ -163,7 +163,7 @@ const INACTIVITY_CHECK_MS = 30 * 1000; // Check every 30s
 
 ### Admin: Monitor Activity
 ```
-1. Go to kiosk-management.html
+1. Go to pages/kiosk/kiosk-management.html
 2. Click "Activity Logs" tab
 3. Select date range
 4. View all token generation events
@@ -172,7 +172,7 @@ const INACTIVITY_CHECK_MS = 30 * 1000; // Check every 30s
 
 ### Admin: Generate Report
 ```
-1. Go to kiosk-management.html
+1. Go to pages/kiosk/kiosk-management.html
 2. Click "Reports" tab
 3. Select KIOSK (or All)
 4. Select date
@@ -207,9 +207,9 @@ const INACTIVITY_CHECK_MS = 30 * 1000; // Check every 30s
 |-------|----------|
 | KIOSKs not loading | Check status='active' and Firebase rules |
 | PIN won't authenticate | Verify PIN format (4-6 digits) in kioskUsers |
-| Tokens not in queue | Check kiosk-db.js is loaded, verify rules |
-| Session timeout wrong | Adjust SESSION_TIMEOUT_MS in kiosk-interface.js |
-| Analytics not showing | Ensure kiosk-db.js loaded before queue-manager.js |
+| Tokens not in queue | Check js/kiosk/kiosk-db.js is loaded, verify rules |
+| Session timeout wrong | Adjust SESSION_TIMEOUT_MS in js/kiosk/kiosk-interface.js |
+| Analytics not showing | Ensure js/kiosk/kiosk-db.js loaded before js/queue/queue-manager.js |
 
 ## Performance Tips
 
@@ -237,9 +237,9 @@ const INACTIVITY_CHECK_MS = 30 * 1000; // Check every 30s
 
 ## Links & Resources
 
-- **Admin Panel:** `admin.html` (then click "Manage KIOSKs")
-- **KIOSK Login:** `kiosk-login.html`
-- **Queue Manager:** `queue-manager.html` (view KIOSK analytics)
+- **Admin Panel:** `pages/admin.html` (then click "Manage KIOSKs")
+- **KIOSK Login:** `pages/kiosk/kiosk-login.html`
+- **Queue Manager:** `pages/queue-manager.html` (view KIOSK analytics)
 - **Docs:** `KIOSK_SYSTEM_DOCUMENTATION.md`
 
 ## Support

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KIOSK Terminal Login</title>
+  <link rel="stylesheet" href="../../css/kiosk.css">
+</head>
+<body>
+  <div class="kiosk-login-container">
+    <div class="kiosk-header">
+      <h1>Welcome to KIOSK</h1>
+      <p>Customer Service Terminal</p>
+    </div>
+
+    <div id="message" class="message"></div>
+
+    <!-- Step Indicator -->
+    <div class="step-indicator">
+      <span class="step active" id="step1">1</span>
+      <span class="step" id="step2">2</span>
+      <span class="step" id="step3">3</span>
+    </div>
+
+    <!-- Step 1: User Authentication View -->
+    <div id="user-auth-view" class="view">
+      <h3 class="kiosk-step-title">Step 1: Account Login</h3>
+      <form id="user-auth-form" class="login-form">
+        <div class="form-group">
+          <label for="user-email">Email Address:</label>
+          <input type="email" id="user-email" placeholder="your@email.com" required />
+        </div>
+        <div class="form-group">
+          <label for="user-password">Password:</label>
+          <input type="password" id="user-password" placeholder="Enter password" required />
+        </div>
+        <button type="submit" class="login-button">Login</button>
+      </form>
+    </div>
+
+    <!-- Step 2: KIOSK Selection View -->
+    <div id="kiosk-select-view" class="view hidden">
+      <h3 class="kiosk-step-title">Step 2: Select Device</h3>
+      <form id="kiosk-select-form" class="login-form">
+        <div class="form-group">
+          <label for="kiosk-select">Select KIOSK Terminal:</label>
+          <select id="kiosk-select" required>
+            <option value="">-- Choose a KIOSK --</option>
+          </select>
+        </div>
+        <button type="submit" class="login-button">Continue</button>
+        <button type="button" class="login-button login-button-muted login-button-spaced" id="back-from-kiosk-btn">Back</button>
+      </form>
+    </div>
+
+    <!-- Step 3: PIN Entry View -->
+    <div id="pin-entry-view" class="view hidden">
+      <h3 class="kiosk-step-title">Step 3: Enter PIN</h3>
+      <form id="pin-login-form" class="login-form">
+        <div class="form-group">
+          <label for="pin-input">Device PIN:</label>
+          <input
+            type="password"
+            id="pin-input"
+            class="pin-input"
+            placeholder="•••• ••••"
+            readonly
+            maxlength="6"
+          />
+        </div>
+
+        <div class="pin-pad">
+          <button type="button" class="pin-button" data-pin="1">1</button>
+          <button type="button" class="pin-button" data-pin="2">2</button>
+          <button type="button" class="pin-button" data-pin="3">3</button>
+          <button type="button" class="pin-button" data-pin="4">4</button>
+          <button type="button" class="pin-button" data-pin="5">5</button>
+          <button type="button" class="pin-button" data-pin="6">6</button>
+          <button type="button" class="pin-button" data-pin="7">7</button>
+          <button type="button" class="pin-button" data-pin="8">8</button>
+          <button type="button" class="pin-button" data-pin="9">9</button>
+          <button type="button" class="pin-button delete" data-action="delete">Delete</button>
+          <button type="button" class="pin-button" data-pin="0">0</button>
+          <button type="button" class="pin-button submit" data-action="submit">→</button>
+        </div>
+
+        <button type="button" class="login-button" id="clear-btn">Clear</button>
+        <button type="button" class="login-button login-button-muted" id="back-btn">Back</button>
+      </form>
+    </div>
+
+    <div class="device-info">
+      <p id="device-info">Device: <span id="device-name">Loading...</span></p>
+    </div>
+  </div>
+
+  <!-- Firebase Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+  <script src="../../js/config/firebase-config.js"></script>
+  <script>
+    // Initialize Firebase
+    if(!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+  </script>
+  <script src="../../js/kiosk/kiosk-db.js"></script>
+  <script src="../../js/kiosk/kiosk-login.js"></script>
+</body>
+</html>
