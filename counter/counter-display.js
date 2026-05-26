@@ -25,6 +25,7 @@ let chosenOrg = null;
 let chosenCounter = null;
 let renderRunId = 0;
 let kioskCustomerSettings = { enabled: false, requireName: false, requirePhone: false, recallEnabled: false };
+let tokenFilterQuery = '';
 
 const ACTIVE_TOKEN_STATUSES = new Set(['waiting', 'arrived']);
 
@@ -190,8 +191,19 @@ async function renderTokens(orgId, counterId){
     visible.sort((a,b)=> (a.timestamp||0) - (b.timestamp||0));
     const activeToken = visible[0] || null;
 
-    const stateGrid = document.createElement('div');
-    stateGrid.className = 'state-grid';
+    // Panels will be rendered as siblings inside the workspace grid so they can appear side-by-side on wide screens.
+    const workspaceGrid = document.querySelector('.workspace-grid');
+
+    const tokenPanel = document.createElement('section');
+    tokenPanel.className = 'portrait-panel';
+    tokenPanel.appendChild(createPortraitHeader(
+      '1. Token Display',
+      activeToken ? 'Current live token for this counter' : 'No live token is active right now',
+      activeToken ? 'Active' : 'Idle'
+    ));
+
+    const tokenBody = document.createElement('div');
+    tokenBody.className = 'portrait-panel-body';
 
     if(activeToken){
       const item = document.createElement('div');
@@ -209,7 +221,7 @@ async function renderTokens(orgId, counterId){
 
       const servicePill = document.createElement('span');
       servicePill.className = 'meta-pill';
-      servicePill.innerHTML = `<strong>${activeToken.serviceName || activeToken.serviceId}</strong>`;
+      servicePill.innerHTML = `<strong>${escapeHtml(activeToken.serviceName || activeToken.serviceId)}</strong>`;
       metaEl.appendChild(servicePill);
 
       const kioskPill = document.createElement('span');
@@ -225,7 +237,7 @@ async function renderTokens(orgId, counterId){
       if((kioskCustomerSettings && kioskCustomerSettings.enabled && kioskCustomerSettings.requireName) || activeToken.customerName){
         const customerPill = document.createElement('span');
         customerPill.className = 'customer-name';
-        customerPill.innerHTML = `<small>Customer</small><span>${activeToken.customerName || 'Not provided'}</span>`;
+        customerPill.innerHTML = `<small>Customer</small><span>${escapeHtml(activeToken.customerName || 'Not provided')}</span>`;
         metaEl.appendChild(customerPill);
       }
 
@@ -241,24 +253,34 @@ async function renderTokens(orgId, counterId){
       actionsHeading.textContent = 'Operator Actions';
       right.appendChild(actionsHeading);
 
-      const serveBtn = document.createElement('button'); serveBtn.type='button'; serveBtn.className='btn-serve'; serveBtn.textContent='Call Next';
+      const serveBtn = document.createElement('button');
+      serveBtn.type='button';
+      serveBtn.className='btn-serve';
+      serveBtn.textContent='Call Next';
       serveBtn.onclick = ()=> updateTokenStatus(orgId, activeToken.serviceId, activeToken.tokenId, 'serving', counterId, (counters[counterId]||{}).name);
 
-      const noshowBtn = document.createElement('button'); noshowBtn.type='button'; noshowBtn.className='btn-noshow'; noshowBtn.textContent='No show';
+      const noshowBtn = document.createElement('button');
+      noshowBtn.type='button';
+      noshowBtn.className='btn-noshow';
+      noshowBtn.textContent='No show';
       noshowBtn.onclick = ()=> updateTokenStatus(orgId, activeToken.serviceId, activeToken.tokenId, 'no-show', counterId, (counters[counterId]||{}).name);
 
       right.appendChild(serveBtn);
       right.appendChild(noshowBtn);
 
-      item.appendChild(stage); item.appendChild(right);
-      tokensEl.appendChild(item);
+      item.appendChild(stage);
+      item.appendChild(right);
+      tokenBody.appendChild(item);
     } else {
       const empty = document.createElement('div');
       empty.className = 'token-empty';
       empty.textContent = 'No ongoing token for this counter.';
-      tokensEl.appendChild(empty);
+      tokenBody.appendChild(empty);
       setStatus('No ongoing token for the selected counter');
     }
+
+    tokenPanel.appendChild(tokenBody);
+    // (panel insertion moved until both panels are constructed)
 
     const calledTokens = Array.from(tokensById.values())
       .filter(t => (t.assigned || serviceIds.includes(t.serviceId)))
@@ -270,6 +292,36 @@ async function renderTokens(orgId, counterId){
       .filter(t => (t.status || 'waiting').toLowerCase() === 'no-show')
       .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
+    const statePanel = document.createElement('section');
+    statePanel.className = 'portrait-panel';
+    statePanel.appendChild(createPortraitHeader(
+      '2. Recall and No Show Tokens',
+      'Search and manage previously handled tokens',
+      kioskCustomerSettings.recallEnabled ? 'Recall on' : 'Recall off'
+    ));
+
+    const stateBody = document.createElement('div');
+    stateBody.className = 'portrait-panel-body';
+
+    const searchWrap = document.createElement('div');
+    searchWrap.className = 'search-wrap';
+    const searchInput = document.createElement('input');
+    searchInput.type = 'search';
+    searchInput.placeholder = 'Search token, service, customer, or kiosk';
+    searchInput.value = tokenFilterQuery;
+    searchInput.addEventListener('input', () => {
+      tokenFilterQuery = searchInput.value || '';
+      renderTokens(orgId, counterId);
+    });
+
+    const searchLabel = document.createElement('span');
+    searchLabel.className = 'search-pill';
+    searchLabel.textContent = 'Live filter';
+    searchWrap.appendChild(searchInput);
+    searchWrap.appendChild(searchLabel);
+
+    const stateGrid = document.createElement('div');
+    stateGrid.className = 'state-grid';
     stateGrid.appendChild(createTokenStatePanel({
       title: 'Already Called Tokens',
       subtitle: kioskCustomerSettings.recallEnabled ? 'Recall one of these if the customer comes back.' : 'These are tokens that have already been called.',
@@ -278,7 +330,8 @@ async function renderTokens(orgId, counterId){
       counterId,
       orgId,
       allowRecall: !!kioskCustomerSettings.recallEnabled,
-      kind: 'called'
+      kind: 'called',
+      query: tokenFilterQuery
     }));
 
     stateGrid.appendChild(createTokenStatePanel({
@@ -288,11 +341,17 @@ async function renderTokens(orgId, counterId){
       tokens: noShowTokens,
       counterId,
       orgId,
-      allowRecall: false,
-      kind: 'noshow'
+      // allow recall from no-show list as requested: enable when kiosk setting allows or always for no-show
+      allowRecall: true,
+      kind: 'noshow',
+      query: tokenFilterQuery
     }));
 
-    tokensEl.appendChild(stateGrid);
+    stateBody.appendChild(searchWrap);
+    stateBody.appendChild(stateGrid);
+    statePanel.appendChild(stateBody);
+    // insert both panels as siblings into the workspace grid so they render side-by-side on wide screens
+    if(workspaceGrid) workspaceGrid.replaceChildren(tokenPanel, statePanel);
 
     setStatus(`Showing live queue for ${counters[counterId]?.name || counterId}`);
   }catch(err){
@@ -301,22 +360,31 @@ async function renderTokens(orgId, counterId){
   }
 }
 
-function createTokenStatePanel({ title, subtitle, emptyText, tokens, counterId, orgId, allowRecall, kind }){
+function createPortraitHeader(title, subtitle, badgeText) {
+  const header = document.createElement('div');
+  header.className = 'portrait-panel-header';
+  header.innerHTML = `<div><div class="portrait-panel-title">${title}</div><div class="portrait-panel-subtitle">${subtitle}</div></div><div class="status-chip">${badgeText}</div>`;
+  return header;
+}
+
+function createTokenStatePanel({ title, subtitle, emptyText, tokens, counterId, orgId, allowRecall, kind, query }){
   const panel = document.createElement('section');
   panel.className = 'state-panel';
 
   const header = document.createElement('div');
   header.className = 'state-panel-header';
-  header.innerHTML = `<div><div class="state-panel-title">${title}</div><div class="state-panel-subtitle">${subtitle}</div></div><div class="status-chip">${tokens.length}</div>`;
+  const tokenCount = filterTokensByQuery(tokens, query).length;
+  header.innerHTML = `<div><div class="state-panel-title">${title}</div><div class="state-panel-subtitle">${subtitle}</div></div><div class="status-chip">${tokenCount}</div>`;
   panel.appendChild(header);
 
   const body = document.createElement('div');
   body.className = 'state-panel-body';
 
-  if(!tokens.length){
+  const filteredTokens = filterTokensByQuery(tokens, query);
+  if(!filteredTokens.length){
     const empty = document.createElement('div');
     empty.className = 'empty-state';
-    empty.textContent = emptyText;
+    empty.textContent = tokens.length ? 'No tokens match your search.' : emptyText;
     body.appendChild(empty);
     panel.appendChild(body);
     return panel;
@@ -325,7 +393,7 @@ function createTokenStatePanel({ title, subtitle, emptyText, tokens, counterId, 
   const list = document.createElement('div');
   list.className = 'token-list';
 
-  tokens.forEach(token => {
+  filteredTokens.forEach(token => {
     const row = document.createElement('div');
     row.className = 'token-list-item';
 
@@ -343,7 +411,8 @@ function createTokenStatePanel({ title, subtitle, emptyText, tokens, counterId, 
     const actions = document.createElement('div');
     actions.className = 'token-list-actions';
 
-    if(kind === 'called' && allowRecall){
+    // allow recall when requested (for called tokens or no-show tokens per user request)
+    if(allowRecall){
       const recallBtn = document.createElement('button');
       recallBtn.type = 'button';
       recallBtn.className = 'mini-btn mini-btn-primary';
@@ -352,6 +421,7 @@ function createTokenStatePanel({ title, subtitle, emptyText, tokens, counterId, 
       actions.appendChild(recallBtn);
     }
 
+    // keep the "Still Serving" action for called tokens
     if(kind === 'called'){
       const doneBtn = document.createElement('button');
       doneBtn.type = 'button';
@@ -369,6 +439,29 @@ function createTokenStatePanel({ title, subtitle, emptyText, tokens, counterId, 
   body.appendChild(list);
   panel.appendChild(body);
   return panel;
+}
+
+function filterTokensByQuery(tokens, query) {
+  const normalizedQuery = String(query || '').trim().toLowerCase();
+  if (!normalizedQuery) return tokens;
+
+  return tokens.filter(token => {
+    const haystack = [
+      token.tokenNumber,
+      token.id,
+      token.serviceName,
+      token.serviceId,
+      token.kioskName,
+      token.customerName,
+      token.customerPhone,
+      token.status
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+
+    return haystack.includes(normalizedQuery);
+  });
 }
 
 async function updateTokenStatus(orgId, serviceId, tokenId, status, counterId=null, counterName=null){
@@ -486,3 +579,26 @@ auth.onAuthStateChanged(async user=>{
 });
 
 setAuthUserLabel(null, null);
+
+// Cycle to the next counter option (skips empty placeholder options)
+function cycleCounterSelectNext(){
+  if(!counterSelect){ setStatus('No counter selector present'); return; }
+  if(counterSelect.disabled){ setStatus('Counter selector is disabled'); return; }
+  const options = Array.from(counterSelect.options).filter(o=>o && o.value);
+  if(!options.length){ setStatus('No available counters to select'); return; }
+  const currentValue = counterSelect.value || '';
+  const idx = options.findIndex(o=>o.value === currentValue);
+  const nextIdx = (idx < 0) ? 0 : ((idx + 1) % options.length);
+  counterSelect.value = options[nextIdx].value;
+  // trigger the change handler so the UI updates
+  counterSelect.dispatchEvent(new Event('change', { bubbles:true }));
+  setStatus(`Switched to counter: ${options[nextIdx].textContent}`);
+}
+
+// Keyboard shortcut: Ctrl+9 (or Cmd+9 on Mac) to cycle counters
+document.addEventListener('keydown', (ev)=>{
+  if((ev.ctrlKey || ev.metaKey) && (ev.key === '9' || ev.code === 'Digit9')){
+    ev.preventDefault();
+    try{ cycleCounterSelectNext(); }catch(e){ console.error(e); }
+  }
+});

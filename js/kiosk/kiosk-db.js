@@ -244,7 +244,7 @@ const kioskTokenDB = {
       throw new Error('Organization ID, KIOSK ID, and Service ID required');
     }
 
-    const tokenNumber = this.generateTokenNumber();
+    const tokenNumber = await this.generateTokenNumber();
     const tokenId = this.generateTokenId();
 
     // Verify service exists and is active
@@ -320,7 +320,7 @@ const kioskTokenDB = {
     }
 
     var opts = options || {};
-    var tokenNumber = this.generateTokenNumber();
+    var tokenNumber = await this.generateTokenNumber();
     var tokenId = this.generateTokenId();
 
     var serviceSnap = await db.ref('users/' + organizationId + '/services/' + primaryServiceId).once('value');
@@ -483,10 +483,27 @@ const kioskTokenDB = {
    * Generate unique token number (e.g., "A001")
    * @returns {string} Token number
    */
-  generateTokenNumber() {
-    const prefix = String.fromCharCode(65 + Math.floor(Math.random() * 26)); // A-Z
-    const number = String(Math.floor(Math.random() * 10000)).padStart(4, '0');
-    return prefix + number;
+  async generateTokenNumber() {
+    const seqRef = db.ref('systemCounters/visitTokenSequence');
+    return new Promise((resolve, reject) => {
+      seqRef.transaction(
+        current => (current || 0) + 1,
+        (error, committed, snapshot) => {
+          if (error) {
+            reject(error);
+            return;
+          }
+
+          if (!committed || !snapshot) {
+            reject(new Error('Unable to allocate a unique token number'));
+            return;
+          }
+
+          const safeSequence = Number(snapshot.val() || 0);
+          resolve('T' + String(safeSequence).padStart(8, '0'));
+        }
+      );
+    });
   },
 
   /**

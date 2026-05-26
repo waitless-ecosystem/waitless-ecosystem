@@ -729,6 +729,23 @@
       cursor: not-allowed;
     }
 
+    /* Keep kiosk actions reliably clickable on touch screens */
+    button,
+    .login-button,
+    .logout-btn,
+    .button-large,
+    .service-card,
+    .service-selection-actions,
+    .kiosk-step-actions {
+      position: relative;
+      z-index: 2;
+      pointer-events: auto;
+    }
+
+    button {
+      touch-action: manipulation;
+    }
+
     /* Loading State */
     .loading-spinner {
       display: inline-block;

@@ -14,18 +14,17 @@ const serviceSelectForm = document.getElementById('service-select-form');
 const selectedCountEl = document.getElementById('selected-count');
 const generateTokensBtn = document.getElementById('generate-tokens-btn');
 const servicesView = document.getElementById('services-view');
+const servicesStep = document.getElementById('services-step');
 const tokenView = document.getElementById('token-view');
 const tokenSummaryList = document.getElementById('token-summary-list');
 const newTokenBtn = document.getElementById('new-token-btn');
 const resetBtn = document.getElementById('reset-btn');
-const logoutBtn = document.getElementById('logout-btn');
-const tokenLogoutBtn = document.getElementById('token-logout-btn');
 const currentTimeEl = document.getElementById('current-time');
-const backToKioskBtn = document.getElementById('back-to-kiosk-btn');
 const customerDetailsSection = document.getElementById('customer-details-section');
 const customerDetailsNote = document.getElementById('customer-details-note');
 const customerNameInput = document.getElementById('customer-name-input');
 const customerPhoneInput = document.getElementById('customer-phone-input');
+const continueToServicesBtn = document.getElementById('continue-to-services-btn');
 const customerNameGroup = customerNameInput ? customerNameInput.closest('.form-group') : null;
 const customerPhoneGroup = customerPhoneInput ? customerPhoneInput.closest('.form-group') : null;
 
@@ -39,6 +38,7 @@ let generatedTokens = null;
 let sessionStartTime = null;
 let inactivityTimeout = null;
 let isGeneratingTokens = false;
+let customerStepCompleted = false;
 let customerDetailSettings = {
   enabled: false,
   requireName: false,
@@ -152,6 +152,10 @@ function applyCustomerDetailSettingsUI() {
 
   if (!customerDetailSettings.enabled) {
     customerDetailsSection.classList.add('hidden');
+    if (servicesStep) {
+      servicesStep.classList.remove('hidden');
+    }
+    customerStepCompleted = true;
     if (customerNameInput) {
       customerNameInput.required = false;
       customerNameInput.value = '';
@@ -164,6 +168,10 @@ function applyCustomerDetailSettingsUI() {
   }
 
   customerDetailsSection.classList.remove('hidden');
+  if (servicesStep) {
+    servicesStep.classList.add('hidden');
+  }
+  customerStepCompleted = false;
 
   if (customerNameGroup) {
     customerNameGroup.classList.toggle('hidden', !customerDetailSettings.requireName);
@@ -202,9 +210,59 @@ function applyCustomerDetailSettingsUI() {
     if (customerDetailSettings.requireName) requiredParts.push('name');
     if (customerDetailSettings.requirePhone) requiredParts.push('phone number');
     customerDetailsNote.textContent = requiredParts.length
-      ? ('Please enter ' + requiredParts.join(' and ') + ' before generating a token.')
-      : 'Customer name and phone are optional for this organization.';
+      ? ('Please enter ' + requiredParts.join(' and ') + ' first, then continue to services.')
+      : 'Customer name is requested first, then you can continue to services.';
   }
+
+  if (continueToServicesBtn) {
+    continueToServicesBtn.textContent = customerDetailSettings.requireName
+      ? 'Continue to Services'
+      : 'Continue to Services';
+  }
+}
+
+function continueToServicesStep() {
+  if (!customerDetailSettings.enabled) {
+    customerStepCompleted = true;
+    if (servicesStep) {
+      servicesStep.classList.remove('hidden');
+    }
+    return;
+  }
+
+  try {
+    const customerDetails = getCustomerDetailsFromForm();
+    if (customerDetailSettings.requireName && !customerDetails?.name) {
+      throw new Error('Customer name is required before continuing');
+    }
+    customerStepCompleted = true;
+    if (customerDetailsSection) {
+      customerDetailsSection.classList.add('hidden');
+    }
+    if (servicesStep) {
+      servicesStep.classList.remove('hidden');
+    }
+    showMessage('Now select the services you need.', 'info');
+  } catch (err) {
+    showMessage(err.message, 'error');
+  }
+}
+
+function bindPressAction(element, handler) {
+  if (!element) return;
+  let lastTriggeredAt = 0;
+  const invoke = (event) => {
+    const now = Date.now();
+    if (now - lastTriggeredAt < 400) {
+      return;
+    }
+    lastTriggeredAt = now;
+    event.preventDefault();
+    handler(event);
+  };
+  element.addEventListener('click', invoke);
+  element.addEventListener('pointerup', invoke);
+  element.addEventListener('touchend', invoke, { passive: false });
 }
 
 function getCustomerDetailsFromForm() {
@@ -236,7 +294,9 @@ function getCustomerDetailsFromForm() {
 
 function updateKioskIdDisplays(value) {
   document.querySelectorAll('#kiosk-id-display, #footer-kiosk-id-display').forEach((el) => {
-    el.textContent = value;
+    if (el) {
+      el.textContent = value;
+    }
   });
 }
 
@@ -258,12 +318,18 @@ async function initializeSession() {
     return false;
   }
 
-  kioskNameDisplay.textContent = kioskName || 'KIOSK Terminal';
+  if (kioskNameDisplay) {
+    kioskNameDisplay.textContent = kioskName || 'KIOSK Terminal';
+  }
   updateKioskIdDisplays(kioskId);
 
   const footerNameEl = document.getElementById('footer-kiosk-name-display');
   if (footerNameEl) {
     footerNameEl.textContent = kioskName || kioskId || 'Unknown';
+  }
+
+  if (currentTimeEl) {
+    updateClock();
   }
 
   if (orgNameDisplay) {
@@ -289,6 +355,7 @@ async function initializeSession() {
 }
 
 function updateClock() {
+  if (!currentTimeEl) return;
   const now = new Date();
   const hours = String(now.getHours()).padStart(2, '0');
   const minutes = String(now.getMinutes()).padStart(2, '0');
@@ -311,17 +378,6 @@ function resetInactivityTimer() {
   if (inactivityTimeout) {
     clearTimeout(inactivityTimeout);
   }
-}
-
-function logout() {
-  sessionStorage.removeItem('kioskId');
-  sessionStorage.removeItem('kioskName');
-  sessionStorage.removeItem('organizationId');
-  sessionStorage.removeItem('kioskUserId');
-  sessionStorage.removeItem('kioskLoginTime');
-  sessionStorage.removeItem('authenticatedUserUID');
-
-  window.location.href = 'kiosk-login.html';
 }
 
 // ============================================================
@@ -461,10 +517,21 @@ function updateSelectionUI() {
 function resetToServices() {
   tokenView.classList.add('hidden');
   servicesView.classList.remove('hidden');
+  customerStepCompleted = !customerDetailSettings.enabled;
   selectedServiceIds.clear();
   generatedTokens = null;
   if (customerNameInput) customerNameInput.value = '';
   if (customerPhoneInput) customerPhoneInput.value = '';
+  if (customerDetailsSection && customerDetailSettings.enabled) {
+    customerDetailsSection.classList.remove('hidden');
+  }
+  if (servicesStep) {
+    if (customerDetailSettings.enabled) {
+      servicesStep.classList.add('hidden');
+    } else {
+      servicesStep.classList.remove('hidden');
+    }
+  }
   renderServices();
   updateSelectionUI();
 }
@@ -480,6 +547,11 @@ async function handleGenerateTokens(e) {
   const serviceIds = Array.from(selectedServiceIds).filter((serviceId) => services[serviceId]);
   if (serviceIds.length === 0) {
     showMessage('Please select at least one service', 'error');
+    return;
+  }
+
+  if (customerDetailSettings.enabled && !customerStepCompleted) {
+    showMessage('Please continue through the customer name step first.', 'error');
     return;
   }
 
@@ -608,38 +680,18 @@ function playNotificationSound() {
 // ============================================================
 
 serviceSelectForm.addEventListener('submit', handleGenerateTokens);
-generateTokensBtn.addEventListener('click', handleGenerateTokens);
+bindPressAction(generateTokensBtn, handleGenerateTokens);
+bindPressAction(continueToServicesBtn, continueToServicesStep);
 
-newTokenBtn.addEventListener('click', (e) => {
-  e.preventDefault();
+bindPressAction(newTokenBtn, () => {
   resetInactivityTimer();
   resetToServices();
 });
 
-resetBtn.addEventListener('click', (e) => {
-  e.preventDefault();
+bindPressAction(resetBtn, () => {
   resetInactivityTimer();
   resetToServices();
 });
-
-logoutBtn.addEventListener('click', (e) => {
-  e.preventDefault();
-  logout();
-});
-
-if (tokenLogoutBtn) {
-  tokenLogoutBtn.addEventListener('click', (e) => {
-    e.preventDefault();
-    logout();
-  });
-}
-
-if (backToKioskBtn) {
-  backToKioskBtn.addEventListener('click', (e) => {
-    e.preventDefault();
-    logout();
-  });
-}
 
 ['click', 'touchstart', 'keydown'].forEach((event) => {
   document.addEventListener(event, resetInactivityTimer, true);
@@ -658,6 +710,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   setInterval(checkSessionTimeout, INACTIVITY_CHECK_MS);
 
   await loadServices();
+  if (servicesStep && !customerDetailSettings.enabled) {
+    servicesStep.classList.remove('hidden');
+  }
   showMessage('Welcome! Select one or more services.', 'info');
 });
 

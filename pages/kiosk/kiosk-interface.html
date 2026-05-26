@@ -7,18 +7,6 @@
   <link rel="stylesheet" href="../../css/kiosk.css">
 </head>
 <body>
-  <!-- Header -->
-  <div class="kiosk-header">
-    <h1>📋 SERVICE QUEUE</h1>
-    <div class="kiosk-terminal-meta">
-      <span class="kiosk-terminal-label">KIOSK:</span>
-      <span id="kiosk-name-display" class="kiosk-terminal-name">KIOSK Terminal</span>
-      <span class="kiosk-terminal-id-label">ID:</span>
-      <span id="kiosk-id-display" class="kiosk-terminal-id">Loading...</span>
-    </div>
-    <div id="org-name-display" class="kiosk-org-name"></div>
-  </div>
-
   <!-- Main Content -->
   <div class="kiosk-content">
     <div id="message" class="message hidden"></div>
@@ -37,7 +25,7 @@
       <form id="service-select-form" class="login-form service-select-form">
         <div id="customer-details-section" class="customer-details-section hidden">
           <h4>Customer Details</h4>
-          <p id="customer-details-note" class="customer-details-note">Enter customer details before generating a token.</p>
+          <p id="customer-details-note" class="customer-details-note">Enter the customer name first, then continue to the next step.</p>
 
           <div class="form-group">
             <label for="customer-name-input">Customer Name</label>
@@ -48,19 +36,34 @@
             <label for="customer-phone-input">Phone Number</label>
             <input id="customer-phone-input" type="tel" maxlength="20" placeholder="Enter phone number" autocomplete="off" inputmode="tel" />
           </div>
+
+          <div class="service-selection-actions kiosk-step-actions">
+            <div id="customer-step-hint" class="selected-count">Name first, then continue</div>
+            <button type="button" class="button-large button-primary" id="continue-to-services-btn">
+              Continue to Services
+            </button>
+          </div>
         </div>
 
-        <div id="services-container" class="services-container">
-          <!-- Services will be loaded here -->
-        </div>
-        <div class="service-selection-actions">
-          <div id="selected-count" class="selected-count">No services selected</div>
-          <button type="button" class="button-large button-primary generate-tokens-button" id="generate-tokens-btn" disabled>
-            Generate Token
-          </button>
+        <div id="services-step" class="services-step hidden">
+          <div class="kiosk-step-header">
+            <p class="kiosk-eyebrow">Next Step</p>
+            <h3 class="kiosk-step-title">Select the services you need</h3>
+            <p class="kiosk-subtitle">Choose one or more services, then generate a token.</p>
+          </div>
+
+          <div id="services-container" class="services-container">
+            <!-- Services will be loaded here -->
+          </div>
+
+          <div class="service-selection-actions">
+            <div id="selected-count" class="selected-count">No services selected</div>
+            <button type="button" class="button-large button-primary generate-tokens-button" id="generate-tokens-btn" disabled>
+              Generate Token
+            </button>
+          </div>
         </div>
       </form>
-      <button type="button" class="login-button login-button-muted back-to-kiosk-button" id="back-to-kiosk-btn">Back to KIOSK Selection</button>
     </div>
 
     <!-- Token Generation View -->
@@ -78,19 +81,8 @@
         <button type="button" class="button-large button-secondary" id="reset-btn">
           Back to Services
         </button>
-        <button type="button" class="button-large button-danger" id="token-logout-btn">
-          Logout
-        </button>
       </div>
     </div>
-  </div>
-
-  <!-- Footer -->
-  <div class="kiosk-footer">
-    <div class="kiosk-footer-info">
-      <p>Time: <span id="current-time">--:--</span> | KIOSK: <span id="footer-kiosk-name-display">Loading...</span></p>
-    </div>
-    <button class="logout-btn" id="logout-btn">← Logout</button>
   </div>
 
   <!-- Firebase Scripts -->
