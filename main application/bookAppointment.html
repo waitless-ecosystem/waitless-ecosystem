@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Online Appointment</title>
+    <link rel="stylesheet" href="style.css"> <style>
+        .booking-container {
+            max-width: 500px;
+            margin: 2rem auto;
+            padding: 2rem;
+            border-radius: 12px;
+        }
+        .form-group {
+            margin-bottom: 1.25rem;
+            display: flex;
+            flex-direction: column;
+        }
+        .form-group label {
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-main, #333);
+            font-weight: 500;
+        }
+        .form-group input {
+            padding: 0.75rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            font-size: 1rem;
+        }
+        .submit-btn {
+            width: 100%;
+            padding: 0.85rem;
+            background: #10b981;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+        .submit-btn:hover {
+            background: #059669;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="booking-container glass-effect">
+        <h2 style="margin-top: 0; margin-bottom: 0.5rem;">Schedule Appointment</h2>
+        <p id="service-display-name" style="color: #10b981; font-weight: 500; margin-bottom: 1.5rem;">Loading service details...</p>
+        
+        <div id="booking-spinner" style="text-align: center; margin: 1rem 0;">⏳ Initializing secure form...</div>
+
+        <form id="appointment-form" style="display: none;">
+            <div class="form-group">
+                <label for="customer-name">Full Name</label>
+                <input type="text" id="customer-name" required placeholder="John Doe">
+            </div>
+
+            <div class="form-group">
+                <label for="customer-phone">Mobile Number</label>
+                <input type="tel" id="customer-phone" required placeholder="0771234567">
+            </div>
+
+            <div class="form-group">
+                <label for="customer-email">Email Address</label>
+                <input type="email" id="customer-email" required placeholder="john@example.com">
+            </div>
+
+            <div class="form-group">
+                <label for="appointment-date">Appointment Date</label>
+                <input type="date" id="appointment-date" required>
+            </div>
+
+            <div class="form-group">
+                <label for="appointment-time">Preferred Time Slot</label>
+                <input type="time" id="appointment-time" required>
+            </div>
+
+            <button type="submit" class="submit-btn">Confirm</button>
+        </form>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    
+    <script src="bookAppointment.js"></script>
+</body>
+</html>

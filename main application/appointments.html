@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Online Services - WaitLess</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Firebase Compat SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+</head>
+
+<body>
+    <div id="app-page" class="app-container glass-effect">
+        <header class="app-header">
+            <div class="header-top">
+                <h1>Online Services</h1>
+                <a href="selectionPage.html" class="back-btn">← Back</a>
+            </div>
+            <p>Browse and book available online services</p>
+        </header>
+
+        <main class="services-content">
+            <div id="loading-spinner" class="spinner">Loading services...</div>
+            <div id="organizations-list" class="organizations-container"></div>
+            <div id="no-services" class="no-services-message hidden">
+                <p>📭 No online services available at the moment.</p>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.5rem;">
+                    Please check back later or contact support.
+                </p>
+            </div>
+        </main>
+    </div>
+
+    <!-- Page Logic -->
+    <script src="appointments.js"></script>
+</body>
+
+</html>
