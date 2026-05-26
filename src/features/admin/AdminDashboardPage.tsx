@@ -293,65 +293,74 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <div style={{ padding: 24, maxWidth: 1100, margin: "0 auto" }}>
-      <h1>Organization Admin Dashboard</h1>
+    <main className="page">
+      <section className="page-hero">
+        <div className="page-eyebrow">Organization admin</div>
+        <h1 className="page-title">Organization Admin Dashboard</h1>
+        <p className="page-subtitle">Organization ID: {organizationId}</p>
+      </section>
 
-      <p>Organization ID: {organizationId}</p>
-
-      <div
-        style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 24 }}
-      >
-        <Link to="/admin/services" style={navLink}>
+      <div className="action-group" style={{ marginBottom: 24 }}>
+        <Link to="/admin/services" className="secondary-btn">
           Manage Services
         </Link>
-        <Link to="/admin/counters" style={navLink}>
+        <Link to="/admin/counters" className="secondary-btn">
           Manage Counters
         </Link>
-        <Link to="/admin/assignments" style={navLink}>
+        <Link to="/admin/assignments" className="secondary-btn">
           Assign Services
         </Link>
-        <Link to="/admin/staff" style={navLink}>
+        <Link to="/admin/staff" className="secondary-btn">
           Assign Staff
         </Link>
+        <button type="button" className="nav-button" onClick={logout}>
+          Logout
+        </button>
       </div>
 
-      <button onClick={logout}>Logout</button>
+      {message && <div className="success-banner">{message}</div>}
+      {error && <div className="error-banner">{error}</div>}
 
-      {message && <p style={{ color: "green" }}>{message}</p>}
-      {error && <p style={{ color: "red" }}>{error}</p>}
-
-      <section style={card}>
+      <section className="page-card">
         <h2>1. Add Services</h2>
 
-        <form onSubmit={createService}>
-          <input
-            required
-            placeholder="Service name"
-            value={serviceName}
-            onChange={(event) => setServiceName(event.target.value)}
-            style={input}
-          />
+        <form className="form-grid" onSubmit={createService}>
+          <label>
+            Service name
+            <input
+              required
+              placeholder="Service name"
+              value={serviceName}
+              onChange={(event) => setServiceName(event.target.value)}
+            />
+          </label>
 
-          <input
-            required
-            placeholder="Prefix, example CD"
-            value={servicePrefix}
-            onChange={(event) => setServicePrefix(event.target.value)}
-            style={input}
-          />
+          <label>
+            Prefix
+            <input
+              required
+              placeholder="Prefix, example CD"
+              value={servicePrefix}
+              onChange={(event) => setServicePrefix(event.target.value)}
+            />
+          </label>
 
-          <input
-            required
-            type="number"
-            min={1}
-            value={averageServiceTime}
-            onChange={(event) =>
-              setAverageServiceTime(Number(event.target.value))
-            }
-            style={input}
-          />
+          <label>
+            Average time (minutes)
+            <input
+              required
+              type="number"
+              min={1}
+              value={averageServiceTime}
+              onChange={(event) =>
+                setAverageServiceTime(Number(event.target.value))
+              }
+            />
+          </label>
 
-          <button type="submit">Add Service</button>
+          <button className="primary-btn" type="submit">
+            Add Service
+          </button>
         </form>
 
         <ul>
@@ -364,27 +373,33 @@ export default function AdminDashboardPage() {
         </ul>
       </section>
 
-      <section style={card}>
+      <section className="page-card">
         <h2>2. Add Counters</h2>
 
-        <form onSubmit={createCounter}>
-          <input
-            required
-            placeholder="Counter name"
-            value={counterName}
-            onChange={(event) => setCounterName(event.target.value)}
-            style={input}
-          />
+        <form className="form-grid" onSubmit={createCounter}>
+          <label>
+            Counter name
+            <input
+              required
+              placeholder="Counter name"
+              value={counterName}
+              onChange={(event) => setCounterName(event.target.value)}
+            />
+          </label>
 
-          <input
-            required
-            placeholder="Counter number, example C1"
-            value={counterNumber}
-            onChange={(event) => setCounterNumber(event.target.value)}
-            style={input}
-          />
+          <label>
+            Counter number
+            <input
+              required
+              placeholder="Counter number, example C1"
+              value={counterNumber}
+              onChange={(event) => setCounterNumber(event.target.value)}
+            />
+          </label>
 
-          <button type="submit">Add Counter</button>
+          <button className="primary-btn" type="submit">
+            Add Counter
+          </button>
         </form>
 
         <ul>
@@ -399,86 +414,108 @@ export default function AdminDashboardPage() {
         </ul>
       </section>
 
-      <section style={card}>
+      <section className="page-card">
         <h2>3. Assign Services to Counters</h2>
 
-        <form onSubmit={saveAssignments}>
-          <select
-            required
-            value={selectedCounterId}
-            onChange={(event) => setSelectedCounterId(event.target.value)}
-            style={input}
-          >
-            <option value="">Select counter</option>
-            {counters.map((counter) => (
-              <option key={counter.id} value={counter.id}>
-                {counter.name} ({counter.counterNumber})
-              </option>
-            ))}
-          </select>
+        <form className="form-grid" onSubmit={saveAssignments}>
+          <label>
+            Select counter
+            <select
+              required
+              value={selectedCounterId}
+              onChange={(event) => setSelectedCounterId(event.target.value)}
+            >
+              <option value="">Select counter</option>
+              {counters.map((counter) => (
+                <option key={counter.id} value={counter.id}>
+                  {counter.name} ({counter.counterNumber})
+                </option>
+              ))}
+            </select>
+          </label>
 
-          <div>
-            {services.map((service) => (
-              <label key={service.id} style={{ display: "block" }}>
-                <input
-                  type="checkbox"
-                  checked={selectedServiceIds.includes(service.id)}
-                  onChange={() => toggleService(service.id)}
-                />
-                {service.name}
-              </label>
-            ))}
+          <div className="page-card" style={{ padding: 20 }}>
+            <h3>Choose services</h3>
+            <div className="content-grid-2">
+              {services.map((service) => (
+                <label
+                  key={service.id}
+                  className="section-card"
+                  style={{ cursor: "pointer" }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedServiceIds.includes(service.id)}
+                    onChange={() => toggleService(service.id)}
+                    style={{ marginRight: 8 }}
+                  />
+                  {service.name}
+                </label>
+              ))}
+            </div>
           </div>
 
-          <button type="submit">Save Assignments</button>
+          <button className="primary-btn" type="submit">
+            Save Assignments
+          </button>
         </form>
       </section>
 
-      <section style={card}>
+      <section className="page-card">
         <h2>4. Add Staff and Assign to Counter</h2>
 
-        <form onSubmit={createStaff}>
-          <input
-            required
-            placeholder="Staff name"
-            value={staffName}
-            onChange={(event) => setStaffName(event.target.value)}
-            style={input}
-          />
+        <form className="form-grid" onSubmit={createStaff}>
+          <label>
+            Staff name
+            <input
+              required
+              placeholder="Staff name"
+              value={staffName}
+              onChange={(event) => setStaffName(event.target.value)}
+            />
+          </label>
 
-          <input
-            required
-            type="email"
-            placeholder="Staff email"
-            value={staffEmail}
-            onChange={(event) => setStaffEmail(event.target.value)}
-            style={input}
-          />
+          <label>
+            Staff email
+            <input
+              required
+              type="email"
+              placeholder="Staff email"
+              value={staffEmail}
+              onChange={(event) => setStaffEmail(event.target.value)}
+            />
+          </label>
 
-          <input
-            required
-            type="password"
-            placeholder="Temporary staff password"
-            value={staffPassword}
-            onChange={(event) => setStaffPassword(event.target.value)}
-            style={input}
-          />
+          <label>
+            Temporary staff password
+            <input
+              required
+              type="password"
+              placeholder="Temporary staff password"
+              value={staffPassword}
+              onChange={(event) => setStaffPassword(event.target.value)}
+            />
+          </label>
 
-          <select
-            required
-            value={staffCounterId}
-            onChange={(event) => setStaffCounterId(event.target.value)}
-            style={input}
-          >
-            <option value="">Select assigned counter</option>
-            {counters.map((counter) => (
-              <option key={counter.id} value={counter.id}>
-                {counter.name} ({counter.counterNumber})
-              </option>
-            ))}
-          </select>
+          <label>
+            Select assigned counter
+            <select
+              required
+              value={staffCounterId}
+              onChange={(event) => setStaffCounterId(event.target.value)}
+            >
+              <option value="">Select assigned counter</option>
+              {counters.map((counter) => (
+                <option key={counter.id} value={counter.id}>
+                  {counter.name} ({counter.counterNumber})
+                </option>
+              ))}
+            </select>
+          </label>
 
-          <button type="submit">Create Staff and Assign Counter</button>
+          <button className="primary-btn" type="submit">
+            Create Staff and Assign Counter
+          </button>
         </form>
 
         <h3>Staff Users</h3>
@@ -486,39 +523,40 @@ export default function AdminDashboardPage() {
         {staffUsers.length === 0 ? (
           <p>No staff users created yet.</p>
         ) : (
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr>
-                <th style={th}>Name</th>
-                <th style={th}>Email</th>
-                <th style={th}>Assigned Counter</th>
-                <th style={th}>Staff Dashboard</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {staffUsers.map((staff) => (
-                <tr key={staff.uid}>
-                  <td style={td}>{staff.displayName}</td>
-                  <td style={td}>{staff.email}</td>
-                  <td style={td}>{getCounterLabel(staff.assignedCounterId)}</td>
-                  <td style={td}>
-                    {staff.assignedCounterId ? (
-                      <code>
-                        /staff/{organizationId}/{staff.assignedCounterId}
-                      </code>
-                    ) : (
-                      "Not assigned"
-                    )}
-                  </td>
+          <div className="table-card">
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Assigned Counter</th>
+                  <th>Staff Dashboard</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {staffUsers.map((staff) => (
+                  <tr key={staff.uid}>
+                    <td>{staff.displayName}</td>
+                    <td>{staff.email}</td>
+                    <td>{getCounterLabel(staff.assignedCounterId)}</td>
+                    <td>
+                      {staff.assignedCounterId ? (
+                        <code>
+                          /staff/{organizationId}/{staff.assignedCounterId}
+                        </code>
+                      ) : (
+                        "Not assigned"
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
 
-      <section style={card}>
+      <section className="page-card" style={{ marginTop: 24 }}>
         <h2>Useful Links</h2>
         <p>Kiosk URL: /kiosk/{organizationId}</p>
 
@@ -544,43 +582,6 @@ export default function AdminDashboardPage() {
           ) : null,
         )}
       </section>
-    </div>
+    </main>
   );
 }
-
-const card = {
-  border: "1px solid #ddd",
-  padding: 20,
-  borderRadius: 8,
-  marginTop: 24,
-};
-
-const navLink = {
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  padding: "12px 18px",
-  background: "#f4f6f8",
-  color: "#111",
-  borderRadius: 8,
-  textDecoration: "none",
-  fontWeight: 600,
-};
-
-const input = {
-  display: "block",
-  width: "100%",
-  padding: 8,
-  marginBottom: 12,
-};
-
-const th = {
-  textAlign: "left" as const,
-  borderBottom: "1px solid #ddd",
-  padding: 8,
-};
-
-const td = {
-  borderBottom: "1px solid #eee",
-  padding: 8,
-};

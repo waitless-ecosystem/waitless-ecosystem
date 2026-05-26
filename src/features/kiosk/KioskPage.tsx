@@ -57,7 +57,10 @@ export default function KioskPage() {
     setBusy(true);
 
     try {
-      const createCustomerToken = httpsCallable(functions, "createCustomerToken");
+      const createCustomerToken = httpsCallable(
+        functions,
+        "createCustomerToken",
+      );
       const result: any = await createCustomerToken({
         organizationId,
         selectedServiceIds: selectedServices,
@@ -72,51 +75,59 @@ export default function KioskPage() {
   }
 
   return (
-    <div style={{ padding: 24, maxWidth: 900, margin: "0 auto" }}>
-      <h1>Customer Kiosk</h1>
-      <p>Select the services you require and receive a queue token instantly.</p>
+    <main className="page">
+      <section className="page-hero">
+        <div className="page-eyebrow">Customer kiosk</div>
+        <h1 className="page-title">Select your services</h1>
+        <p className="page-subtitle">
+          Choose the services you need and get a queue token instantly.
+        </p>
+      </section>
 
       {services.length === 0 ? (
-        <p>No services are currently configured for this kiosk.</p>
+        <section className="page-card">
+          <p>No services are currently configured for this kiosk.</p>
+        </section>
       ) : (
-        <div style={{ display: "grid", gap: 12 }}>
-          {services.map((service) => (
-            <button
-              key={service.id}
-              type="button"
-              onClick={() => toggleService(service.id)}
-              style={{
-                padding: 18,
-                border: selectedServices.includes(service.id)
-                  ? "2px solid #0066ff"
-                  : "1px solid #ccc",
-                background: selectedServices.includes(service.id)
-                  ? "#eef4ff"
-                  : "white",
-                textAlign: "left",
-                borderRadius: 10,
-                cursor: "pointer",
-              }}
-            >
-              <strong>{service.name}</strong>
-              <div style={{ fontSize: 14, color: "#555" }}>
-                {service.prefix} • {service.averageServiceTime} min average
-              </div>
-            </button>
-          ))}
-        </div>
+        <section className="page-card">
+          <div className="content-grid-2">
+            {services.map((service) => (
+              <button
+                key={service.id}
+                type="button"
+                className={
+                  selectedServices.includes(service.id)
+                    ? "secondary-btn"
+                    : "section-card"
+                }
+                onClick={() => toggleService(service.id)}
+                style={{ textAlign: "left" }}
+              >
+                <strong>{service.name}</strong>
+                <p className="kicker">
+                  {service.prefix} • {service.averageServiceTime} min average
+                </p>
+              </button>
+            ))}
+          </div>
+        </section>
       )}
 
-      <button
-        type="button"
-        onClick={submit}
-        disabled={busy}
-        style={{ marginTop: 24, padding: "12px 20px", borderRadius: 8 }}
-      >
-        {busy ? "Submitting..." : "Create Token"}
-      </button>
-
-      {error && <p style={{ color: "red", marginTop: 16 }}>{error}</p>}
-    </div>
+      <div className="page-card" style={{ textAlign: "center" }}>
+        <button
+          className="primary-btn"
+          type="button"
+          onClick={submit}
+          disabled={busy}
+        >
+          {busy ? "Submitting..." : "Create Token"}
+        </button>
+        {error && (
+          <div className="error-banner" style={{ marginTop: 16 }}>
+            {error}
+          </div>
+        )}
+      </div>
+    </main>
   );
 }

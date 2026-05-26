@@ -17,9 +17,13 @@ export default function SuperAdminPage() {
   const [requests, setRequests] = useState<DemoRequest[]>([]);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  const [selectedApprovalId, setSelectedApprovalId] = useState<string | null>(null);
+  const [selectedApprovalId, setSelectedApprovalId] = useState<string | null>(
+    null,
+  );
   const [temporaryPassword, setTemporaryPassword] = useState("");
-  const [processingRequestId, setProcessingRequestId] = useState<string | null>(null);
+  const [processingRequestId, setProcessingRequestId] = useState<string | null>(
+    null,
+  );
 
   useEffect(() => {
     const demoRequestQuery = query(
@@ -69,9 +73,7 @@ export default function SuperAdminPage() {
         temporaryPassword,
       });
 
-      setMessage(
-        `Approved ${requestId}. Admin: ${result.data.adminEmail}.`,
-      );
+      setMessage(`Approved ${requestId}. Admin: ${result.data.adminEmail}.`);
       cancelApproval();
     } catch (err: any) {
       console.error(err);
@@ -99,95 +101,106 @@ export default function SuperAdminPage() {
   }
 
   return (
-    <div style={{ padding: 24, maxWidth: 1100, margin: "0 auto" }}>
-      <h1>Superadmin Console</h1>
-      <p>Review new demo requests and create approved organizations.</p>
+    <main className="page">
+      <section className="page-hero">
+        <div className="page-eyebrow">Superadmin</div>
+        <h1 className="page-title">Demo request review</h1>
+        <p className="page-subtitle">
+          Review demo requests and approve new organizations from the central
+          console.
+        </p>
+      </section>
 
-      {message && <p style={{ color: "green" }}>{message}</p>}
-      {error && <p style={{ color: "red" }}>{error}</p>}
+      {message && <div className="success-banner">{message}</div>}
+      {error && <div className="error-banner">{error}</div>}
 
-      <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 24 }}>
-        <thead>
-          <tr>
-            <th style={th}>Organization</th>
-            <th style={th}>Contact</th>
-            <th style={th}>Email</th>
-            <th style={th}>Industry</th>
-            <th style={th}>Message</th>
-            <th style={th}>Status</th>
-            <th style={th}>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {requests.map((request) => (
-            <tr key={request.id}>
-              <td style={td}>{request.organizationName}</td>
-              <td style={td}>{request.contactName}</td>
-              <td style={td}>{request.email}</td>
-              <td style={td}>{request.industry || "N/A"}</td>
-              <td style={td}>{request.message || "-"}</td>
-              <td style={td}>{request.status}</td>
-              <td style={td}>
-                {request.status === "pending" ? (
-                  selectedApprovalId === request.id ? (
-                    <div style={{ display: "grid", gap: 8 }}>
-                      <input
-                        type="password"
-                        value={temporaryPassword}
-                        onChange={(event) => setTemporaryPassword(event.target.value)}
-                        placeholder="Temp password"
-                        style={{ padding: 8, width: "100%" }}
-                      />
-                      <div>
+      <section className="table-card" style={{ marginTop: 24 }}>
+        <table>
+          <thead>
+            <tr>
+              <th>Organization</th>
+              <th>Contact</th>
+              <th>Email</th>
+              <th>Industry</th>
+              <th>Message</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {requests.map((request) => (
+              <tr key={request.id}>
+                <td>{request.organizationName}</td>
+                <td>{request.contactName}</td>
+                <td>{request.email}</td>
+                <td>{request.industry || "N/A"}</td>
+                <td>{request.message || "-"}</td>
+                <td>{request.status}</td>
+                <td>
+                  {request.status === "pending" ? (
+                    selectedApprovalId === request.id ? (
+                      <div className="form-grid">
+                        <input
+                          type="password"
+                          value={temporaryPassword}
+                          onChange={(event) =>
+                            setTemporaryPassword(event.target.value)
+                          }
+                          placeholder="Temp password"
+                        />
+                        <div className="action-group">
+                          <button
+                            type="button"
+                            className="primary-btn"
+                            onClick={() => confirmApproval(request.id)}
+                            disabled={processingRequestId === request.id}
+                          >
+                            {processingRequestId === request.id
+                              ? "Approving..."
+                              : "Confirm Approval"}
+                          </button>
+                          <button
+                            type="button"
+                            className="secondary-btn"
+                            onClick={cancelApproval}
+                            disabled={processingRequestId === request.id}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="action-group">
                         <button
                           type="button"
-                          onClick={() => confirmApproval(request.id)}
+                          className="primary-btn"
+                          onClick={() => beginApproval(request.id)}
+                          disabled={processingRequestId === request.id}
+                        >
+                          Approve
+                        </button>
+                        <button
+                          type="button"
+                          className="secondary-btn"
+                          onClick={() => rejectRequest(request.id)}
                           disabled={processingRequestId === request.id}
                         >
                           {processingRequestId === request.id
-                            ? "Approving..."
-                            : "Confirm Approval"}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={cancelApproval}
-                          disabled={processingRequestId === request.id}
-                          style={{ marginLeft: 8 }}
-                        >
-                          Cancel
+                            ? "Rejecting..."
+                            : "Reject"}
                         </button>
                       </div>
-                    </div>
+                    )
                   ) : (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => beginApproval(request.id)}
-                        disabled={processingRequestId === request.id}
-                      >
-                        Approve
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => rejectRequest(request.id)}
-                        disabled={processingRequestId === request.id}
-                        style={{ marginLeft: 8 }}
-                      >
-                        {processingRequestId === request.id
-                          ? "Rejecting..."
-                          : "Reject"}
-                      </button>
-                    </>
-                  )
-                ) : (
-                  <span>{request.status}</span>
-                )}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+                    <span>{request.status}</span>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
+    </main>
   );
 }
 

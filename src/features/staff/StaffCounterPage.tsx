@@ -146,38 +146,37 @@ export default function StaffCounterPage() {
 
   if (error && !counter) {
     return (
-      <div style={{ padding: 24 }}>
-        <p style={{ color: "red" }}>{error}</p>
-      </div>
+      <main className="page page-center">
+        <div className="error-banner">{error}</div>
+      </main>
     );
   }
 
   return (
-    <div style={{ padding: 24, maxWidth: 900, margin: "0 auto" }}>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 24,
-        }}
-      >
-        <h1>
-          Staff Counter: {counter?.name} ({counter?.counterNumber})
+    <main className="page">
+      <section className="page-hero">
+        <div className="page-eyebrow">Staff counter</div>
+        <h1 className="page-title">
+          {counter?.name} ({counter?.counterNumber})
         </h1>
-        <button onClick={logout} style={{ padding: "8px 16px" }}>
+        <p className="page-subtitle">
+          Manage the queue for your assigned counter.
+        </p>
+      </section>
+
+      <div className="action-group" style={{ marginBottom: 24 }}>
+        <button type="button" className="nav-button" onClick={logout}>
           Logout
         </button>
       </div>
 
-      {message && <p style={{ color: "green", marginBottom: 16 }}>{message}</p>}
-      {error && <p style={{ color: "red", marginBottom: 16 }}>{error}</p>}
+      {message && <div className="success-banner">{message}</div>}
+      {error && <div className="error-banner">{error}</div>}
 
-      <section style={card}>
+      <section className="page-card">
         <h2>Now Serving</h2>
-
         {currentStep ? (
-          <>
+          <div className="step-card">
             <p>
               <strong>Token:</strong> {currentStep.tokenNumber}
             </p>
@@ -187,56 +186,44 @@ export default function StaffCounterPage() {
             <p>
               <strong>Status:</strong> {currentStep.status}
             </p>
-            <button onClick={completeCurrent} style={button}>
+            <button className="primary-btn" onClick={completeCurrent}>
               Complete Service
             </button>
-          </>
+          </div>
         ) : (
           <p>No current customer.</p>
         )}
 
-        <button onClick={callNext} style={{ ...button, marginTop: 16 }}>
+        <button
+          className="primary-btn"
+          style={{ marginTop: 18 }}
+          onClick={callNext}
+        >
           Call Next Customer
         </button>
       </section>
 
-      <section style={card}>
+      <section className="page-card" style={{ marginTop: 24 }}>
         <h2>Waiting Queue</h2>
 
         {steps.filter((step) => step.status === "waiting").length === 0 ? (
           <p>No customers waiting.</p>
         ) : (
-          <div>
+          <div className="content-grid-1">
             {steps
               .filter((step) => step.status === "waiting")
               .map((step) => (
-                <div
-                  key={step.id}
-                  style={{ padding: "8px 0", borderBottom: "1px solid #ddd" }}
-                >
-                  <strong>{step.tokenNumber}</strong> - {step.serviceName}
+                <div key={step.id} className="step-row">
+                  <div>
+                    <strong>{step.tokenNumber}</strong>
+                    <p className="kicker">{step.serviceName}</p>
+                  </div>
+                  <div>{step.status}</div>
                 </div>
               ))}
           </div>
         )}
       </section>
-    </div>
+    </main>
   );
 }
-
-const card = {
-  border: "1px solid #ddd",
-  padding: 20,
-  borderRadius: 8,
-  marginBottom: 24,
-};
-
-const button = {
-  background: "#0066ff",
-  color: "white",
-  border: "none",
-  padding: "12px 20px",
-  borderRadius: 8,
-  cursor: "pointer",
-  fontSize: 14,
-};

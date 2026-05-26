@@ -58,37 +58,47 @@ export default function LoginPage() {
   }
 
   return (
-    <div style={{ maxWidth: 420, margin: "80px auto", padding: 24 }}>
-      <h1>Internal Login</h1>
-      <p>This login is for superadmins, organization admins, and staff.</p>
+    <main className="page page-center">
+      <section className="page-hero">
+        <div className="page-eyebrow">Internal access</div>
+        <h1 className="page-title">Internal Login</h1>
+        <p className="page-subtitle">
+          This login is for superadmins, organization admins, and staff.
+        </p>
+      </section>
 
-      <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: 16 }}>
-          <label>Email</label>
-          <input
-            type="email"
-            required
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            style={{ width: "100%", padding: 8, marginTop: 4 }}
-          />
-        </div>
+      <section
+        className="page-card"
+        style={{ maxWidth: 520, margin: "0 auto" }}
+      >
+        <form className="form-grid" onSubmit={handleSubmit}>
+          <label>
+            Email
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+            />
+          </label>
 
-        <div style={{ marginBottom: 16 }}>
-          <label>Password</label>
-          <input
-            type="password"
-            required
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            style={{ width: "100%", padding: 8, marginTop: 4 }}
-          />
-        </div>
+          <label>
+            Password
+            <input
+              type="password"
+              required
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+            />
+          </label>
 
-        <button type="submit">Login</button>
-      </form>
+          <button className="primary-btn" type="submit">
+            Login
+          </button>
+        </form>
 
-      {error && <p style={{ color: "red" }}>{error}</p>}
-    </div>
+        {error && <div className="error-banner">{error}</div>}
+      </section>
+    </main>
   );
 }

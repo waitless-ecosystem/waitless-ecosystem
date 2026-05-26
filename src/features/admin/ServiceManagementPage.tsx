@@ -1,5 +1,14 @@
 import { FormEvent, useEffect, useState } from "react";
-import { addDoc, collection, onSnapshot, query, serverTimestamp, updateDoc, doc, where } from "firebase/firestore";
+import {
+  addDoc,
+  collection,
+  onSnapshot,
+  query,
+  serverTimestamp,
+  updateDoc,
+  doc,
+  where,
+} from "firebase/firestore";
 import { useAuth } from "../auth/AuthProvider";
 import { db } from "../../firebase/firebase";
 
@@ -31,7 +40,10 @@ export default function ServiceManagementPage() {
 
     return onSnapshot(serviceQuery, (snapshot) => {
       setServices(
-        snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as Service[],
+        snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as Service[],
       );
     });
   }, [organizationId]);
@@ -97,7 +109,9 @@ export default function ServiceManagementPage() {
             type="number"
             min={1}
             value={averageServiceTime}
-            onChange={(event) => setAverageServiceTime(Number(event.target.value))}
+            onChange={(event) =>
+              setAverageServiceTime(Number(event.target.value))
+            }
           />
         </label>
 
@@ -114,7 +128,8 @@ export default function ServiceManagementPage() {
           <ul>
             {services.map((service) => (
               <li key={service.id} style={{ marginBottom: 8 }}>
-                <strong>{service.name}</strong> ({service.prefix}) — {service.averageServiceTime} min
+                <strong>{service.name}</strong> ({service.prefix}) —{" "}
+                {service.averageServiceTime} min
                 <button
                   type="button"
                   onClick={() => deactivateService(service.id)}
@@ -130,18 +145,3 @@ export default function ServiceManagementPage() {
     </div>
   );
 }
-
-const formStyle = {
-  display: "grid",
-  gap: 16,
-  maxWidth: 520,
-};
-
-const button = {
-  background: "#0066ff",
-  color: "white",
-  border: "none",
-  padding: "12px 20px",
-  borderRadius: 8,
-  cursor: "pointer",
-};

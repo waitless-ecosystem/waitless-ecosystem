@@ -42,80 +42,72 @@ export default function RequestDemoPage() {
   }
 
   return (
-    <div style={{ maxWidth: 700, margin: "60px auto", padding: 24 }}>
-      <h1>Request a Demo</h1>
-      <p>
-        Share your organization details below. Once approved, your administrator
-        will receive access to configure services, counters, and kiosk flow.
-      </p>
+    <main className="page">
+      <section className="page-hero">
+        <div className="page-eyebrow">Demo requests</div>
+        <h1 className="page-title">Request a Demo</h1>
+        <p className="page-subtitle">
+          Share your organization details below. Once approved, your
+          administrator will receive access to configure services, counters, and
+          kiosk flow.
+        </p>
+      </section>
 
-      <form onSubmit={handleSubmit} style={formStyle}>
-        <label>
-          Organization Name
-          <input
-            required
-            value={organizationName}
-            onChange={(event) => setOrganizationName(event.target.value)}
-          />
-        </label>
+      <section className="page-card">
+        <form className="form-grid" onSubmit={handleSubmit}>
+          <label>
+            Organization Name
+            <input
+              required
+              value={organizationName}
+              onChange={(event) => setOrganizationName(event.target.value)}
+            />
+          </label>
 
-        <label>
-          Contact Name
-          <input
-            required
-            value={contactName}
-            onChange={(event) => setContactName(event.target.value)}
-          />
-        </label>
+          <label>
+            Contact Name
+            <input
+              required
+              value={contactName}
+              onChange={(event) => setContactName(event.target.value)}
+            />
+          </label>
 
-        <label>
-          Contact Email
-          <input
-            required
-            type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-          />
-        </label>
+          <label>
+            Contact Email
+            <input
+              required
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+            />
+          </label>
 
-        <label>
-          Industry
-          <input
-            value={industry}
-            onChange={(event) => setIndustry(event.target.value)}
-            placeholder="Banking, Healthcare, Retail, etc."
-          />
-        </label>
+          <label>
+            Industry
+            <input
+              value={industry}
+              onChange={(event) => setIndustry(event.target.value)}
+              placeholder="Banking, Healthcare, Retail, etc."
+            />
+          </label>
 
-        <label>
-          What would you like to achieve with Waitless?
-          <textarea
-            value={message}
-            onChange={(event) => setMessage(event.target.value)}
-          />
-        </label>
+          <label>
+            What would you like to achieve with Waitless?
+            <textarea
+              value={message}
+              onChange={(event) => setMessage(event.target.value)}
+            />
+          </label>
 
-        <button type="submit" style={submitButton}>
-          Send Request
-        </button>
-      </form>
+          <button className="primary-btn" type="submit">
+            Send Request
+          </button>
+        </form>
 
-      {feedback && <p style={{ color: "green" }}>{feedback}</p>}
-      {error && <p style={{ color: "red" }}>{error}</p>}
-    </div>
+        {feedback && <div className="success-banner">{feedback}</div>}
+        {error && <div className="error-banner">{error}</div>}
+      </section>
+    </main>
   );
 }
-
-const formStyle = {
-  display: "grid",
-  gap: 16,
-};
-
-const submitButton = {
-  background: "#0066ff",
-  color: "white",
-  border: "none",
-  padding: "12px 20px",
-  borderRadius: 8,
-  cursor: "pointer",
-};

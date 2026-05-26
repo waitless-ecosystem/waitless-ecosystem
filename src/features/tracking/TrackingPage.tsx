@@ -1,6 +1,13 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { collection, doc, onSnapshot, orderBy, query, where } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  onSnapshot,
+  orderBy,
+  query,
+  where,
+} from "firebase/firestore";
 import { db } from "../../firebase/firebase";
 
 type Token = {
@@ -25,7 +32,13 @@ export default function TrackingPage() {
   useEffect(() => {
     if (!organizationId || !tokenId) return;
 
-    const tokenRef = doc(db, "organizations", organizationId, "tokens", tokenId);
+    const tokenRef = doc(
+      db,
+      "organizations",
+      organizationId,
+      "tokens",
+      tokenId,
+    );
     const unsubscribeToken = onSnapshot(tokenRef, (snapshot) => {
       setToken(snapshot.exists() ? (snapshot.data() as Token) : null);
     });
@@ -51,35 +64,44 @@ export default function TrackingPage() {
   }, [organizationId, tokenId]);
 
   return (
-    <div style={{ padding: 24, maxWidth: 900, margin: "0 auto" }}>
-      <h1>Queue Tracking</h1>
-      <p>Real-time status for your token.</p>
+    <main className="page">
+      <section className="page-hero">
+        <div className="page-eyebrow">Queue tracking</div>
+        <h1 className="page-title">Real-time token status</h1>
+        <p className="page-subtitle">
+          Follow each step of your queue journey and see the latest status.
+        </p>
+      </section>
 
       {token ? (
         <>
-          <div style={statusCard}>
+          <section className="page-card">
             <h2>Token</h2>
-            <p style={{ fontSize: 32 }}>{token.tokenNumber}</p>
-            <p>Status: {token.status}</p>
-          </div>
+            <p style={{ fontSize: 34, margin: "16px 0" }}>
+              {token.tokenNumber}
+            </p>
+            <div className="kicker">Status: {token.status}</div>
+          </section>
 
-          <div style={{ marginTop: 24 }}>
+          <section className="page-card" style={{ marginTop: 24 }}>
             <h2>Service Journey</h2>
             {steps.map((step) => (
-              <div key={step.id} style={stepRow}>
+              <div key={step.id} className="step-row">
                 <div>
                   <strong>{step.serviceName}</strong>
-                  <div style={{ color: "#555" }}>Step {step.sequenceNumber}</div>
+                  <p className="kicker">Step {step.sequenceNumber}</p>
                 </div>
                 <div>{step.status}</div>
               </div>
             ))}
-          </div>
+          </section>
         </>
       ) : (
-        <p>Loading token status…</p>
+        <section className="page-card">
+          <p>Loading token status…</p>
+        </section>
       )}
-    </div>
+    </main>
   );
 }
 

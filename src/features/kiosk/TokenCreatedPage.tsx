@@ -40,16 +40,29 @@ export default function TokenCreatedPage() {
   }, [organizationId, tokenId]);
 
   return (
-    <div style={{ padding: 24, textAlign: "center" }}>
-      <h1>Your Token</h1>
+    <main className="page page-center">
+      <section className="page-hero">
+        <div className="page-eyebrow">Queue token</div>
+        <h1 className="page-title">Your Token</h1>
+        <p className="page-subtitle">
+          Scan the QR code to track your queue and stay informed in real time.
+        </p>
+      </section>
 
-      <h2>{token?.tokenNumber}</h2>
-
-      <p>Scan this QR code to track your queue in real time.</p>
-
-      {qrCodeUrl && <img src={qrCodeUrl} alt="Queue tracking QR code" />}
-
-      <p>Status: {token?.status}</p>
-    </div>
+      <section
+        className="page-card"
+        style={{ width: "100%", maxWidth: 480, textAlign: "center" }}
+      >
+        <h2>{token?.tokenNumber}</h2>
+        {qrCodeUrl && (
+          <img
+            src={qrCodeUrl}
+            alt="Queue tracking QR code"
+            style={{ maxWidth: "100%", borderRadius: 20, margin: "24px 0" }}
+          />
+        )}
+        <div className="kicker">Status: {token?.status}</div>
+      </section>
+    </main>
   );
 }

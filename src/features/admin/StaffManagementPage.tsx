@@ -86,7 +86,6 @@ export default function StaffManagementPage() {
       setError("Organization ID is missing.");
       return;
     }
-
     if (!staffCounterId) {
       setError("Please select a counter for this staff member.");
       return;
@@ -125,151 +124,109 @@ export default function StaffManagementPage() {
   }
 
   return (
-    <div style={{ padding: 24, maxWidth: 1100, margin: "0 auto" }}>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 24,
-        }}
-      >
-        <div>
-          <h1>Staff Management</h1>
-          <p>Create and assign staff to counters.</p>
-        </div>
-        <button onClick={logout} style={button}>
+    <main className="page">
+      <section className="page-hero">
+        <div className="page-eyebrow">Staff operations</div>
+        <h1 className="page-title">Staff Management</h1>
+        <p className="page-subtitle">Create and assign staff to counters.</p>
+      </section>
+
+      <div className="action-group" style={{ marginBottom: 24 }}>
+        <button type="button" className="nav-button" onClick={logout}>
           Logout
         </button>
-      </div>
-
-      <div style={{ marginBottom: 24 }}>
-        <Link to="/admin" style={linkButton}>
+        <Link to="/admin" className="secondary-btn">
           Back to Organization Admin Dashboard
         </Link>
       </div>
 
-      {message && <p style={{ color: "green" }}>{message}</p>}
-      {error && <p style={{ color: "red" }}>{error}</p>}
+      {message && <div className="success-banner">{message}</div>}
+      {error && <div className="error-banner">{error}</div>}
 
-      <section style={card}>
+      <section className="page-card">
         <h2>Add Staff and Assign to Counter</h2>
+        <form className="form-grid" onSubmit={createStaff}>
+          <label>
+            Staff name
+            <input
+              required
+              placeholder="Staff name"
+              value={staffName}
+              onChange={(event) => setStaffName(event.target.value)}
+            />
+          </label>
 
-        <form onSubmit={createStaff}>
-          <input
-            required
-            placeholder="Staff name"
-            value={staffName}
-            onChange={(event) => setStaffName(event.target.value)}
-            style={input}
-          />
+          <label>
+            Staff email
+            <input
+              required
+              type="email"
+              placeholder="Staff email"
+              value={staffEmail}
+              onChange={(event) => setStaffEmail(event.target.value)}
+            />
+          </label>
 
-          <input
-            required
-            type="email"
-            placeholder="Staff email"
-            value={staffEmail}
-            onChange={(event) => setStaffEmail(event.target.value)}
-            style={input}
-          />
+          <label>
+            Temporary password
+            <input
+              required
+              type="password"
+              placeholder="Temporary staff password"
+              value={staffPassword}
+              onChange={(event) => setStaffPassword(event.target.value)}
+            />
+          </label>
 
-          <input
-            required
-            type="password"
-            placeholder="Temporary staff password"
-            value={staffPassword}
-            onChange={(event) => setStaffPassword(event.target.value)}
-            style={input}
-          />
+          <label>
+            Assigned counter
+            <select
+              required
+              value={staffCounterId}
+              onChange={(event) => setStaffCounterId(event.target.value)}
+            >
+              <option value="">Select assigned counter</option>
+              {counters.map((counter) => (
+                <option key={counter.id} value={counter.id}>
+                  {counter.name} ({counter.counterNumber})
+                </option>
+              ))}
+            </select>
+          </label>
 
-          <select
-            required
-            value={staffCounterId}
-            onChange={(event) => setStaffCounterId(event.target.value)}
-            style={input}
-          >
-            <option value="">Select assigned counter</option>
-            {counters.map((counter) => (
-              <option key={counter.id} value={counter.id}>
-                {counter.name} ({counter.counterNumber})
-              </option>
-            ))}
-          </select>
-
-          <button type="submit">Create Staff and Assign Counter</button>
+          <button className="primary-btn" type="submit">
+            Create Staff and Assign Counter
+          </button>
         </form>
       </section>
 
-      <section style={card}>
+      <section className="page-card" style={{ marginTop: 24 }}>
         <h2>Staff Users</h2>
         {staffUsers.length === 0 ? (
           <p>No staff users created yet.</p>
         ) : (
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr>
-                <th style={th}>Name</th>
-                <th style={th}>Email</th>
-                <th style={th}>Assigned Counter</th>
-              </tr>
-            </thead>
-            <tbody>
-              {staffUsers.map((staff) => (
-                <tr key={staff.uid}>
-                  <td style={td}>{staff.displayName}</td>
-                  <td style={td}>{staff.email}</td>
-                  <td style={td}>{getCounterLabel(staff.assignedCounterId)}</td>
+          <div className="table-card">
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Assigned Counter</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {staffUsers.map((staff) => (
+                  <tr key={staff.uid}>
+                    <td>{staff.displayName}</td>
+                    <td>{staff.email}</td>
+                    <td>{getCounterLabel(staff.assignedCounterId)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </section>
-    </div>
+    </main>
   );
 }
-
-const card = {
-  border: "1px solid #ddd",
-  padding: 20,
-  borderRadius: 8,
-  marginBottom: 24,
-};
-
-const input = {
-  display: "block",
-  width: "100%",
-  marginBottom: 12,
-  padding: 10,
-  borderRadius: 6,
-  border: "1px solid #ccc",
-};
-
-const button = {
-  background: "#0066ff",
-  color: "white",
-  border: "none",
-  padding: "12px 20px",
-  borderRadius: 8,
-  cursor: "pointer",
-};
-
-const linkButton = {
-  display: "inline-block",
-  background: "#f5f5f5",
-  color: "#333",
-  padding: "10px 16px",
-  borderRadius: 8,
-  textDecoration: "none",
-};
-
-const th = {
-  textAlign: "left" as const,
-  padding: 10,
-  borderBottom: "1px solid #ddd",
-};
-
-const td = {
-  padding: 10,
-  borderBottom: "1px solid #eee",
-};

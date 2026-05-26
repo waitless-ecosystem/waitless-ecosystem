@@ -1,5 +1,14 @@
 import { FormEvent, useEffect, useState } from "react";
-import { addDoc, collection, onSnapshot, query, serverTimestamp, updateDoc, doc, where } from "firebase/firestore";
+import {
+  addDoc,
+  collection,
+  onSnapshot,
+  query,
+  serverTimestamp,
+  updateDoc,
+  doc,
+  where,
+} from "firebase/firestore";
 import { useAuth } from "../auth/AuthProvider";
 import { db } from "../../firebase/firebase";
 
@@ -29,7 +38,10 @@ export default function CounterManagementPage() {
 
     return onSnapshot(counterQuery, (snapshot) => {
       setCounters(
-        snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as Counter[],
+        snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as Counter[],
       );
     });
   }, [organizationId]);
@@ -118,17 +130,3 @@ export default function CounterManagementPage() {
     </div>
   );
 }
-
-const formStyle = {
-  display: "grid",
-  gap: 16,
-};
-
-const button = {
-  background: "#0066ff",
-  color: "white",
-  border: "none",
-  padding: "12px 20px",
-  borderRadius: 8,
-  cursor: "pointer",
-};
