@@ -12,16 +12,18 @@ import AdminDashboardPage from "./features/admin/AdminDashboardPage";
 import ServiceManagementPage from "./features/admin/ServiceManagementPage";
 import CounterManagementPage from "./features/admin/CounterManagementPage";
 import ServiceAssignmentPage from "./features/admin/ServiceAssignmentPage";
+import StaffManagementPage from "./features/admin/StaffManagementPage";
 
 import KioskPage from "./features/kiosk/KioskPage";
 import TokenCreatedPage from "./features/kiosk/TokenCreatedPage";
 
 import TrackingPage from "./features/tracking/TrackingPage";
+import StaffDashboard from "./features/staff/StaffDashboard";
 import StaffCounterPage from "./features/staff/StaffCounterPage";
 import CounterDisplayPage from "./features/display/CounterDisplayPage";
 
 function Navigation() {
-  const { currentUser, isSuperAdmin, isOrganizationAdmin, logout } = useAuth();
+  const { currentUser, isSuperAdmin, isOrganizationAdmin, isStaff, logout } = useAuth();
 
   return (
     <nav style={{ display: "flex", flexWrap: "wrap", gap: 16, padding: 16 }}>
@@ -33,6 +35,8 @@ function Navigation() {
       {isSuperAdmin && <Link to="/superadmin">Superadmin</Link>}
 
       {isOrganizationAdmin && <Link to="/admin">Organization Admin</Link>}
+
+      {isStaff && <Link to="/staff">Staff Counter</Link>}
 
       {currentUser && <button onClick={logout}>Logout</button>}
     </nav>
@@ -91,6 +95,14 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/admin/staff"
+          element={
+            <ProtectedRoute requireOrganizationAdmin>
+              <StaffManagementPage />
+            </ProtectedRoute>
+          }
+        />
 
         <Route path="/kiosk/:organizationId" element={<KioskPage />} />
         <Route
@@ -100,6 +112,15 @@ export default function App() {
         <Route
           path="/track/:organizationId/:tokenId"
           element={<TrackingPage />}
+        />
+
+        <Route
+          path="/staff"
+          element={
+            <ProtectedRoute>
+              <StaffDashboard />
+            </ProtectedRoute>
+          }
         />
 
         <Route

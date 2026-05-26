@@ -20,6 +20,27 @@ async function requireSuperadmin(uid: string) {
   }
 }
 
+async function requireOrganizationAdminOrStaff(uid: string, organizationId: string, counterId?: string) {
+  const userSnap = await db.collection("users").doc(uid).get();
+
+  if (!userSnap.exists) {
+    throw new HttpsError("permission-denied", "User profile not found.");
+  }
+
+  const user = userSnap.data();
+
+  if (user?.status !== "active") {
+    throw new HttpsError("permission-denied", "User account is not active.");
+  }
+
+  const isOrganizationAdmin = user?.platformRole === "organization_admin" && user?.organizationId === organizationId;
+  const isStaffForCounter = user?.platformRole === "staff" && user?.organizationId === organizationId && (!counterId || user?.assignedCounterId === counterId);
+
+  if (!isOrganizationAdmin && !isStaffForCounter) {
+    throw new HttpsError("permission-denied", "You do not have permission to perform this action.");
+  }
+}
+
 export const approveDemoRequest = onCall(async (request) => {
   try {
     if (!request.auth) {
@@ -180,6 +201,132 @@ export const rejectDemoRequest = onCall(async (request) => {
     throw new HttpsError(
       "internal",
       error.message || "Rejection failed because of an internal server error.",
+    );
+  }
+});
+
+export const createStaffUser = onCall(async (request) => {
+  try {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Login required.");
+    }
+
+    const {
+      organizationId,
+      counterId,
+      email,
+      password,
+      displayName,
+    } = request.data;
+
+    if (!organizationId || !counterId || !email || !password || !displayName) {
+      throw new HttpsError(
+        "invalid-argument",
+        "Organization, counter, email, password, and staff name are required."
+      );
+    }
+
+    const callerSnap = await db.collection("users").doc(request.auth.uid).get();
+
+    if (!callerSnap.exists) {
+      throw new HttpsError("permission-denied", "User profile not found.");
+    }
+
+    const caller = callerSnap.data();
+
+    const isOrganizationAdmin =
+      caller?.platformRole === "organization_admin" &&
+      caller?.status === "active" &&
+      caller?.organizationId === organizationId;
+
+    const isSuperadmin =
+      caller?.platformRole === "superadmin" &&
+      caller?.status === "active";
+
+    if (!isOrganizationAdmin && !isSuperadmin) {
+      throw new HttpsError(
+        "permission-denied",
+        "Only an organization administrator can create staff users."
+      );
+    }
+
+    const organizationRef = db.collection("organizations").doc(organizationId);
+    const organizationSnap = await organizationRef.get();
+
+    if (!organizationSnap.exists) {
+      throw new HttpsError("not-found", "Organization not found.");
+    }
+
+    const counterRef = organizationRef.collection("counters").doc(counterId);
+    const counterSnap = await counterRef.get();
+
+    if (!counterSnap.exists) {
+      throw new HttpsError("not-found", "Counter not found.");
+    }
+
+    let staffUser;
+
+    try {
+      staffUser = await admin.auth().createUser({
+        email,
+        password,
+        displayName,
+        emailVerified: true,
+      });
+    } catch (error: any) {
+      if (error.code === "auth/email-already-exists") {
+        staffUser = await admin.auth().getUserByEmail(email);
+      } else {
+        console.error("Error creating staff user:", error);
+        throw new HttpsError(
+          "internal",
+          error.message || "Could not create staff user."
+        );
+      }
+    }
+
+    await db.collection("users").doc(staffUser.uid).set(
+      {
+        uid: staffUser.uid,
+        email,
+        displayName,
+        platformRole: "staff",
+        status: "active",
+        organizationId,
+        assignedCounterId: counterId,
+        createdBy: request.auth.uid,
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+
+    await counterRef.set(
+      {
+        assignedStaffId: staffUser.uid,
+        assignedStaffEmail: email,
+        assignedStaffName: displayName,
+        updatedAt: FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+
+    return {
+      success: true,
+      staffUid: staffUser.uid,
+      staffEmail: email,
+      assignedCounterId: counterId,
+    };
+  } catch (error: any) {
+    console.error("createStaffUser failed:", error);
+
+    if (error instanceof HttpsError) {
+      throw error;
+    }
+
+    throw new HttpsError(
+      "internal",
+      error.message || "Could not create staff user."
     );
   }
 });
@@ -357,6 +504,10 @@ export const createCustomerToken = onCall(async (request) => {
 
 export const callNextCustomer = onCall(async (request) => {
   try {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Login required.");
+    }
+
     const { organizationId, counterId } = request.data;
 
     if (!organizationId || !counterId) {
@@ -365,6 +516,8 @@ export const callNextCustomer = onCall(async (request) => {
         "Organization and counter are required.",
       );
     }
+
+    await requireOrganizationAdminOrStaff(request.auth.uid, organizationId, counterId);
 
     const organizationRef = db.collection("organizations").doc(organizationId);
     const counterRef = organizationRef.collection("counters").doc(counterId);
@@ -429,11 +582,17 @@ export const callNextCustomer = onCall(async (request) => {
 
 export const completeCurrentService = onCall(async (request) => {
   try {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Login required.");
+    }
+
     const { organizationId, counterId, stepId } = request.data;
 
     if (!organizationId || !counterId || !stepId) {
       throw new HttpsError("invalid-argument", "Missing required values.");
     }
+
+    await requireOrganizationAdminOrStaff(request.auth.uid, organizationId, counterId);
 
     const organizationRef = db.collection("organizations").doc(organizationId);
     const stepRef = organizationRef.collection("queueSteps").doc(stepId);

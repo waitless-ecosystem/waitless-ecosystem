@@ -68,6 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
+      setLoading(true);
       const userRef = doc(db, "users", user.uid);
 
       unsubscribeProfile = onSnapshot(userRef, (snapshot) => {

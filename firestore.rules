@@ -39,9 +39,18 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      allow read: if signedIn() && (request.auth.uid == userId || isSuperAdmin());
-      allow write: if isSuperAdmin();
-    }
+  allow read: if signedIn()
+    && (
+      request.auth.uid == userId
+      || isSuperAdmin()
+      || (
+        isOrganizationAdmin()
+        && resource.data.organizationId == userDoc().data.organizationId
+      )
+    );
+
+  allow write: if isSuperAdmin();
+}
 
     match /organizations/{orgId} {
       allow read: if true;

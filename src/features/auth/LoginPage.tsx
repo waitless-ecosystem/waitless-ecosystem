@@ -34,7 +34,15 @@ export default function LoginPage() {
       );
     }
 
-    return <Navigate to="/admin" replace />;
+    return (
+      <div style={{ maxWidth: 600, margin: "80px auto", padding: 24 }}>
+        <h1>No Counter Assigned</h1>
+        <p>
+          Your staff account is active, but no counter has been assigned to your
+          profile. Please contact your organization administrator.
+        </p>
+      </div>
+    );
   }
 
   async function handleSubmit(event: FormEvent) {
