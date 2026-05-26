@@ -37,10 +37,10 @@ auth.onAuthStateChanged((user) => {
 
     if (user) {
         if (currentPage === "login.html" || currentPage === "signup.html" || currentPage === "") {
-            window.location.href = 'welcome.html';
+            window.location.href = 'selectionPage.html';
         }
     } else {
-        if (currentPage === "qrscan.html" || currentPage === "welcome.html") {
+        if (currentPage === "qrscan.html" || currentPage === "selectionPage.html") {
             window.location.href = 'login.html';
         }
     }
@@ -51,7 +51,7 @@ async function handleGoogleSignIn(response) {
     try {
         const credential = firebase.auth.GoogleAuthProvider.credential(response.credential);
         await auth.signInWithCredential(credential);
-        window.location.href = 'welcome.html';
+        window.location.href = 'selectionPage.html';
     } catch (error) {
         console.error('Google sign-in error:', error);
         alert('Error signing in with Google: ' + error.message);
@@ -99,7 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const password = document.getElementById('password').value;
             try {
                 await auth.signInWithEmailAndPassword(email, password);
-                window.location.href = 'welcome.html';
+                window.location.href = 'selectionPage.html';
             } catch (error) {
                 handleAuthError(error);
             }
@@ -121,7 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 await auth.createUserWithEmailAndPassword(email, password);
                 alert('Account Created!');
-                window.location.href = 'welcome.html';
+                window.location.href = 'selectionPage.html';
             } catch (error) {
                 handleAuthError(error);
             }
@@ -285,4 +285,20 @@ function handleAuthError(error) {
 document.addEventListener('visibilitychange', () => {
     if (document.hidden) stopScanner();
     else if (window.location.pathname.includes('qrscan.html')) initScanner();
+});
+
+auth.onAuthStateChanged((user) => {
+    const currentPage = window.location.pathname.split("/").pop();
+
+    if (user) {
+        // If logged in and trying to access landing/auth screens, send to selection menu
+        if (currentPage === "login.html" || currentPage === "signup.html" || currentPage === "") {
+            window.location.href = 'selectionPage.html';
+        }
+    } else {
+        // Protected routes configuration
+        if (currentPage === "qrscan.html" || currentPage === "selectionPage.html" || currentPage === "service.html" || currentPage === "token.html") {
+            window.location.href = 'login.html';
+        }
+    }
 });

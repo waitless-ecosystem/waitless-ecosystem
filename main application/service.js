@@ -11,13 +11,13 @@
 const firebaseConfig = {
 
     apiKey: "AIzaSyDQF6Ax8-96AKns_8XpgM-MDrtaVDc78CU",
-  authDomain: "ecosystem-e703c.firebaseapp.com",
-  databaseURL: "https://ecosystem-e703c-default-rtdb.firebaseio.com",
-  projectId: "ecosystem-e703c",
-  storageBucket: "ecosystem-e703c.firebasestorage.app",
-  messagingSenderId: "127085232481",
-  appId: "1:127085232481:web:edc94cfe0b5a86d8a40520",
-  measurementId: "G-6FNBEKNFSQ"
+    authDomain: "ecosystem-e703c.firebaseapp.com",
+    databaseURL: "https://ecosystem-e703c-default-rtdb.firebaseio.com",
+    projectId: "ecosystem-e703c",
+    storageBucket: "ecosystem-e703c.firebasestorage.app",
+    messagingSenderId: "127085232481",
+    appId: "1:127085232481:web:edc94cfe0b5a86d8a40520",
+    measurementId: "G-6FNBEKNFSQ"
 }
 
 // Initialize
@@ -34,29 +34,29 @@ document.addEventListener('DOMContentLoaded', () => {
     const servicesGrid = document.getElementById('services-list');
     const spinner = document.getElementById('loading-spinner');
 
-   /* if (!kioskId) {
-        alert("Invalid Kiosk Access!");
-        window.location.href = 'qrscan.html';
-        return;
-    }*/
+    /* if (!kioskId) {
+         alert("Invalid Kiosk Access!");
+         window.location.href = 'qrscan.html';
+         return;
+     }*/
 
-        if (!orgId) {
+    if (!orgId) {
         alert("Invalid QR Code Scanned!");
         window.location.href = 'qrscan.html';
         return;
     }
 
-   // display.textContent = `Kiosk ID: ${kioskId}`;
-   display.textContent = `Organization ID: ${orgId}`;
+    // display.textContent = `Kiosk ID: ${kioskId}`;
+    display.textContent = `Organization ID: ${orgId}`;
 
     // 2. Listen for Auth State
     auth.onAuthStateChanged((user) => {
         if (user) {
             // Display user UID
             console.log(`User UID: ${user.uid}`);
-           //display.textContent = ` KIOSK UID: ${user.uid}`;
-           // loadKioskServices(user.uid, kioskId);
-           loadOrganizationServices(orgId, kioskId);
+            //display.textContent = ` KIOSK UID: ${user.uid}`;
+            // loadKioskServices(user.uid, kioskId);
+            loadOrganizationServices(orgId, kioskId);
         } else {
             window.location.href = 'login.html';
         }
@@ -76,9 +76,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     const childData = childSnapshot.val();
                     const childKey = childSnapshot.key;
                     const service = {
-                    id: childData.id || childKey, 
-                    name: childData.name || "Unnamed Service"
-                };
+                        id: childData.id || childKey,
+                        name: childData.name || "Unnamed Service"
+                    };
                     renderServiceCard(service, organizationId, kid);
                 });
             } else {
@@ -112,28 +112,37 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function renderServiceCard(service,organizationId, kid) {
-        const card = document.createElement('div');
-        card.className = 'service-card glass-effect';
-        card.innerHTML = `
-            <h3>${service.name}</h3>
-            <p>ID: ${service.id}</p>
-            <button onclick="requestToken('${service.id}' , '${organizationId}', '${kid}')" class="request-btn">Get Token</button>
-        `;
-        servicesGrid.appendChild(card);
-    }
+  function renderServiceCard(service, organizationId, kid) {
+    const card = document.createElement('div');
+    card.className = 'service-card-modern glass-effect';
+    card.innerHTML = `
+        <div class="card-body">
+            <div class="card-header-row">
+                <h3 class="service-title">${service.name}</h3>
+                
+            </div>
+           
+        </div>
+        <div class="card-actions">
+            <button onclick="requestToken('${service.id}', '${service.name}', '${organizationId}', '${kid}')" class="open-service-btn">
+                Get Token
+            </button>
+        </div>
+    `;
+    servicesGrid.appendChild(card);
+}
 });
 
 // Global function to handle token generation
-window.requestToken = function(serviceId, serviceName, orgId, kioskId) {
+window.requestToken = function (serviceId, serviceName, orgId, kioskId) {
     const user = firebase.auth().currentUser;
     if (!user) { window.location.href = 'login.html'; return; }
 
     const params = new URLSearchParams({
-        orgId:       orgId,      
-        serviceId:   serviceId,
+        orgId: orgId,
+        serviceId: serviceId,
         serviceName: serviceName, // Added to URL parameters
-        kioskId:     kioskId,
+        kioskId: kioskId,
     });
 
     window.location.href = 'token.html?' + params.toString();
