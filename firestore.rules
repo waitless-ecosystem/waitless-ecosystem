@@ -1,0 +1,89 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function userDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function isSuperAdmin() {
+      return signedIn()
+        && userDoc().data.platformRole == "superadmin"
+        && userDoc().data.status == "active";
+    }
+
+    function isOrganizationAdmin() {
+      return signedIn()
+        && userDoc().data.platformRole == "organization_admin"
+        && userDoc().data.status == "active";
+    }
+
+    function isStaff() {
+      return signedIn()
+        && userDoc().data.platformRole == "staff"
+        && userDoc().data.status == "active";
+    }
+
+    function belongsToOrg(orgId) {
+      return signedIn() && userDoc().data.organizationId == orgId;
+    }
+
+    match /demoRequests/{requestId} {
+      allow create: if true;
+      allow read, update: if isSuperAdmin();
+      allow delete: if false;
+    }
+
+    match /users/{userId} {
+      allow read: if signedIn() && (request.auth.uid == userId || isSuperAdmin());
+      allow write: if isSuperAdmin();
+    }
+
+    match /organizations/{orgId} {
+      allow read: if true;
+      allow create: if isSuperAdmin();
+      allow update: if isSuperAdmin() || (isOrganizationAdmin() && belongsToOrg(orgId));
+      allow delete: if false;
+
+      match /services/{serviceId} {
+        allow read: if true;
+        allow create, update: if isOrganizationAdmin() && belongsToOrg(orgId);
+        allow delete: if false;
+      }
+
+      match /counters/{counterId} {
+        allow read: if true;
+        allow create, update: if isOrganizationAdmin() && belongsToOrg(orgId);
+        allow delete: if false;
+      }
+
+      match /serviceAssignments/{assignmentId} {
+        allow read: if true;
+        allow create, update: if isOrganizationAdmin() && belongsToOrg(orgId);
+        allow delete: if false;
+      }
+
+      match /tokens/{tokenId} {
+        allow read: if true;
+        allow create: if false;
+        allow update: if false;
+        allow delete: if false;
+      }
+
+      match /queueSteps/{stepId} {
+        allow read: if true;
+        allow create: if false;
+        allow update: if false;
+        allow delete: if false;
+      }
+
+      match /system/{docId} {
+        allow read, write: if false;
+      }
+    }
+  }
+}
