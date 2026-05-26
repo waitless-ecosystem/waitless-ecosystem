@@ -25,8 +25,31 @@
 
     <!-- Service Selection View -->
     <div id="services-view">
-      <h3 class="kiosk-step-title">Step 2: Select Service(s)</h3>
+      <div class="kiosk-hero-card">
+        <div>
+          <p class="kiosk-eyebrow">Quick Service Flow</p>
+          <h3 class="kiosk-step-title">Select the services you need</h3>
+          <p class="kiosk-subtitle">Choose one or more services, then generate a token in a few taps.</p>
+        </div>
+        <div class="kiosk-hero-badge">Fast • Clear • Guided</div>
+      </div>
+
       <form id="service-select-form" class="login-form service-select-form">
+        <div id="customer-details-section" class="customer-details-section hidden">
+          <h4>Customer Details</h4>
+          <p id="customer-details-note" class="customer-details-note">Enter customer details before generating a token.</p>
+
+          <div class="form-group">
+            <label for="customer-name-input">Customer Name</label>
+            <input id="customer-name-input" type="text" maxlength="80" placeholder="Enter customer name" autocomplete="off" />
+          </div>
+
+          <div class="form-group">
+            <label for="customer-phone-input">Phone Number</label>
+            <input id="customer-phone-input" type="tel" maxlength="20" placeholder="Enter phone number" autocomplete="off" inputmode="tel" />
+          </div>
+        </div>
+
         <div id="services-container" class="services-container">
           <!-- Services will be loaded here -->
         </div>

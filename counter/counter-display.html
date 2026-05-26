@@ -4,39 +4,104 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Counter Live — EcoSystem (Counter)</title>
-  <link rel="stylesheet" href="../styles.css" />
+  <link rel="stylesheet" href="../css/global.css" />
   <style>
-    /* Improved, touch-friendly counter UI */
-    body{font-family:Inter,Arial,Helvetica,sans-serif;background:#eef3f8;padding:18px}
-    .panel{max-width:1100px;margin:0 auto;background:#fff;padding:22px;border-radius:12px;box-shadow:0 10px 30px rgba(10,20,40,0.06)}
-    .header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
-    .title{font-size:1.3rem;font-weight:700}
-    .row{display:flex;gap:12px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
-    select,input{padding:12px;border:1px solid #dbe6ef;border-radius:10px;font-size:1rem}
-    .tokens{display:grid;gap:14px;margin-top:12px}
-    .token{display:grid;grid-template-columns:1fr 240px;gap:18px;align-items:stretch;padding:20px;border-radius:14px;border:1px solid #eef6ff;background:linear-gradient(180deg,#ffffff,#fbfdff)}
-    .token .actions{display:flex;flex-direction:column;gap:12px;justify-content:center}
-    .token .actions button{width:100%;min-height:78px;font-size:1.1rem;font-weight:800;border-radius:12px;border:0;cursor:pointer}
-    .btn-serve{background:linear-gradient(180deg,#19a34a,#0a8f47);color:#fff}
-    .btn-noshow{background:linear-gradient(180deg,#ff6b6b,#ff5252);color:#fff}
-    .muted{color:#6b7785;font-size:13px}
-    .token-number{display:flex;align-items:center;justify-content:center;min-height:220px;font-size:7rem;font-weight:900;line-height:1;color:#0b1220;text-align:center}
-    .token-empty{padding:32px;text-align:center;font-size:1.1rem;color:#4b5563}
-    .token-stage{display:flex;flex-direction:column;justify-content:center;gap:10px}
-    .token-meta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;color:#6b7785}
-    .controls{display:flex;gap:10px;align-items:center}
-    .big-select{min-width:260px}
-    .ghost{background:transparent;border:1px solid #d0d7de;padding:10px;border-radius:8px}
-    @media (max-width:700px){
+    :root{
+      --bg:#eef3f8;
+      --surface:#ffffff;
+      --surface-2:#f7fbff;
+      --text:#102033;
+      --muted:#5f6d7f;
+      --line:#dbe6f0;
+      --accent:#0b63ce;
+      --accent-2:#13a35d;
+      --warn:#d93d3d;
+      --shadow:0 16px 40px rgba(14,35,62,0.10);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,Arial,Helvetica,sans-serif;background:radial-gradient(circle at top left,#f8fbff 0,#eef3f8 42%,#e9f0f7 100%);color:var(--text);padding:20px}
+    .panel{max-width:1320px;margin:0 auto;background:linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,255,255,0.92));backdrop-filter:blur(6px);padding:22px;border:1px solid rgba(217,226,235,0.9);border-radius:24px;box-shadow:var(--shadow)}
+    .header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--line)}
+    .title{font-size:1.5rem;font-weight:800;letter-spacing:-0.02em;color:var(--text)}
+    .subtitle{margin-top:6px;color:var(--muted);font-size:0.96rem;line-height:1.45}
+    .row{display:flex;gap:12px;align-items:flex-end;margin-bottom:14px;flex-wrap:wrap;padding:14px;border:1px solid var(--line);border-radius:18px;background:var(--surface-2)}
+    .field{display:flex;flex-direction:column;gap:6px;min-width:240px}
+    .field label,.row > label{font-size:0.84rem;font-weight:700;color:#35455a;letter-spacing:0.02em}
+    select,input{padding:13px 14px;border:1px solid #ccd9e6;border-radius:14px;font-size:1rem;background:#fff;color:var(--text);outline:none;transition:border-color .18s ease,box-shadow .18s ease}
+    select:focus,input:focus{border-color:rgba(11,99,206,0.55);box-shadow:0 0 0 4px rgba(11,99,206,0.10)}
+    .tokens{display:grid;gap:16px;margin-top:14px}
+    .token{position:relative;display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px;align-items:stretch;padding:20px;border-radius:22px;border:1px solid #e1ebf5;background:linear-gradient(180deg,#ffffff 0%,#fbfdff 100%);box-shadow:0 8px 22px rgba(14,35,62,0.06)}
+    .token::before{content:'';position:absolute}
+    .token .actions{display:flex;flex-direction:column;gap:12px;justify-content:flex-start}
+    .token .actions button{width:100%;min-height:66px;font-size:1rem;font-weight:800;border-radius:16px;border:0;cursor:pointer;letter-spacing:0.01em;box-shadow:0 8px 18px rgba(0,0,0,0.08);touch-action:manipulation;position:relative;z-index:1}
+    .btn-serve{background:linear-gradient(180deg,#1bb15b,#12944d);color:#fff}
+    .btn-noshow{background:linear-gradient(180deg,#ff7070,#dc4d4d);color:#fff}
+    .muted{color:var(--muted);font-size:13px}
+    .status-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:10px 0 4px}
+    .status-chip{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:#fff;color:#415165;font-size:0.84rem;font-weight:700}
+    .status-dot{width:10px;height:10px;border-radius:50%;background:var(--accent)}
+    .token-stage{display:flex;flex-direction:column;justify-content:space-between;gap:14px;min-height:100%}
+    .token-hero{display:flex;flex-direction:column;gap:10px;padding:6px 6px 0}
+    .token-number{display:flex;align-items:center;justify-content:center;min-height:220px;font-size:7.4rem;font-weight:900;line-height:1;color:#0a1322;text-align:center;letter-spacing:-0.04em;background:linear-gradient(180deg,#ffffff,#f8fbff);border:1px solid #edf3f8;border-radius:22px;box-shadow:inset 0 1px 0 rgba(255,255,255,0.9)}
+    .token-empty{padding:38px;text-align:center;font-size:1.06rem;color:#4b5563;border:1px dashed #c9d6e4;border-radius:18px;background:rgba(255,255,255,0.7)}
+    .token-meta{display:flex;gap:10px;justify-content:flex-start;flex-wrap:wrap;color:#6b7785}
+    .meta-pill{display:inline-flex;align-items:center;gap:6px;padding:8px 11px;border-radius:999px;background:#f4f8fc;border:1px solid #e1ebf4;font-size:0.84rem;color:#425266}
+    .meta-pill strong{color:#0f1726}
+    .customer-name{display:inline-flex;align-items:center;gap:8px;padding:10px 12px;border-radius:16px;background:linear-gradient(180deg,#f7fbff,#eef5ff);border:1px solid #dce8f7;color:#0c2444;font-weight:800;font-size:1rem}
+    .customer-name small{font-weight:700;color:#5c6f85}
+    .actions-panel{position:relative;display:flex;flex-direction:column;gap:14px;padding:16px;border-radius:18px;background:linear-gradient(180deg,#f8fbff,#f3f7fc);border:1px solid #e3ebf4}
+    .actions-title{font-size:0.86rem;text-transform:uppercase;letter-spacing:0.10em;color:#5b6a7b;font-weight:800}
+    .recall-rail{display:flex;flex-direction:column;gap:10px}
+    .recall-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:0.92rem;font-weight:800;color:#213247}
+    .recall-note{font-size:0.82rem;color:var(--muted);font-weight:600}
+    .ghost{background:#fff;border:1px solid #d0d7de;padding:11px 12px;border-radius:14px;transition:transform .15s ease,box-shadow .15s ease,border-color .15s ease;touch-action:manipulation;position:relative;z-index:1}
+    .ghost:hover{transform:translateY(-1px);border-color:#bcd0e4;box-shadow:0 8px 18px rgba(15,35,62,0.08)}
+    .controls{position:relative;z-index:2;display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+    .big-select{min-width:240px}
+    .workspace-grid{position:relative;z-index:1;display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
+    .state-grid{display:grid;grid-template-columns:1fr;gap:16px;margin-top:6px}
+    .state-panel{border:1px solid #dde8f3;border-radius:20px;background:linear-gradient(180deg,#ffffff,#f8fbff);box-shadow:0 8px 22px rgba(14,35,62,0.05);overflow:hidden}
+    .state-panel-header{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;border-bottom:1px solid #e6eef6;background:linear-gradient(180deg,#f8fbff,#f3f8fd)}
+    .state-panel-title{font-size:0.98rem;font-weight:800;color:#18263a}
+    .state-panel-subtitle{font-size:0.82rem;color:var(--muted);font-weight:600}
+    .state-panel-body{padding:16px}
+    .token-list{display:grid;gap:12px}
+    .token-list-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:14px 16px;border:1px solid #e4edf6;border-radius:16px;background:#fff}
+    .token-list-title{font-weight:800;color:#112032}
+    .token-list-meta{margin-top:4px;display:flex;flex-wrap:wrap;gap:8px;color:var(--muted);font-size:0.88rem}
+    .token-list-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+    .mini-btn{padding:10px 12px;border-radius:12px;border:0;cursor:pointer;font-weight:800}
+    .mini-btn-primary{background:linear-gradient(180deg,#1bb15b,#12944d);color:#fff}
+    .mini-btn-ghost{background:#f4f8fc;color:#24364d;border:1px solid #d7e4f0}
+    .empty-state{padding:18px;border:1px dashed #d3dfea;border-radius:16px;background:rgba(245,249,253,0.75);color:var(--muted);text-align:center}
+    @media (min-width:1100px){
+      .workspace-grid{grid-template-columns:minmax(0,1fr)}
+    }
+    @media (max-width:980px){
       .token{grid-template-columns:1fr}
+      .actions-panel{order:2}
+      .token-list-item{grid-template-columns:1fr}
+      .token-list-actions{justify-content:flex-start}
+    }
+    @media (max-width:700px){
+      body{padding:12px}
+      .panel{padding:16px;border-radius:18px}
+      .header{flex-direction:column;align-items:flex-start}
+      .row{padding:12px}
+      .field,.big-select{width:100%;min-width:0}
       .token-number{min-height:160px;font-size:5rem}
-      .token .actions button{min-height:64px;font-size:1rem}
+      .token .actions button{min-height:58px;font-size:0.98rem}
+      .controls{width:100%;justify-content:space-between}
+    }
+    @media (min-width:980px) and (max-height:760px){
+      .token-number{min-height:180px;font-size:6rem}
+      .actions-panel{padding:14px}
     }
     /* Sign-in modal */
-    .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(7,12,20,0.35);z-index:60}
+    .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(7,12,20,0.45);z-index:60;backdrop-filter:blur(4px)}
     .modal[aria-hidden="false"]{display:flex}
-    .modal-content{background:#fff;padding:18px;border-radius:10px;min-width:320px;max-width:420px;box-shadow:0 12px 32px rgba(10,20,40,0.12)}
-    .modal-content h3{margin:0 0 10px 0}
+    .modal-content{background:#fff;padding:20px;border-radius:18px;min-width:320px;max-width:440px;box-shadow:0 18px 40px rgba(10,20,40,0.18);border:1px solid #e5edf5}
+    .modal-content h3{margin:0 0 10px 0;font-size:1.15rem}
     .modal-content label{display:block;margin-top:8px;font-size:0.9rem}
     .modal-content input{width:100%;margin-top:6px}
     .modal-actions{display:flex;gap:8px;margin-top:12px}
@@ -47,32 +112,42 @@
   <div class="panel active">
     <div class="header">
       <div>
-        <div class="title">Counter Live Display</div>
-        <div class="muted">Operator view — simplified and touch-friendly</div>
+        <div class="title">Counter Command Center</div>
+        <div class="subtitle">A streamlined operator view for serving the next token, recalling earlier tokens, and showing customer details when enabled.</div>
       </div>
       <div class="controls">
         <div style="text-align:right">
           <div class="muted small">Signed in as</div>
           <div id="auth-user" class="small">Not signed in</div>
         </div>
-        <button id="org-logout" class="ghost" style="display:none">Sign Out</button>
-        <button id="sign-in-btn" class="ghost">Sign In</button>
+        <button id="org-logout" class="ghost" type="button" style="display:none">Sign Out</button>
+        <button id="sign-in-btn" class="ghost" type="button">Sign In</button>
       </div>
     </div>
 
-    <div id="selection-row" class="row">
-      <label for="org-select">Organization</label>
-      <select id="org-select" class="big-select" disabled><option value="">-- Sign in first --</option></select>
-
-      <label for="counter-select">Counter</label>
-      <select id="counter-select" class="big-select" disabled><option value="">-- Select counter --</option></select>
-
-      <button id="refresh-orgs" class="ghost" disabled>Refresh</button>
+    <div class="status-bar">
+      <span id="status-badge" class="status-chip"><span class="status-dot"></span><span id="status">Not connected</span></span>
+      <span class="status-chip">Recall ready</span>
+      <span class="status-chip">Customer name aware</span>
     </div>
 
-    <div id="status" class="muted">Not connected</div>
+    <div id="selection-row" class="row">
+      <div class="field">
+        <label for="org-select">Organization</label>
+        <select id="org-select" class="big-select" disabled><option value="">-- Sign in first --</option></select>
+      </div>
 
-    <div id="tokens" class="tokens"></div>
+      <div class="field">
+        <label for="counter-select">Counter</label>
+        <select id="counter-select" class="big-select" disabled><option value="">-- Select counter --</option></select>
+      </div>
+
+      <button id="refresh-orgs" class="ghost" type="button" disabled>Refresh</button>
+    </div>
+
+    <div class="workspace-grid">
+      <div id="tokens" class="tokens"></div>
+    </div>
   </div>
 
   <!-- Sign-in Modal -->
@@ -96,7 +171,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-  <script src="../firebase-config.js"></script>
+  <script src="../js/config/firebase-config.js"></script>
   <script src="counter-display.js"></script>
 </body>
 </html>

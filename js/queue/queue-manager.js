@@ -39,6 +39,22 @@ let currentCounters = {};
 let currentServices = {};
 let currentAssignments = {};
 let currentQueueData = {};
+let kioskCustomerDetailsSettings = {
+  enabled: false,
+  requireName: false,
+  requirePhone: false,
+  recallEnabled: false
+};
+
+function normalizeCustomerDetailSettings(raw) {
+  const data = raw || {};
+  return {
+    enabled: !!data.enabled,
+    requireName: !!data.requireName,
+    requirePhone: !!data.requirePhone,
+    recallEnabled: !!data.recallEnabled
+  };
+}
 
 // ============================================================
 // TAB NAVIGATION
@@ -246,6 +262,26 @@ const tokensDB = {
     return Object.fromEntries(
       Object.entries(allTokens).filter(([_, t]) => t.counterId === counterId)
     );
+  }
+};
+
+const organizationSettingsDB = {
+  async getCustomerDetailSettings() {
+    const snap = await db.ref(`users/${currentUserUID}/settings/kioskCustomerDetails`).once('value');
+    return normalizeCustomerDetailSettings(snap.val());
+  },
+
+  async saveCustomerDetailSettings(settings) {
+    const normalized = normalizeCustomerDetailSettings(settings);
+    await db.ref(`users/${currentUserUID}/settings/kioskCustomerDetails`).set({
+      enabled: normalized.enabled,
+      requireName: normalized.enabled ? normalized.requireName : false,
+      requirePhone: normalized.enabled ? normalized.requirePhone : false,
+      recallEnabled: !!normalized.recallEnabled,
+      updatedAt: firebase.database.ServerValue.TIMESTAMP,
+      updatedBy: auth.currentUser ? auth.currentUser.uid : currentUserUID
+    });
+    return normalized;
   }
 };
 
@@ -619,6 +655,86 @@ function attachEventListeners() {
       await auth.signOut();
       window.location.href = '../index.html';
     });
+  }
+
+  const detailsEnabledInput = $('#collect-customer-details-enabled');
+  if(detailsEnabledInput) {
+    detailsEnabledInput.addEventListener('change', () => {
+      const enabled = !!detailsEnabledInput.checked;
+      const nameInput = $('#collect-customer-name-required');
+      const phoneInput = $('#collect-customer-phone-required');
+
+      if(nameInput) {
+        nameInput.disabled = !enabled;
+        if(!enabled) nameInput.checked = false;
+      }
+
+      if(phoneInput) {
+        phoneInput.disabled = !enabled;
+        if(!enabled) phoneInput.checked = false;
+      }
+    });
+  }
+
+  const saveCustomerSettingsBtn = $('#save-customer-detail-settings');
+  if(saveCustomerSettingsBtn) {
+    saveCustomerSettingsBtn.addEventListener('click', async () => {
+      const enabled = !!$('#collect-customer-details-enabled')?.checked;
+      const requireName = enabled && !!$('#collect-customer-name-required')?.checked;
+      const requirePhone = enabled && !!$('#collect-customer-phone-required')?.checked;
+      const recallEnabled = !!$('#collect-recall-enabled')?.checked;
+
+      try {
+        kioskCustomerDetailsSettings = await organizationSettingsDB.saveCustomerDetailSettings({
+          enabled,
+          requireName,
+          requirePhone
+          ,recallEnabled
+        });
+        renderCustomizeSettings();
+        showMessage('Customize settings saved', 'success');
+      } catch(err) {
+        showMessage('Failed to save customize settings: ' + err.message, 'error');
+      }
+    });
+  }
+}
+
+function renderCustomizeSettings() {
+  const enabledInput = $('#collect-customer-details-enabled');
+  const nameInput = $('#collect-customer-name-required');
+  const phoneInput = $('#collect-customer-phone-required');
+  const nameRow = $('#customer-name-required-row');
+  const phoneRow = $('#customer-phone-required-row');
+  const statusEl = $('#customize-settings-status');
+
+  if(enabledInput) enabledInput.checked = !!kioskCustomerDetailsSettings.enabled;
+  if(nameInput) {
+    nameInput.checked = !!kioskCustomerDetailsSettings.requireName;
+  }
+  if(phoneInput) {
+    phoneInput.checked = !!kioskCustomerDetailsSettings.requirePhone;
+  }
+  const recallInput = $('#collect-recall-enabled');
+  if(recallInput) recallInput.checked = !!kioskCustomerDetailsSettings.recallEnabled;
+
+  if(nameRow) nameRow.style.display = kioskCustomerDetailsSettings.enabled ? '' : 'none';
+  if(phoneRow) phoneRow.style.display = kioskCustomerDetailsSettings.enabled ? '' : 'none';
+
+  if(nameInput) nameInput.disabled = !kioskCustomerDetailsSettings.enabled;
+  if(phoneInput) phoneInput.disabled = !kioskCustomerDetailsSettings.enabled;
+
+  if(statusEl) {
+    if(!kioskCustomerDetailsSettings.enabled) {
+      statusEl.textContent = 'Customer details collection is currently disabled.';
+    } else {
+      const required = [];
+      if(kioskCustomerDetailsSettings.requireName) required.push('Name');
+      if(kioskCustomerDetailsSettings.requirePhone) required.push('Phone');
+      statusEl.textContent = required.length
+        ? ('Enabled. Required fields: ' + required.join(', ') + '.')
+        : 'Enabled. Name and phone are optional.';
+    }
   }
 }
 
@@ -1023,10 +1139,12 @@ async function initializeApp() {
     currentCounters = await countersDB.getAll();
     currentServices = await servicesDB.getAll();
     currentAssignments = await assignmentsDB.getAll();
+    kioskCustomerDetailsSettings = await organizationSettingsDB.getCustomerDetailSettings();
 
     renderCounters(currentCounters);
     renderServices(currentServices);
     renderAssignments(currentAssignments, currentCounters, currentServices);
+    renderCustomizeSettings();
 
     // Render counter cards for assignments
     renderCounterCards(currentCounters, currentServices);

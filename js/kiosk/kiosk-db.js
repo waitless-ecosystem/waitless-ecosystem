@@ -328,6 +328,19 @@ const kioskTokenDB = {
     if (!serviceData) throw new Error('Primary service not found');
 
     var primaryServiceName = opts.primaryServiceName || serviceData.name || primaryServiceId;
+    var customerDetails = opts.customerDetails || null;
+
+    var cleanedCustomerDetails = null;
+    if (customerDetails && typeof customerDetails === 'object') {
+      var customerName = String(customerDetails.name || '').trim();
+      var customerPhone = String(customerDetails.phone || '').trim();
+      if (customerName || customerPhone) {
+        cleanedCustomerDetails = {
+          name: customerName,
+          phone: customerPhone
+        };
+      }
+    }
 
     var cleanedServices = selectedServices.map(function(s) {
       return {
@@ -359,6 +372,12 @@ const kioskTokenDB = {
       customerUid: auth.currentUser ? auth.currentUser.uid : ('kiosk:' + kioskId)
     };
 
+    if (cleanedCustomerDetails) {
+      tokenData.customerDetails = cleanedCustomerDetails;
+      tokenData.customerName = cleanedCustomerDetails.name || null;
+      tokenData.customerPhone = cleanedCustomerDetails.phone || null;
+    }
+
     var activityId = this.generateActivityId();
     var updates = {};
     updates['users/' + organizationId + '/queue/' + primaryServiceId + '/' + tokenId] = tokenData;
@@ -372,6 +391,7 @@ const kioskTokenDB = {
         primaryServiceId: primaryServiceId,
         primaryServiceName: primaryServiceName,
         serviceCount: cleanedServices.length,
+        hasCustomerDetails: !!cleanedCustomerDetails,
         tokenId: tokenId
       },
       userId: auth.currentUser ? auth.currentUser.uid : 'unknown'

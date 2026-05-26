@@ -24,10 +24,20 @@ let activeListeners = [];
 let chosenOrg = null;
 let chosenCounter = null;
 let renderRunId = 0;
+let kioskCustomerSettings = { enabled: false, requireName: false, requirePhone: false, recallEnabled: false };
 
 const ACTIVE_TOKEN_STATUSES = new Set(['waiting', 'arrived']);
 
 function setStatus(txt){ if(statusEl) statusEl.textContent = txt; }
+
+function escapeHtml(text){
+  return String(text ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 
 function setAuthUserLabel(user, profile){
   if(!authUserEl) return;
@@ -106,9 +116,27 @@ async function loadCounters(orgId){
     });
     counterSelect.disabled = false;
     setStatus('Counters loaded');
+    // load kiosk customer detail settings for this organization
+    await loadKioskCustomerSettings(orgId);
   }catch(err){
     console.error(err);
     setStatus('Failed to load counters: ' + err.message);
+  }
+}
+
+async function loadKioskCustomerSettings(orgId){
+  try{
+    const snap = await db.ref(`users/${orgId}/settings/kioskCustomerDetails`).once('value');
+    const raw = snap.val() || {};
+    kioskCustomerSettings = {
+      enabled: !!raw.enabled,
+      requireName: !!raw.requireName,
+      requirePhone: !!raw.requirePhone,
+      recallEnabled: !!raw.recallEnabled
+    };
+  }catch(err){
+    console.error('Failed to load kiosk customer settings', err);
+    kioskCustomerSettings = { enabled:false, requireName:false, requirePhone:false };
   }
 }
 
@@ -162,49 +190,185 @@ async function renderTokens(orgId, counterId){
     visible.sort((a,b)=> (a.timestamp||0) - (b.timestamp||0));
     const activeToken = visible[0] || null;
 
-    if(!activeToken){
-      tokensEl.innerHTML = '<div class="token-empty">No ongoing token for this counter.</div>';
+    const stateGrid = document.createElement('div');
+    stateGrid.className = 'state-grid';
+
+    if(activeToken){
+      const item = document.createElement('div');
+      item.className = 'token';
+
+      const stage = document.createElement('div');
+      stage.className = 'token-stage';
+
+      const numberEl = document.createElement('div');
+      numberEl.className = 'token-number';
+      numberEl.textContent = String(activeToken.tokenNumber || activeToken.id || '—');
+
+      const metaEl = document.createElement('div');
+      metaEl.className = 'token-meta';
+
+      const servicePill = document.createElement('span');
+      servicePill.className = 'meta-pill';
+      servicePill.innerHTML = `<strong>${activeToken.serviceName || activeToken.serviceId}</strong>`;
+      metaEl.appendChild(servicePill);
+
+      const kioskPill = document.createElement('span');
+      kioskPill.className = 'meta-pill';
+      kioskPill.textContent = activeToken.kioskName || 'Live queue';
+      metaEl.appendChild(kioskPill);
+
+      const statusPill = document.createElement('span');
+      statusPill.className = 'meta-pill';
+      statusPill.textContent = `Status: ${activeToken.status || 'waiting'}`;
+      metaEl.appendChild(statusPill);
+
+      if((kioskCustomerSettings && kioskCustomerSettings.enabled && kioskCustomerSettings.requireName) || activeToken.customerName){
+        const customerPill = document.createElement('span');
+        customerPill.className = 'customer-name';
+        customerPill.innerHTML = `<small>Customer</small><span>${activeToken.customerName || 'Not provided'}</span>`;
+        metaEl.appendChild(customerPill);
+      }
+
+      stage.appendChild(numberEl);
+      stage.appendChild(metaEl);
+
+      const right = document.createElement('div');
+      right.className='actions actions-panel';
+      right.setAttribute('aria-label', 'token actions');
+
+      const actionsHeading = document.createElement('div');
+      actionsHeading.className = 'actions-title';
+      actionsHeading.textContent = 'Operator Actions';
+      right.appendChild(actionsHeading);
+
+      const serveBtn = document.createElement('button'); serveBtn.type='button'; serveBtn.className='btn-serve'; serveBtn.textContent='Call Next';
+      serveBtn.onclick = ()=> updateTokenStatus(orgId, activeToken.serviceId, activeToken.tokenId, 'serving', counterId, (counters[counterId]||{}).name);
+
+      const noshowBtn = document.createElement('button'); noshowBtn.type='button'; noshowBtn.className='btn-noshow'; noshowBtn.textContent='No show';
+      noshowBtn.onclick = ()=> updateTokenStatus(orgId, activeToken.serviceId, activeToken.tokenId, 'no-show', counterId, (counters[counterId]||{}).name);
+
+      right.appendChild(serveBtn);
+      right.appendChild(noshowBtn);
+
+      item.appendChild(stage); item.appendChild(right);
+      tokensEl.appendChild(item);
+    } else {
+      const empty = document.createElement('div');
+      empty.className = 'token-empty';
+      empty.textContent = 'No ongoing token for this counter.';
+      tokensEl.appendChild(empty);
       setStatus('No ongoing token for the selected counter');
-      return;
     }
 
-    const item = document.createElement('div');
-    item.className = 'token';
+    const calledTokens = Array.from(tokensById.values())
+      .filter(t => (t.assigned || serviceIds.includes(t.serviceId)))
+      .filter(t => (t.status || 'waiting').toLowerCase() === 'serving')
+      .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
-    const stage = document.createElement('div');
-    stage.className = 'token-stage';
+    const noShowTokens = Array.from(tokensById.values())
+      .filter(t => (t.assigned || serviceIds.includes(t.serviceId)))
+      .filter(t => (t.status || 'waiting').toLowerCase() === 'no-show')
+      .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
-    const numberEl = document.createElement('div');
-    numberEl.className = 'token-number';
-    numberEl.textContent = String(activeToken.tokenNumber || activeToken.id || '—');
+    stateGrid.appendChild(createTokenStatePanel({
+      title: 'Already Called Tokens',
+      subtitle: kioskCustomerSettings.recallEnabled ? 'Recall one of these if the customer comes back.' : 'These are tokens that have already been called.',
+      emptyText: 'No called tokens right now.',
+      tokens: calledTokens,
+      counterId,
+      orgId,
+      allowRecall: !!kioskCustomerSettings.recallEnabled,
+      kind: 'called'
+    }));
 
-    const metaEl = document.createElement('div');
-    metaEl.className = 'token-meta';
-    metaEl.innerHTML = `<strong style="font-size:1.05rem">${activeToken.serviceName || activeToken.serviceId}</strong><div style="font-size:0.95rem;color:#475569">${activeToken.kioskName || ''}</div><div style="font-size:0.9rem;color:#6b7280">Status: ${activeToken.status || 'waiting'}</div>`;
+    stateGrid.appendChild(createTokenStatePanel({
+      title: 'No Show Tokens',
+      subtitle: 'Tokens marked as no-show for this counter.',
+      emptyText: 'No no-show tokens yet.',
+      tokens: noShowTokens,
+      counterId,
+      orgId,
+      allowRecall: false,
+      kind: 'noshow'
+    }));
 
-    stage.appendChild(numberEl);
-    stage.appendChild(metaEl);
+    tokensEl.appendChild(stateGrid);
 
-    const right = document.createElement('div'); right.className='actions';
-    right.setAttribute('aria-label', 'token actions');
-
-    const serveBtn = document.createElement('button'); serveBtn.className='btn-serve'; serveBtn.textContent='Call Next';
-    serveBtn.onclick = ()=> updateTokenStatus(orgId, activeToken.serviceId, activeToken.tokenId, 'serving', counterId, (counters[counterId]||{}).name);
-
-    const noshowBtn = document.createElement('button'); noshowBtn.className='btn-noshow'; noshowBtn.textContent='No show';
-    noshowBtn.onclick = ()=> updateTokenStatus(orgId, activeToken.serviceId, activeToken.tokenId, 'no-show', null, null);
-
-    right.appendChild(serveBtn);
-    right.appendChild(noshowBtn);
-
-    item.appendChild(stage); item.appendChild(right);
-    tokensEl.appendChild(item);
-
-    setStatus(`Showing 1 ongoing token for ${counters[counterId]?.name || counterId}`);
+    setStatus(`Showing live queue for ${counters[counterId]?.name || counterId}`);
   }catch(err){
     console.error(err);
     setStatus('Failed to render tokens: ' + err.message);
   }
+}
+
+function createTokenStatePanel({ title, subtitle, emptyText, tokens, counterId, orgId, allowRecall, kind }){
+  const panel = document.createElement('section');
+  panel.className = 'state-panel';
+
+  const header = document.createElement('div');
+  header.className = 'state-panel-header';
+  header.innerHTML = `<div><div class="state-panel-title">${title}</div><div class="state-panel-subtitle">${subtitle}</div></div><div class="status-chip">${tokens.length}</div>`;
+  panel.appendChild(header);
+
+  const body = document.createElement('div');
+  body.className = 'state-panel-body';
+
+  if(!tokens.length){
+    const empty = document.createElement('div');
+    empty.className = 'empty-state';
+    empty.textContent = emptyText;
+    body.appendChild(empty);
+    panel.appendChild(body);
+    return panel;
+  }
+
+  const list = document.createElement('div');
+  list.className = 'token-list';
+
+  tokens.forEach(token => {
+    const row = document.createElement('div');
+    row.className = 'token-list-item';
+
+    const info = document.createElement('div');
+    const displayNumber = String(token.tokenNumber || token.id || '—');
+    info.innerHTML = `
+      <div class="token-list-title">${displayNumber} <span style="font-weight:700;color:#5d6e82">${escapeHtml(token.serviceName || token.serviceId)}</span></div>
+      <div class="token-list-meta">
+        <span>${escapeHtml(token.kioskName || 'Live queue')}</span>
+        <span>Status: ${escapeHtml(token.status || 'waiting')}</span>
+        ${token.customerName ? `<span>Customer: ${escapeHtml(token.customerName)}</span>` : ''}
+      </div>
+    `;
+
+    const actions = document.createElement('div');
+    actions.className = 'token-list-actions';
+
+    if(kind === 'called' && allowRecall){
+      const recallBtn = document.createElement('button');
+      recallBtn.type = 'button';
+      recallBtn.className = 'mini-btn mini-btn-primary';
+      recallBtn.textContent = 'Recall';
+      recallBtn.onclick = () => updateTokenStatus(orgId, token.serviceId, token.tokenId, 'arrived', counterId, (counters[counterId]||{}).name);
+      actions.appendChild(recallBtn);
+    }
+
+    if(kind === 'called'){
+      const doneBtn = document.createElement('button');
+      doneBtn.type = 'button';
+      doneBtn.className = 'mini-btn mini-btn-ghost';
+      doneBtn.textContent = 'Still Serving';
+      doneBtn.onclick = () => updateTokenStatus(orgId, token.serviceId, token.tokenId, 'serving', counterId, (counters[counterId]||{}).name);
+      actions.appendChild(doneBtn);
+    }
+
+    row.appendChild(info);
+    row.appendChild(actions);
+    list.appendChild(row);
+  });
+
+  body.appendChild(list);
+  panel.appendChild(body);
+  return panel;
 }
 
 async function updateTokenStatus(orgId, serviceId, tokenId, status, counterId=null, counterName=null){

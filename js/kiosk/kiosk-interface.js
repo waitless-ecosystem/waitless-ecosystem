@@ -22,6 +22,12 @@ const logoutBtn = document.getElementById('logout-btn');
 const tokenLogoutBtn = document.getElementById('token-logout-btn');
 const currentTimeEl = document.getElementById('current-time');
 const backToKioskBtn = document.getElementById('back-to-kiosk-btn');
+const customerDetailsSection = document.getElementById('customer-details-section');
+const customerDetailsNote = document.getElementById('customer-details-note');
+const customerNameInput = document.getElementById('customer-name-input');
+const customerPhoneInput = document.getElementById('customer-phone-input');
+const customerNameGroup = customerNameInput ? customerNameInput.closest('.form-group') : null;
+const customerPhoneGroup = customerPhoneInput ? customerPhoneInput.closest('.form-group') : null;
 
 // Session Data
 let kioskId = null;
@@ -33,6 +39,11 @@ let generatedTokens = null;
 let sessionStartTime = null;
 let inactivityTimeout = null;
 let isGeneratingTokens = false;
+let customerDetailSettings = {
+  enabled: false,
+  requireName: false,
+  requirePhone: false
+};
 
 // Constants
 const SESSION_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
@@ -117,6 +128,112 @@ function getServiceDescription(service) {
   return String(service?.description || '').trim() || 'Please select this service to continue.';
 }
 
+function normalizeCustomerDetailSettings(raw) {
+  const data = raw || {};
+  return {
+    enabled: !!data.enabled,
+    requireName: !!data.requireName,
+    requirePhone: !!data.requirePhone
+  };
+}
+
+function sanitizePhoneNumber(value) {
+  return String(value || '').trim().replace(/\s+/g, ' ');
+}
+
+function isValidPhoneNumber(value) {
+  const phone = sanitizePhoneNumber(value);
+  if (!phone) return false;
+  return /^[0-9+()\-\s]{6,20}$/.test(phone);
+}
+
+function applyCustomerDetailSettingsUI() {
+  if (!customerDetailsSection) return;
+
+  if (!customerDetailSettings.enabled) {
+    customerDetailsSection.classList.add('hidden');
+    if (customerNameInput) {
+      customerNameInput.required = false;
+      customerNameInput.value = '';
+    }
+    if (customerPhoneInput) {
+      customerPhoneInput.required = false;
+      customerPhoneInput.value = '';
+    }
+    return;
+  }
+
+  customerDetailsSection.classList.remove('hidden');
+
+  if (customerNameGroup) {
+    customerNameGroup.classList.toggle('hidden', !customerDetailSettings.requireName);
+  }
+
+  if (customerPhoneGroup) {
+    customerPhoneGroup.classList.toggle('hidden', !customerDetailSettings.requirePhone);
+  }
+
+  if (customerNameInput) {
+    customerNameInput.required = customerDetailSettings.requireName;
+    customerNameInput.placeholder = customerDetailSettings.requireName
+      ? 'Customer name (required)'
+      : 'Customer name (optional)';
+  }
+
+  if (customerPhoneInput) {
+    customerPhoneInput.required = customerDetailSettings.requirePhone;
+    customerPhoneInput.placeholder = customerDetailSettings.requirePhone
+      ? 'Phone number (required)'
+      : 'Phone number (optional)';
+  }
+
+  if (customerNameInput && !customerDetailSettings.requireName) {
+    customerNameInput.value = '';
+    customerNameInput.required = false;
+  }
+
+  if (customerPhoneInput && !customerDetailSettings.requirePhone) {
+    customerPhoneInput.value = '';
+    customerPhoneInput.required = false;
+  }
+
+  if (customerDetailsNote) {
+    const requiredParts = [];
+    if (customerDetailSettings.requireName) requiredParts.push('name');
+    if (customerDetailSettings.requirePhone) requiredParts.push('phone number');
+    customerDetailsNote.textContent = requiredParts.length
+      ? ('Please enter ' + requiredParts.join(' and ') + ' before generating a token.')
+      : 'Customer name and phone are optional for this organization.';
+  }
+}
+
+function getCustomerDetailsFromForm() {
+  if (!customerDetailSettings.enabled) {
+    return null;
+  }
+
+  const name = String(customerNameInput?.value || '').trim();
+  const phone = sanitizePhoneNumber(customerPhoneInput?.value || '');
+
+  if (customerDetailSettings.requireName && !name) {
+    throw new Error('Customer name is required');
+  }
+
+  if (customerDetailSettings.requirePhone && !phone) {
+    throw new Error('Customer phone number is required');
+  }
+
+  if (phone && !isValidPhoneNumber(phone)) {
+    throw new Error('Please enter a valid phone number');
+  }
+
+  if (!name && !phone) {
+    return null;
+  }
+
+  return { name, phone };
+}
+
 function updateKioskIdDisplays(value) {
   document.querySelectorAll('#kiosk-id-display, #footer-kiosk-id-display').forEach((el) => {
     el.textContent = value;
@@ -158,6 +275,15 @@ async function initializeSession() {
       orgNameDisplay.textContent = '';
     }
   }
+
+  try {
+    const settingsSnap = await db.ref(`users/${organizationId}/settings/kioskCustomerDetails`).once('value');
+    customerDetailSettings = normalizeCustomerDetailSettings(settingsSnap.val());
+  } catch (err) {
+    customerDetailSettings = normalizeCustomerDetailSettings(null);
+  }
+
+  applyCustomerDetailSettingsUI();
 
   return true;
 }
@@ -337,6 +463,8 @@ function resetToServices() {
   servicesView.classList.remove('hidden');
   selectedServiceIds.clear();
   generatedTokens = null;
+  if (customerNameInput) customerNameInput.value = '';
+  if (customerPhoneInput) customerPhoneInput.value = '';
   renderServices();
   updateSelectionUI();
 }
@@ -360,6 +488,7 @@ async function handleGenerateTokens(e) {
   updateSelectionUI();
 
   try {
+    const customerDetails = getCustomerDetailsFromForm();
     const primaryServiceId = serviceIds[0];
     const primaryService = services[primaryServiceId];
 
@@ -375,7 +504,10 @@ async function handleGenerateTokens(e) {
       kioskName,
       primaryServiceId,
       selectedServicesList,
-      { primaryServiceName: primaryService.displayName }
+      {
+        primaryServiceName: primaryService.displayName,
+        customerDetails
+      }
     );
 
     const queuePosition = await kioskTokenDB.getQueuePosition(

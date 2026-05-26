@@ -29,6 +29,8 @@
           <button class="qm-tab" data-tab="assignments" role="tab">Assignments</button>
           <button class="qm-tab" data-tab="queue" role="tab">Queue</button>
           <button class="qm-tab" data-tab="reports" role="tab">Reports</button>
+          <button class="qm-tab" data-tab="customize" role="tab">Customize</button>
+
         </div>
       </div>
 
@@ -156,6 +158,52 @@
 
         <!-- KIOSK Analytics Section -->
         <div id="kiosk-analytics" class="qm-kiosk-analytics"></div>
+      </div>
+
+      <!-- Customize Tab -->
+      <div id="customize" class="qm-content">
+        <h2>Customize KIOSK Queue</h2>
+        <p class="lead">Configure what customer details are collected before token generation.</p>
+
+        <div class="qm-customize-card">
+          <h3>Customer Details Collection</h3>
+          <p class="muted small">These settings apply to your organization only.</p>
+
+          <div class="qm-form qm-customize-form">
+            <div class="qm-toggle-ribbon">
+              <label class="qm-toggle-row" for="collect-customer-details-enabled">
+                <span class="qm-toggle-copy">
+                  <span class="qm-toggle-title">Enable customer details at KIOSK token creation</span>
+                  <span class="qm-toggle-desc">Show a customer details step before token generation.</span>
+                </span>
+                <span class="qm-toggle-switch">
+                  <input id="collect-customer-details-enabled" type="checkbox" />
+                  <span class="qm-toggle-track" aria-hidden="true"></span>
+                </span>
+              </label>
+              <div class="qm-toggle-ribbon-note">Choose which details become required when this is enabled.</div>
+            </div>
+
+            <label id="customer-name-required-row" class="qm-checkbox-row" for="collect-customer-name-required" style="display:none;">
+              <input id="collect-customer-name-required" type="checkbox" />
+              <span>Require customer name</span>
+            </label>
+
+            <label id="customer-phone-required-row" class="qm-checkbox-row" for="collect-customer-phone-required" style="display:none;">
+              <input id="collect-customer-phone-required" type="checkbox" />
+              <span>Require customer phone number</span>
+            </label>
+
+            <label id="recall-enabled-row" class="qm-checkbox-row" for="collect-recall-enabled" style="display:block;margin-top:12px;"> 
+              <input id="collect-recall-enabled" type="checkbox" />
+              <span>Enable recall on counter (allow operators to recall recent tokens)</span>
+            </label>
+
+            <button id="save-customer-detail-settings" type="button">Save Customize Settings</button>
+          </div>
+
+          <div id="customize-settings-status" class="qm-customize-status muted small"></div>
+        </div>
       </div>
       </div>
     </div>
