@@ -20,7 +20,11 @@ async function requireSuperadmin(uid: string) {
   }
 }
 
-async function requireOrganizationAdminOrStaff(uid: string, organizationId: string, counterId?: string) {
+async function requireOrganizationAdminOrStaff(
+  uid: string,
+  organizationId: string,
+  counterId?: string,
+) {
   const userSnap = await db.collection("users").doc(uid).get();
 
   if (!userSnap.exists) {
@@ -33,11 +37,19 @@ async function requireOrganizationAdminOrStaff(uid: string, organizationId: stri
     throw new HttpsError("permission-denied", "User account is not active.");
   }
 
-  const isOrganizationAdmin = user?.platformRole === "organization_admin" && user?.organizationId === organizationId;
-  const isStaffForCounter = user?.platformRole === "staff" && user?.organizationId === organizationId && (!counterId || user?.assignedCounterId === counterId);
+  const isOrganizationAdmin =
+    user?.platformRole === "organization_admin" &&
+    user?.organizationId === organizationId;
+  const isStaffForCounter =
+    user?.platformRole === "staff" &&
+    user?.organizationId === organizationId &&
+    (!counterId || user?.assignedCounterId === counterId);
 
   if (!isOrganizationAdmin && !isStaffForCounter) {
-    throw new HttpsError("permission-denied", "You do not have permission to perform this action.");
+    throw new HttpsError(
+      "permission-denied",
+      "You do not have permission to perform this action.",
+    );
   }
 }
 
@@ -211,18 +223,13 @@ export const createStaffUser = onCall(async (request) => {
       throw new HttpsError("unauthenticated", "Login required.");
     }
 
-    const {
-      organizationId,
-      counterId,
-      email,
-      password,
-      displayName,
-    } = request.data;
+    const { organizationId, counterId, email, password, displayName } =
+      request.data;
 
     if (!organizationId || !counterId || !email || !password || !displayName) {
       throw new HttpsError(
         "invalid-argument",
-        "Organization, counter, email, password, and staff name are required."
+        "Organization, counter, email, password, and staff name are required.",
       );
     }
 
@@ -240,13 +247,12 @@ export const createStaffUser = onCall(async (request) => {
       caller?.organizationId === organizationId;
 
     const isSuperadmin =
-      caller?.platformRole === "superadmin" &&
-      caller?.status === "active";
+      caller?.platformRole === "superadmin" && caller?.status === "active";
 
     if (!isOrganizationAdmin && !isSuperadmin) {
       throw new HttpsError(
         "permission-denied",
-        "Only an organization administrator can create staff users."
+        "Only an organization administrator can create staff users.",
       );
     }
 
@@ -280,7 +286,7 @@ export const createStaffUser = onCall(async (request) => {
         console.error("Error creating staff user:", error);
         throw new HttpsError(
           "internal",
-          error.message || "Could not create staff user."
+          error.message || "Could not create staff user.",
         );
       }
     }
@@ -298,7 +304,7 @@ export const createStaffUser = onCall(async (request) => {
         createdAt: FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp(),
       },
-      { merge: true }
+      { merge: true },
     );
 
     await counterRef.set(
@@ -308,7 +314,7 @@ export const createStaffUser = onCall(async (request) => {
         assignedStaffName: displayName,
         updatedAt: FieldValue.serverTimestamp(),
       },
-      { merge: true }
+      { merge: true },
     );
 
     return {
@@ -326,7 +332,7 @@ export const createStaffUser = onCall(async (request) => {
 
     throw new HttpsError(
       "internal",
-      error.message || "Could not create staff user."
+      error.message || "Could not create staff user.",
     );
   }
 });
@@ -517,7 +523,11 @@ export const callNextCustomer = onCall(async (request) => {
       );
     }
 
-    await requireOrganizationAdminOrStaff(request.auth.uid, organizationId, counterId);
+    await requireOrganizationAdminOrStaff(
+      request.auth.uid,
+      organizationId,
+      counterId,
+    );
 
     const organizationRef = db.collection("organizations").doc(organizationId);
     const counterRef = organizationRef.collection("counters").doc(counterId);
@@ -592,7 +602,11 @@ export const completeCurrentService = onCall(async (request) => {
       throw new HttpsError("invalid-argument", "Missing required values.");
     }
 
-    await requireOrganizationAdminOrStaff(request.auth.uid, organizationId, counterId);
+    await requireOrganizationAdminOrStaff(
+      request.auth.uid,
+      organizationId,
+      counterId,
+    );
 
     const organizationRef = db.collection("organizations").doc(organizationId);
     const stepRef = organizationRef.collection("queueSteps").doc(stepId);

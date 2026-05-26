@@ -1,6 +1,13 @@
 import { FormEvent, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { addDoc, collection, onSnapshot, query, serverTimestamp, where } from "firebase/firestore";
+import {
+  addDoc,
+  collection,
+  onSnapshot,
+  query,
+  serverTimestamp,
+  where,
+} from "firebase/firestore";
 import { httpsCallable } from "firebase/functions";
 import { db, functions } from "../../firebase/firebase";
 import { useAuth } from "../auth/AuthProvider";
@@ -37,24 +44,30 @@ export default function StaffManagementPage() {
 
     const countersQuery = query(
       collection(db, "organizations", organizationId, "counters"),
-      where("status", "==", "active")
+      where("status", "==", "active"),
     );
 
     const staffQuery = query(
       collection(db, "users"),
       where("organizationId", "==", organizationId),
-      where("platformRole", "==", "staff")
+      where("platformRole", "==", "staff"),
     );
 
     const unsubscribeCounters = onSnapshot(countersQuery, (snapshot) => {
       setCounters(
-        snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as Counter[]
+        snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as Counter[],
       );
     });
 
     const unsubscribeStaff = onSnapshot(staffQuery, (snapshot) => {
       setStaffUsers(
-        snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as StaffUser[]
+        snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as StaffUser[],
       );
     });
 
@@ -96,7 +109,7 @@ export default function StaffManagementPage() {
       setStaffCounterId("");
 
       setMessage(
-        `Staff created. Email: ${result.data.staffEmail}. Assigned counter ID: ${result.data.assignedCounterId}`
+        `Staff created. Email: ${result.data.staffEmail}. Assigned counter ID: ${result.data.assignedCounterId}`,
       );
     } catch (err: any) {
       console.error(err);
@@ -113,7 +126,14 @@ export default function StaffManagementPage() {
 
   return (
     <div style={{ padding: 24, maxWidth: 1100, margin: "0 auto" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 24,
+        }}
+      >
         <div>
           <h1>Staff Management</h1>
           <p>Create and assign staff to counters.</p>

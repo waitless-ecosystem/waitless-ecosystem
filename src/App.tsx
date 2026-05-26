@@ -23,7 +23,8 @@ import StaffCounterPage from "./features/staff/StaffCounterPage";
 import CounterDisplayPage from "./features/display/CounterDisplayPage";
 
 function Navigation() {
-  const { currentUser, isSuperAdmin, isOrganizationAdmin, isStaff, logout } = useAuth();
+  const { currentUser, isSuperAdmin, isOrganizationAdmin, isStaff, logout } =
+    useAuth();
 
   return (
     <nav style={{ display: "flex", flexWrap: "wrap", gap: 16, padding: 16 }}>
@@ -117,7 +118,7 @@ export default function App() {
         <Route
           path="/staff"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute requireStaff>
               <StaffDashboard />
             </ProtectedRoute>
           }
@@ -132,7 +133,10 @@ export default function App() {
           }
         />
 
-        <Route path="/display/:organizationId/:counterId" element={<CounterDisplayPage />} />
+        <Route
+          path="/display/:organizationId/:counterId"
+          element={<CounterDisplayPage />}
+        />
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

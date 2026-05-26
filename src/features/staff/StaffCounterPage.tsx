@@ -70,17 +70,21 @@ export default function StaffCounterPage() {
       orderBy("createdAt", "asc"),
     );
 
-    const unsubscribeSteps = onSnapshot(stepsQuery, (snapshot) => {
-      setSteps(
-        snapshot.docs.map((document) => ({
-          id: document.id,
-          ...document.data(),
-        })) as Step[],
-      );
-    }, (err) => {
-      console.error("Error loading steps:", err);
-      setError("Failed to load queue steps.");
-    });
+    const unsubscribeSteps = onSnapshot(
+      stepsQuery,
+      (snapshot) => {
+        setSteps(
+          snapshot.docs.map((document) => ({
+            id: document.id,
+            ...document.data(),
+          })) as Step[],
+        );
+      },
+      (err) => {
+        console.error("Error loading steps:", err);
+        setError("Failed to load queue steps.");
+      },
+    );
 
     return () => {
       unsubscribeCounter();
@@ -110,7 +114,7 @@ export default function StaffCounterPage() {
     try {
       setMessage("");
       setError("");
-      
+
       if (!counter?.currentStepId) {
         setError("No current service to complete.");
         return;
@@ -150,7 +154,14 @@ export default function StaffCounterPage() {
 
   return (
     <div style={{ padding: 24, maxWidth: 900, margin: "0 auto" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 24,
+        }}
+      >
         <h1>
           Staff Counter: {counter?.name} ({counter?.counterNumber})
         </h1>
@@ -167,9 +178,15 @@ export default function StaffCounterPage() {
 
         {currentStep ? (
           <>
-            <p><strong>Token:</strong> {currentStep.tokenNumber}</p>
-            <p><strong>Service:</strong> {currentStep.serviceName}</p>
-            <p><strong>Status:</strong> {currentStep.status}</p>
+            <p>
+              <strong>Token:</strong> {currentStep.tokenNumber}
+            </p>
+            <p>
+              <strong>Service:</strong> {currentStep.serviceName}
+            </p>
+            <p>
+              <strong>Status:</strong> {currentStep.status}
+            </p>
             <button onClick={completeCurrent} style={button}>
               Complete Service
             </button>
@@ -193,7 +210,10 @@ export default function StaffCounterPage() {
             {steps
               .filter((step) => step.status === "waiting")
               .map((step) => (
-                <div key={step.id} style={{ padding: "8px 0", borderBottom: "1px solid #ddd" }}>
+                <div
+                  key={step.id}
+                  style={{ padding: "8px 0", borderBottom: "1px solid #ddd" }}
+                >
                   <strong>{step.tokenNumber}</strong> - {step.serviceName}
                 </div>
               ))}

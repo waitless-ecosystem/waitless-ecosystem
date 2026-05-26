@@ -76,18 +76,18 @@ export default function AdminDashboardPage() {
 
     const servicesQuery = query(
       collection(db, "organizations", organizationId, "services"),
-      where("status", "==", "active")
+      where("status", "==", "active"),
     );
 
     const countersQuery = query(
       collection(db, "organizations", organizationId, "counters"),
-      where("status", "==", "active")
+      where("status", "==", "active"),
     );
 
     const staffQuery = query(
       collection(db, "users"),
       where("organizationId", "==", organizationId),
-      where("platformRole", "==", "staff")
+      where("platformRole", "==", "staff"),
     );
 
     const unsubscribeServices = onSnapshot(servicesQuery, (snapshot) => {
@@ -95,7 +95,7 @@ export default function AdminDashboardPage() {
         snapshot.docs.map((document) => ({
           id: document.id,
           ...document.data(),
-        })) as Service[]
+        })) as Service[],
       );
     });
 
@@ -104,7 +104,7 @@ export default function AdminDashboardPage() {
         snapshot.docs.map((document) => ({
           id: document.id,
           ...document.data(),
-        })) as Counter[]
+        })) as Counter[],
       );
     });
 
@@ -113,7 +113,7 @@ export default function AdminDashboardPage() {
         snapshot.docs.map((document) => ({
           id: document.id,
           ...document.data(),
-        })) as StaffUser[]
+        })) as StaffUser[],
       );
     });
 
@@ -135,13 +135,16 @@ export default function AdminDashboardPage() {
     }
 
     try {
-      await addDoc(collection(db, "organizations", organizationId, "services"), {
-        name: serviceName.trim(),
-        prefix: servicePrefix.trim().toUpperCase(),
-        averageServiceTime,
-        status: "active",
-        createdAt: serverTimestamp(),
-      });
+      await addDoc(
+        collection(db, "organizations", organizationId, "services"),
+        {
+          name: serviceName.trim(),
+          prefix: servicePrefix.trim().toUpperCase(),
+          averageServiceTime,
+          status: "active",
+          createdAt: serverTimestamp(),
+        },
+      );
 
       setServiceName("");
       setServicePrefix("");
@@ -164,18 +167,21 @@ export default function AdminDashboardPage() {
     }
 
     try {
-      await addDoc(collection(db, "organizations", organizationId, "counters"), {
-        name: counterName.trim(),
-        counterNumber: counterNumber.trim(),
-        status: "active",
-        currentTokenId: null,
-        currentStepId: null,
-        previousTokenId: null,
-        assignedStaffId: null,
-        assignedStaffEmail: null,
-        assignedStaffName: null,
-        createdAt: serverTimestamp(),
-      });
+      await addDoc(
+        collection(db, "organizations", organizationId, "counters"),
+        {
+          name: counterName.trim(),
+          counterNumber: counterNumber.trim(),
+          status: "active",
+          currentTokenId: null,
+          currentStepId: null,
+          previousTokenId: null,
+          assignedStaffId: null,
+          assignedStaffEmail: null,
+          assignedStaffName: null,
+          createdAt: serverTimestamp(),
+        },
+      );
 
       setCounterName("");
       setCounterNumber("");
@@ -215,7 +221,7 @@ export default function AdminDashboardPage() {
             serviceId,
             status: "active",
             createdAt: serverTimestamp(),
-          }
+          },
         );
       }
 
@@ -260,7 +266,7 @@ export default function AdminDashboardPage() {
       setStaffCounterId("");
 
       setMessage(
-        `Staff created. Email: ${result.data.staffEmail}. Assigned counter ID: ${result.data.assignedCounterId}`
+        `Staff created. Email: ${result.data.staffEmail}. Assigned counter ID: ${result.data.assignedCounterId}`,
       );
     } catch (err: any) {
       console.error(err);
@@ -272,7 +278,7 @@ export default function AdminDashboardPage() {
     setSelectedServiceIds((current) =>
       current.includes(serviceId)
         ? current.filter((id) => id !== serviceId)
-        : [...current, serviceId]
+        : [...current, serviceId],
     );
   }
 
@@ -292,7 +298,9 @@ export default function AdminDashboardPage() {
 
       <p>Organization ID: {organizationId}</p>
 
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 24 }}>
+      <div
+        style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 24 }}
+      >
         <Link to="/admin/services" style={navLink}>
           Manage Services
         </Link>
@@ -349,7 +357,8 @@ export default function AdminDashboardPage() {
         <ul>
           {services.map((service) => (
             <li key={service.id}>
-              {service.name} ({service.prefix}) - {service.averageServiceTime} min
+              {service.name} ({service.prefix}) - {service.averageServiceTime}{" "}
+              min
             </li>
           ))}
         </ul>
@@ -532,7 +541,7 @@ export default function AdminDashboardPage() {
                 /staff/{organizationId}/{staff.assignedCounterId}
               </code>
             </p>
-          ) : null
+          ) : null,
         )}
       </section>
     </div>
