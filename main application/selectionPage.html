@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Flow - QR Connect</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+</head>
+<body>
+    <div class="app-container glass-effect">
+        <header class="app-header">
+            <div class="header-top">
+                <h1>WaitLess</h1>
+                <button id="logout-btn" class="logout-btn">Logout</button>
+            </div>
+            <p>Welcome! How would you like to proceed?</p>
+        </header>
+
+        <div class="services-grid">
+            <div class="service-card glass-effect flow-card">
+                <div class="icon-placeholder">🌐</div>
+                <h3>Online Appointment</h3>
+                <p style="color: var(--text-muted); font-size: 0.85rem; margin: 0.5rem 0 1rem 0;">
+                    Book a scheduled slot from anywhere.
+                </p>
+                <button id="online-btn" class="login-btn">Book Slot</button>
+            </div>
+
+            <div class="service-card glass-effect flow-card">
+                <div class="icon-placeholder">🏪</div>
+                <h3>In-Shop Queue</h3>
+                <p style="color: var(--text-muted); font-size: 0.85rem; margin: 0.5rem 0 1rem 0;">
+                    Scan the shop's QR code to enter the walk-in queue.
+                </p>
+                <button id="scan-btn" class="login-btn" style="background: var(--accent);">Scan QR</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const onlineBtn = document.getElementById('online-btn');
+            const scanBtn = document.getElementById('scan-btn');
+
+            if (onlineBtn) {
+                onlineBtn.addEventListener('click', () => {
+                    // Redirect to your online booking system or a directory page
+                    window.location.href = 'appointments.html'; 
+                });
+            }
+
+            if (scanBtn) {
+                scanBtn.addEventListener('click', () => {
+                    // Redirects to your existing scanner page
+                    window.location.href = 'qrscan.html';
+                });
+            }
+        });
+    </script>
+</body>
+</html>
