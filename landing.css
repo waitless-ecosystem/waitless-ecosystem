@@ -1,9 +1,17 @@
 :root{--bg:#000;--surface:#0f1729;--surface-light:#1a2847;--muted:#8b95a5;--accent:#1d4ed8;--accent-2:#0891b2;--accent-3:#10b981;--glass:rgba(255,255,255,0.05)}
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;font-family:Inter,system-ui,Segoe UI,Roboto,'Helvetica Neue',Arial}
-body{background:radial-gradient(circle at top left, rgba(29,78,216,0.18), transparent 25%),radial-gradient(circle at bottom right, rgba(16,185,129,0.12), transparent 30%),linear-gradient(180deg,#08101e 0%, #111827 55%, #02040a 100%);color:#e5e7eb;line-height:1.6;background-attachment:fixed;}
+body {
+    background: radial-gradient(circle at top left, rgba(29,78,216,0.18), transparent 25%),
+                radial-gradient(circle at bottom right, rgba(16,185,129,0.12), transparent 30%),
+                linear-gradient(180deg,#08101e 0%, #111827 55%, #02040a 100%);
+    color: #e5e7eb;
+    line-height: 1.6;
+    background-attachment: fixed;
+}
 .container{max-width:1280px;margin:0 auto;padding:2rem 1rem}
-.site-header{background:rgba(10,14,26,0.85);padding:1rem 0;position:sticky;top:0;z-index:40;backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,255,255,0.08)}
+.site-header{background:rgba(8,16,30,0.9);padding:1rem 0;position:sticky;top:0;z-index:40;backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,0.08)}
+
 .header-inner{display:flex;align-items:center;justify-content:space-between;gap:1rem}
 .logo{font-weight:900;color:#fff;text-decoration:none;font-size:1.5rem;letter-spacing:-0.5px}
 .nav{display:flex;gap:1.75rem;align-items:center}
@@ -255,4 +263,90 @@ body{background:radial-gradient(circle at top left, rgba(29,78,216,0.18), transp
     font-size:0.9rem;
     line-height:1.5;
     border-top:1px solid #e5e7eb;
+}
+
+
+.hero{
+    position: relative;
+    min-height: 100vh;
+    overflow: hidden;
+
+    background: transparent
+    
+    (
+        90deg,
+        #020b24,
+        #03163a
+    );
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image: url('images/new.png');
+    background-repeat: repeat-y; /* Allows it to appear down all your other sections */
+    background-position: center 30%;
+    background-size: 1200px;
+    opacity: 0.03; /* Restores the ultra-subtle, elegant look */
+    pointer-events: none;
+    z-index: -1; /* Puts it completely behind all text, boxes, and sections */
+}
+
+.hero-inner{
+    position: relative;
+    z-index: 1;
+}
+
+/* --- REPLACE THE .logo RULES IN YOUR CSS WITH THIS --- */
+.logo {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    height: 100%;
+    
+    /* Crucial: Gives the massive logo a baseline anchor point */
+    position: relative; 
+    
+    /* Tells the header to reserve enough horizontal width for a giant logo */
+    width: 260px; 
+}
+
+.logo img {
+    /* SET TO YOUR REQUESTED GIANT SIZE */
+    height: 256px; 
+    width: auto;
+    object-fit: contain;
+    
+    /* Lifts the image so it floats OVER the header without pushing it open */
+    position: absolute;
+    left: 0;
+    top: 50%;
+    
+    /* Centers the giant logo vertically perfectly over your short header bar */
+    transform: translateY(-50%); 
+    
+    /* Forces the icon graphic to be crisp solid pure white */
+    filter: brightness(0) invert(1);
+    
+    /* Smooth hover effect */
+    transition: transform 0.3s ease;
+    
+    /* Soft continuous glow animation */
+    animation: logoIconGlow 3s ease-in-out infinite;
+}
+
+/* Hover effect handler for absolute positioning */
+.logo img:hover {
+    transform: translateY(-50%) scale(1.04);
+}
+
+/* --- KEEP THIS ANIMATION AT THE BOTTOM OF YOUR CSS --- */
+@keyframes logoIconGlow {
+    0%, 100% {
+        filter: brightness(0) invert(1) drop-shadow(0 0 0px rgba(255, 255, 255, 0));
+    }
+    50% {
+        filter: brightness(0) invert(1) drop-shadow(0 0 20px rgba(255, 255, 255, 0.6));
+    }
 }
