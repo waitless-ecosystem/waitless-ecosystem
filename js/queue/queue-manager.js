@@ -8,6 +8,7 @@
 
 // Store current user UID
 let currentUserUID = null;
+let currentOrganizationProfile = null;
 
 // ============================================================
 // UTILITY FUNCTIONS
@@ -34,6 +35,82 @@ function formatDate(ts) {
   catch(_) { return String(ts); }
 }
 
+function getMobileAppUrl(orgId) {
+  const url = new URL('../user-app/index.html', window.location.href);
+  if (orgId) {
+    url.searchParams.set('orgId', orgId);
+  }
+  return url.toString();
+}
+
+function getPublicServicesRef(orgId) {
+  return db.ref(`publicOrganizations/${orgId}/services`);
+}
+
+async function syncPublicService(orgId, serviceId, serviceData) {
+  await getPublicServicesRef(orgId).child(serviceId).set(serviceData);
+}
+
+async function syncPublicOrganizationMeta(profile = currentOrganizationProfile) {
+  if (!currentUserUID) return;
+
+  await db.ref(`publicOrganizations/${currentUserUID}`).update({
+    meta: {
+      orgId: currentUserUID,
+      name: profile?.profile?.name || profile?.displayName || profile?.organizationName || profile?.name || currentUserUID,
+      email: profile?.email || '',
+      role: profile?.role || 'approved',
+      tokenPrefix: String(profile?.settings?.tokenPrefix || '').trim(),
+      allowOnlineBooking: !!kioskCustomerDetailsSettings.allowOnlineBooking,
+      serviceCategoriesEnabled: !!kioskCustomerDetailsSettings.serviceCategoriesEnabled,
+      scheduledServicesEnabled: !!kioskCustomerDetailsSettings.scheduledServicesEnabled,
+      tokenSequenceResetMinutes: Number(kioskCustomerDetailsSettings.tokenSequenceResetMinutes || 0),
+      serviceCount: Object.keys(currentServices || {}).length,
+      updatedAt: firebase.database.ServerValue.TIMESTAMP
+    }
+  });
+}
+
+async function removePublicService(orgId, serviceId) {
+  await getPublicServicesRef(orgId).child(serviceId).remove();
+}
+
+function renderOrganizationQr(orgId) {
+  const qrEl = $('#org-qr-code');
+  const urlEl = $('#org-qr-url');
+  const copyBtn = $('#copy-org-qr-link');
+  if (!qrEl || !urlEl) return;
+
+  const mobileUrl = getMobileAppUrl(orgId);
+  urlEl.textContent = mobileUrl;
+  qrEl.innerHTML = '';
+
+  if (window.QRCode) {
+    new QRCode(qrEl, {
+      text: mobileUrl,
+      width: 180,
+      height: 180,
+      colorDark: '#0b1220',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.M
+    });
+  } else {
+    qrEl.innerHTML = `<a href="${mobileUrl}">${mobileUrl}</a>`;
+  }
+
+  if (copyBtn && !copyBtn.dataset.bound) {
+    copyBtn.dataset.bound = 'true';
+    copyBtn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(mobileUrl);
+        showMessage('Mobile app link copied', 'success');
+      } catch (err) {
+        showMessage('Unable to copy mobile link', 'error');
+      }
+    });
+  }
+}
+
 // Global state
 let currentCounters = {};
 let currentServices = {};
@@ -43,7 +120,11 @@ let kioskCustomerDetailsSettings = {
   enabled: false,
   requireName: false,
   requirePhone: false,
-  recallEnabled: false
+  recallEnabled: false,
+  serviceCategoriesEnabled: false,
+  scheduledServicesEnabled: false,
+  basicModeEnabled: false,
+  allowOnlineBooking: false
 };
 
 function normalizeCustomerDetailSettings(raw) {
@@ -52,8 +133,85 @@ function normalizeCustomerDetailSettings(raw) {
     enabled: !!data.enabled,
     requireName: !!data.requireName,
     requirePhone: !!data.requirePhone,
-    recallEnabled: !!data.recallEnabled
+    recallEnabled: !!data.recallEnabled,
+    serviceCategoriesEnabled: !!data.serviceCategoriesEnabled,
+    scheduledServicesEnabled: !!data.scheduledServicesEnabled,
+    basicModeEnabled: !!data.basicModeEnabled,
+    mobileAppBlocked: !!data.mobileAppBlocked,
+    allowOnlineBooking: !!data.allowOnlineBooking,
+    autoReturnSeconds: Number(data.autoReturnSeconds || 0),
+    tokenSequenceResetMinutes: Number(data.tokenSequenceResetMinutes || 0)
   };
+}
+
+function syncCustomizeControlsWithBasicMode() {
+  const basicModeEnabled = !!$('#collect-basic-enabled')?.checked;
+  const mobileAppBlocked = !!$('#block-mobile-app-enabled')?.checked;
+  const scheduledServicesEnabled = !!$('#scheduled-services-enabled')?.checked;
+  const detailsEnabledInput = $('#collect-customer-details-enabled');
+  const nameInput = $('#collect-customer-name-required');
+  const phoneInput = $('#collect-customer-phone-required');
+  const recallInput = $('#collect-recall-enabled');
+  const nameRow = $('#customer-name-required-row');
+  const phoneRow = $('#customer-phone-required-row');
+  const customizeCard = $('#customer-details-customize-card');
+  const customizeStatus = $('#customize-settings-status');
+
+  if(detailsEnabledInput) {
+    detailsEnabledInput.disabled = basicModeEnabled;
+    if(basicModeEnabled) {
+      detailsEnabledInput.checked = false;
+    }
+  }
+
+  if(nameInput) {
+    nameInput.disabled = basicModeEnabled || !detailsEnabledInput?.checked;
+    if(basicModeEnabled) {
+      nameInput.checked = false;
+    }
+  }
+
+  if(phoneInput) {
+    phoneInput.disabled = basicModeEnabled || !detailsEnabledInput?.checked;
+    if(basicModeEnabled) {
+      phoneInput.checked = false;
+    }
+  }
+
+  if(recallInput) {
+    recallInput.disabled = basicModeEnabled;
+    if(basicModeEnabled) {
+      recallInput.checked = false;
+    }
+  }
+
+  const mobileAppBlockedInput = $('#block-mobile-app-enabled');
+  if(mobileAppBlockedInput) {
+    mobileAppBlockedInput.disabled = basicModeEnabled;
+    if(basicModeEnabled) {
+      mobileAppBlockedInput.checked = false;
+    }
+  }
+
+  const scheduledServicesInput = $('#scheduled-services-enabled');
+  if(scheduledServicesInput) {
+    scheduledServicesInput.disabled = basicModeEnabled;
+    if(basicModeEnabled) {
+      scheduledServicesInput.checked = false;
+    }
+  }
+
+  if(nameRow) nameRow.style.display = basicModeEnabled ? 'none' : (detailsEnabledInput?.checked ? '' : 'none');
+  if(phoneRow) phoneRow.style.display = basicModeEnabled ? 'none' : (detailsEnabledInput?.checked ? '' : 'none');
+  if(customizeCard) customizeCard.style.display = basicModeEnabled ? 'none' : '';
+
+  if(customizeStatus && basicModeEnabled) {
+    customizeStatus.textContent = 'Basic mode is on. Other customization options are hidden.';
+  }
+  const autoReturnInput = $('#kiosk-auto-return-seconds');
+  if (autoReturnInput) autoReturnInput.value = kioskCustomerDetailsSettings.autoReturnSeconds || '';
+  const tokenResetInput = $('#token-sequence-reset-minutes');
+  if (tokenResetInput) tokenResetInput.value = kioskCustomerDetailsSettings.tokenSequenceResetMinutes || '';
 }
 
 // ============================================================
@@ -120,26 +278,34 @@ const countersDB = {
 
 // Services CRUD
 const servicesDB = {
-  async create(name, description = '', estimatedTime = 0) {
+  async create(name, description = '', estimatedTime = 0, category = '') {
     if(!name || name.trim().length === 0) throw new Error('Service name required');
     const id = generateId();
-    await db.ref(`users/${currentUserUID}/services/${id}`).set({
+    const serviceData = {
       id,
       name: name.trim(),
       description: description.trim(),
+      category: category.trim(),
       status: 'active',
       estimatedTime: parseInt(estimatedTime) || 0,
       createdAt: firebase.database.ServerValue.TIMESTAMP
-    });
+    };
+    await db.ref(`users/${currentUserUID}/services/${id}`).set(serviceData);
+    await syncPublicService(currentUserUID, id, serviceData);
     return id;
   },
 
   async update(id, data) {
+    const currentSnap = await db.ref(`users/${currentUserUID}/services/${id}`).once('value');
+    const currentData = currentSnap.val() || {};
+    const mergedData = { ...currentData, ...data };
     await db.ref(`users/${currentUserUID}/services/${id}`).update(data);
+    await syncPublicService(currentUserUID, id, mergedData);
   },
 
   async delete(id) {
     await db.ref(`users/${currentUserUID}/services/${id}`).remove();
+    await removePublicService(currentUserUID, id);
   },
 
   async getAll() {
@@ -185,18 +351,23 @@ const assignmentsDB = {
 // Queue Operations
 const queueDB = {
   async addToken(serviceId, description = '') {
-    const id = generateId();
+    const id = tokenFactory.generateTokenId('QUEUE');
+    const prefix = await tokenFactory.resolveOrganizationTokenPrefix(db, currentUserUID);
+    const tokenNumber = await tokenFactory.generateSequentialTokenNumber(db, { organizationId: currentUserUID, prefix, serviceId });
     await db.ref(`users/${currentUserUID}/queue/${serviceId}/${id}`).set({
-      id,
-      tokenNumber: id.toUpperCase(),
+      ...tokenFactory.createBaseTokenData({
+        tokenId: id,
+        tokenNumber,
+        organizationId: currentUserUID,
+        kioskId: null,
+        kioskName: null,
+        serviceId,
+        serviceName: null,
+        customerUid: currentUserUID,
+        source: 'admin'
+      }),
       serviceId,
-      organizationId: currentUserUID,
-      customerUid: currentUserUID,
-      description: description.trim(),
-      timestamp: firebase.database.ServerValue.TIMESTAMP,
-      status: 'waiting',
-      assignedCounterId: null,
-      assignedCounterName: null
+      description: description.trim()
     });
     return id;
   },
@@ -207,6 +378,10 @@ const queueDB = {
       counter,
       updatedAt: firebase.database.ServerValue.TIMESTAMP
     });
+  },
+
+  async deleteAllTokens() {
+    await db.ref(`users/${currentUserUID}/queue`).remove();
   },
 
   async listenByService(serviceId, callback) {
@@ -270,7 +445,6 @@ const organizationSettingsDB = {
     const snap = await db.ref(`users/${currentUserUID}/settings/kioskCustomerDetails`).once('value');
     return normalizeCustomerDetailSettings(snap.val());
   },
-
   async saveCustomerDetailSettings(settings) {
     const normalized = normalizeCustomerDetailSettings(settings);
     await db.ref(`users/${currentUserUID}/settings/kioskCustomerDetails`).set({
@@ -278,11 +452,33 @@ const organizationSettingsDB = {
       requireName: normalized.enabled ? normalized.requireName : false,
       requirePhone: normalized.enabled ? normalized.requirePhone : false,
       recallEnabled: !!normalized.recallEnabled,
+      serviceCategoriesEnabled: !!normalized.serviceCategoriesEnabled,
+      scheduledServicesEnabled: !!normalized.scheduledServicesEnabled,
+      basicModeEnabled: !!normalized.basicModeEnabled,
+      mobileAppBlocked: !!normalized.mobileAppBlocked,
+      allowOnlineBooking: !!normalized.allowOnlineBooking,
+      autoReturnSeconds: Number(normalized.autoReturnSeconds || 0),
+      tokenSequenceResetMinutes: Number(normalized.tokenSequenceResetMinutes || 0),
       updatedAt: firebase.database.ServerValue.TIMESTAMP,
       updatedBy: auth.currentUser ? auth.currentUser.uid : currentUserUID
     });
+
     return normalized;
   }
+};
+
+// Open Hours CRUD
+organizationSettingsDB.getOpenHours = async function() {
+  const snap = await db.ref(`users/${currentUserUID}/settings/openHours`).once('value');
+  return snap.val() || {};
+};
+
+organizationSettingsDB.saveOpenHours = async function(openHours) {
+  await db.ref(`users/${currentUserUID}/settings/openHours`).set({
+    ...(openHours || {}),
+    updatedAt: firebase.database.ServerValue.TIMESTAMP,
+    updatedBy: auth.currentUser ? auth.currentUser.uid : currentUserUID
+  });
 };
 
 // ============================================================
@@ -331,6 +527,8 @@ function renderServices(services) {
       '<div class="qm-item-info">' +
       '<div class="qm-item-name">' + escapeHtml(service.name) + '</div>' +
       '<div class="qm-item-meta">' + escapeHtml(service.description || '(no description)') + '</div>' +
+      (service.category ? '<div class="qm-item-meta">Category: <span class="qm-meta-highlight">' + escapeHtml(service.category) + '</span></div>' : '') +
+      (service.scheduledServiceEnabled ? '<div class="qm-item-meta"><span class="qm-schedule-badge">Scheduled</span> ' + escapeHtml(formatServiceScheduleSummary(service)) + '</div>' : '') +
       '<div class="qm-item-meta">Est. time: <span class="qm-meta-highlight">' + (service.estimatedTime || 0) + '</span> min' +
       ' | Status: <span class="qm-meta-highlight">' + escapeHtml(service.status || 'active') + '</span></div>' +
       '</div>' +
@@ -394,6 +592,104 @@ function renderCounterCards(counters, services) {
       <div class="card-status status-${counter.status}">${counter.status}</div>
     `;
     grid.appendChild(card);
+  });
+}
+
+function formatServiceScheduleSummary(service) {
+  const schedule = service?.schedule || {};
+  const days = Array.isArray(schedule.days) ? schedule.days : [];
+  const open = schedule.open || '';
+  const close = schedule.close || '';
+  const labels = {
+    sun: 'Sun', mon: 'Mon', tue: 'Tue', wed: 'Wed', thu: 'Thu', fri: 'Fri', sat: 'Sat'
+  };
+  const dayText = days.length
+    ? days.map((day) => labels[day] || day).join(', ')
+    : 'No days selected';
+  if (!open || !close) return dayText;
+  return `${dayText} • ${open} - ${close}`;
+}
+
+function toggleScheduledServicesTabVisibility(forceVisible) {
+  const tab = document.querySelector('.qm-tab[data-tab="scheduled-services"]');
+  const panel = $('#scheduled-services');
+  const shouldShow = typeof forceVisible === 'boolean'
+    ? forceVisible
+    : !!kioskCustomerDetailsSettings.scheduledServicesEnabled;
+
+  if (tab) tab.style.display = shouldShow ? '' : 'none';
+  if (panel) panel.style.display = shouldShow ? '' : 'none';
+
+  if (!shouldShow) {
+    const activeTab = document.querySelector('.qm-tab.active');
+    const activePanel = document.querySelector('.qm-content.active');
+    if (activeTab && activeTab.dataset.tab === 'scheduled-services') {
+      const servicesTab = document.querySelector('.qm-tab[data-tab="services"]');
+      servicesTab?.click();
+    }
+    if (activePanel && activePanel.id === 'scheduled-services') {
+      const servicesPanel = $('#services');
+      activePanel.classList.remove('active');
+      servicesPanel?.classList.add('active');
+    }
+  }
+}
+
+function renderScheduledServices(services) {
+  const list = $('#scheduled-services-list');
+  if (!list) return;
+
+  if (!kioskCustomerDetailsSettings.scheduledServicesEnabled) {
+    list.innerHTML = '<p class="muted small">Enable scheduled services in Customize to configure service availability.</p>';
+    return;
+  }
+
+  const entries = Object.entries(services || {});
+  if (!entries.length) {
+    list.innerHTML = '<p class="muted small">No services. Add one first.</p>';
+    return;
+  }
+
+  const dayKeys = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+  const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  list.innerHTML = '';
+  entries.forEach(([serviceId, service]) => {
+    const schedule = service?.schedule || {};
+    const enabled = !!service?.scheduledServiceEnabled;
+    const days = Array.isArray(schedule.days) ? schedule.days : [];
+    const open = schedule.open || '09:00';
+    const close = schedule.close || '17:00';
+
+    const item = document.createElement('div');
+    item.className = 'qm-item qm-schedule-item';
+    item.dataset.id = serviceId;
+    item.innerHTML = `
+      <div class="qm-item-info qm-schedule-info">
+        <div class="qm-item-name">${escapeHtml(service.name)}</div>
+        <div class="qm-item-meta">${escapeHtml(service.description || '(no description)')}</div>
+        <div class="qm-item-meta schedule-summary">${escapeHtml(formatServiceScheduleSummary(service))}</div>
+      </div>
+      <div class="qm-schedule-form">
+        <label class="qm-checkbox-row qm-schedule-enabled-row">
+          <input type="checkbox" class="scheduled-service-enabled" ${enabled ? 'checked' : ''} />
+          <span>Service is scheduled only</span>
+        </label>
+        <div class="qm-schedule-hours">
+          <label>Open <input type="time" class="scheduled-service-open" value="${escapeHtml(open)}" /></label>
+          <label>Close <input type="time" class="scheduled-service-close" value="${escapeHtml(close)}" /></label>
+        </div>
+        <div class="qm-schedule-days">
+          ${dayKeys.map((day, index) => `
+            <label class="qm-schedule-day-pill">
+              <input type="checkbox" class="scheduled-service-day" value="${day}" ${days.includes(day) ? 'checked' : ''} />
+              <span>${dayLabels[index]}</span>
+            </label>
+          `).join('')}
+        </div>
+      </div>
+    `;
+    list.appendChild(item);
   });
 }
 
@@ -554,6 +850,36 @@ function renderQueueStatus(queueData, services) {
 // ============================================================
 
 function attachEventListeners() {
+  // Queue management
+  const deleteAllTokensBtn = $('#delete-all-tokens');
+  if(deleteAllTokensBtn) {
+    deleteAllTokensBtn.addEventListener('click', async () => {
+      const tokenCount = Object.values(currentQueueData || {}).reduce((count, serviceQueue) => {
+        return count + Object.keys(serviceQueue || {}).length;
+      }, 0);
+
+      if(tokenCount === 0) {
+        showMessage('There are no tokens to delete.', 'info');
+        return;
+      }
+
+      const confirmed = window.confirm(`Delete all ${tokenCount} token(s) in this queue? This cannot be undone.`);
+      if(!confirmed) return;
+
+      deleteAllTokensBtn.disabled = true;
+      try {
+        await queueDB.deleteAllTokens();
+        currentQueueData = {};
+        renderQueueStatus(currentQueueData, currentServices);
+        showMessage('All tokens deleted successfully', 'success');
+      } catch(err) {
+        showMessage(err.message, 'error');
+      } finally {
+        deleteAllTokensBtn.disabled = false;
+      }
+    });
+  }
+
   // Counter management
   const addCounterBtn = $('#add-counter');
   if(addCounterBtn) {
@@ -581,18 +907,65 @@ function attachEventListeners() {
       const name = $('#service-name')?.value;
       const desc = $('#service-desc')?.value || '';
       const time = $('#service-time')?.value;
+      const category = $('#service-category')?.value || '';
       if(!name) {
         showMessage('Please enter service name', 'error');
         return;
       }
       try {
-        await servicesDB.create(name, desc, time);
+        await servicesDB.create(name, desc, time, category);
         $('#service-name').value = '';
         $('#service-desc').value = '';
         $('#service-time').value = '';
+        if($('#service-category')) $('#service-category').value = '';
         showMessage('Service added successfully', 'success');
       } catch(err) {
         showMessage(err.message, 'error');
+      }
+    });
+  }
+
+  const reloadScheduledServicesBtn = $('#reload-scheduled-services');
+  if (reloadScheduledServicesBtn) {
+    reloadScheduledServicesBtn.addEventListener('click', () => {
+      renderScheduledServices(currentServices);
+      showMessage('Scheduled services reloaded.', 'success');
+    });
+  }
+
+  const saveScheduledServicesBtn = $('#save-scheduled-services');
+  if (saveScheduledServicesBtn) {
+    saveScheduledServicesBtn.addEventListener('click', async () => {
+      if (!kioskCustomerDetailsSettings.scheduledServicesEnabled) {
+        showMessage('Enable scheduled services in Customize first.', 'error');
+        return;
+      }
+
+      try {
+        const rows = document.querySelectorAll('.qm-schedule-item');
+        for (const row of rows) {
+          const serviceId = row.dataset.id;
+          const enabled = !!row.querySelector('.scheduled-service-enabled')?.checked;
+          const open = row.querySelector('.scheduled-service-open')?.value || '';
+          const close = row.querySelector('.scheduled-service-close')?.value || '';
+          const days = Array.from(row.querySelectorAll('.scheduled-service-day:checked')).map((input) => input.value);
+          const currentService = currentServices[serviceId] || {};
+          const mergedService = {
+            ...currentService,
+            scheduledServiceEnabled: enabled,
+            schedule: enabled ? { days, open, close } : null,
+            updatedAt: firebase.database.ServerValue.TIMESTAMP
+          };
+
+          await db.ref(`users/${currentUserUID}/services/${serviceId}`).update(mergedService);
+          await syncPublicService(currentUserUID, serviceId, mergedService);
+          currentServices[serviceId] = mergedService;
+        }
+        renderServices(currentServices);
+        renderScheduledServices(currentServices);
+        showMessage('Scheduled services saved.', 'success');
+      } catch (err) {
+        showMessage('Failed to save scheduled services: ' + err.message, 'error');
       }
     });
   }
@@ -660,43 +1033,129 @@ function attachEventListeners() {
   const detailsEnabledInput = $('#collect-customer-details-enabled');
   if(detailsEnabledInput) {
     detailsEnabledInput.addEventListener('change', () => {
-      const enabled = !!detailsEnabledInput.checked;
-      const nameInput = $('#collect-customer-name-required');
-      const phoneInput = $('#collect-customer-phone-required');
+      syncCustomizeControlsWithBasicMode();
+    });
+  }
 
-      if(nameInput) {
-        nameInput.disabled = !enabled;
-        if(!enabled) nameInput.checked = false;
-      }
-
-      if(phoneInput) {
-        phoneInput.disabled = !enabled;
-        if(!enabled) phoneInput.checked = false;
-      }
+  const basicModeInput = $('#collect-basic-enabled');
+  if(basicModeInput) {
+    basicModeInput.addEventListener('change', () => {
+      syncCustomizeControlsWithBasicMode();
+      showMessage(
+        basicModeInput.checked
+          ? 'Basic mode is on.'
+          : 'Basic mode is off.',
+        'info'
+      );
     });
   }
 
   const saveCustomerSettingsBtn = $('#save-customer-detail-settings');
   if(saveCustomerSettingsBtn) {
     saveCustomerSettingsBtn.addEventListener('click', async () => {
-      const enabled = !!$('#collect-customer-details-enabled')?.checked;
-      const requireName = enabled && !!$('#collect-customer-name-required')?.checked;
-      const requirePhone = enabled && !!$('#collect-customer-phone-required')?.checked;
-      const recallEnabled = !!$('#collect-recall-enabled')?.checked;
+      const basicModeEnabled = !!$('#collect-basic-enabled')?.checked;
+      const enabled = basicModeEnabled ? false : !!$('#collect-customer-details-enabled')?.checked;
+      const requireName = basicModeEnabled ? false : (enabled && !!$('#collect-customer-name-required')?.checked);
+      const requirePhone = basicModeEnabled ? false : (enabled && !!$('#collect-customer-phone-required')?.checked);
+      const recallEnabled = basicModeEnabled ? false : !!$('#collect-recall-enabled')?.checked;
+      const serviceCategoriesEnabled = !!$('#service-categories-enabled')?.checked;
+      const scheduledServicesEnabled = basicModeEnabled ? false : !!$('#scheduled-services-enabled')?.checked;
+      const mobileAppBlocked = basicModeEnabled ? false : !!$('#block-mobile-app-enabled')?.checked;
+      const allowOnlineBooking = !!$('#allow-online-booking-enabled')?.checked;
+      const tokenResetMinutes = Number($('#token-sequence-reset-minutes')?.value || 0);
 
       try {
+        const autoReturn = Number($('#kiosk-auto-return-seconds')?.value || 0);
         kioskCustomerDetailsSettings = await organizationSettingsDB.saveCustomerDetailSettings({
           enabled,
           requireName,
-          requirePhone
-          ,recallEnabled
+          requirePhone,
+          recallEnabled,
+          serviceCategoriesEnabled,
+          scheduledServicesEnabled,
+          basicModeEnabled,
+          mobileAppBlocked,
+          allowOnlineBooking,
+          autoReturnSeconds: autoReturn,
+          tokenSequenceResetMinutes: tokenResetMinutes
         });
+        await syncPublicOrganizationMeta();
         renderCustomizeSettings();
         showMessage('Customize settings saved', 'success');
       } catch(err) {
         showMessage('Failed to save customize settings: ' + err.message, 'error');
       }
     });
+  }
+
+  // Open Hours load/save
+  const loadOpenHoursBtn = $('#load-open-hours');
+  const saveOpenHoursBtn = $('#save-open-hours');
+  if (loadOpenHoursBtn) {
+    loadOpenHoursBtn.addEventListener('click', async () => {
+      try {
+        const hours = await organizationSettingsDB.getOpenHours();
+        renderOpenHours(hours);
+        showMessage('Open hours loaded.', 'success');
+      } catch (err) {
+        showMessage('Failed to load open hours: ' + err.message, 'error');
+      }
+    });
+  }
+
+  if (saveOpenHoursBtn) {
+    saveOpenHoursBtn.addEventListener('click', async () => {
+      try {
+        const rows = document.querySelectorAll('.open-hours-row');
+        const payload = {};
+        rows.forEach((row) => {
+          const day = row.dataset.day;
+          const enabled = row.querySelector('.oh-enabled').checked;
+          const open = row.querySelector('.oh-open').value || '';
+          const close = row.querySelector('.oh-close').value || '';
+          payload[day] = { enabled, open, close };
+        });
+        await organizationSettingsDB.saveOpenHours(payload);
+        showMessage('Open hours saved.', 'success');
+      } catch (err) {
+        showMessage('Failed to save open hours: ' + err.message, 'error');
+      }
+    });
+  }
+}
+
+// Render Open Hours UI rows
+function renderOpenHours(openHours) {
+  const container = $('#open-hours-rows');
+  if (!container) return;
+  const days = ['sun','mon','tue','wed','thu','fri','sat'];
+  const labels = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  container.innerHTML = '';
+  days.forEach((d, idx) => {
+    const data = openHours && openHours[d] ? openHours[d] : { enabled: true, open: '09:00', close: '17:00' };
+    const row = document.createElement('div');
+    row.className = 'open-hours-row';
+    row.dataset.day = d;
+    row.innerHTML = `
+      <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <input type="checkbox" class="oh-enabled" ${data.enabled ? 'checked' : ''} />
+        <strong style="width:120px;display:inline-block">${labels[idx]}</strong>
+        <input type="time" class="oh-open" value="${data.open || ''}" />
+        <span style="margin:0 6px;">to</span>
+        <input type="time" class="oh-close" value="${data.close || ''}" />
+      </label>
+    `;
+    container.appendChild(row);
+  });
+}
+
+// Load open hours on initial profile load
+async function loadInitialOpenHours() {
+  try {
+    const hours = await organizationSettingsDB.getOpenHours();
+    renderOpenHours(hours);
+  } catch (err) {
+    // ignore silently
   }
 }
 
@@ -717,25 +1176,40 @@ function renderCustomizeSettings() {
   }
   const recallInput = $('#collect-recall-enabled');
   if(recallInput) recallInput.checked = !!kioskCustomerDetailsSettings.recallEnabled;
+  const categoriesInput = $('#service-categories-enabled');
+  if(categoriesInput) categoriesInput.checked = !!kioskCustomerDetailsSettings.serviceCategoriesEnabled;
+  const scheduledServicesInput = $('#scheduled-services-enabled');
+  if(scheduledServicesInput) scheduledServicesInput.checked = !!kioskCustomerDetailsSettings.scheduledServicesEnabled;
+  const basicModeInput = $('#collect-basic-enabled');
+  if(basicModeInput) basicModeInput.checked = !!kioskCustomerDetailsSettings.basicModeEnabled;
+  const mobileAppBlockedInput = $('#block-mobile-app-enabled');
+  if(mobileAppBlockedInput) mobileAppBlockedInput.checked = !!kioskCustomerDetailsSettings.mobileAppBlocked;
+  const allowOnlineBookingInput = $('#allow-online-booking-enabled');
+  if(allowOnlineBookingInput) allowOnlineBookingInput.checked = !!kioskCustomerDetailsSettings.allowOnlineBooking;
 
-  if(nameRow) nameRow.style.display = kioskCustomerDetailsSettings.enabled ? '' : 'none';
-  if(phoneRow) phoneRow.style.display = kioskCustomerDetailsSettings.enabled ? '' : 'none';
-
-  if(nameInput) nameInput.disabled = !kioskCustomerDetailsSettings.enabled;
-  if(phoneInput) phoneInput.disabled = !kioskCustomerDetailsSettings.enabled;
+  syncCustomizeControlsWithBasicMode();
 
   if(statusEl) {
     if(!kioskCustomerDetailsSettings.enabled) {
-      statusEl.textContent = 'Customer details collection is currently disabled.';
+      statusEl.textContent = kioskCustomerDetailsSettings.basicModeEnabled
+        ? 'Basic mode is on. Other customization options are hidden.'
+        : 'Customer details collection is currently disabled.';
     } else {
       const required = [];
       if(kioskCustomerDetailsSettings.requireName) required.push('Name');
       if(kioskCustomerDetailsSettings.requirePhone) required.push('Phone');
-      statusEl.textContent = required.length
+      const summary = required.length
         ? ('Enabled. Required fields: ' + required.join(', ') + '.')
         : 'Enabled. Name and phone are optional.';
+      statusEl.textContent = summary;
+    }
+    if(kioskCustomerDetailsSettings.mobileAppBlocked) {
+      statusEl.textContent += ' Mobile app access is blocked.';
     }
   }
+
+  toggleScheduledServicesTabVisibility();
+  renderScheduledServices(currentServices);
 }
 
 window.editCounter = function(id) {
@@ -802,6 +1276,7 @@ window.editService = function(id) {
     '<div class="qm-inline-edit-fields">' +
     '<input class="qm-edit-field" data-f="name" placeholder="Service name" />' +
     '<input class="qm-edit-field" data-f="desc" placeholder="Description (optional)" />' +
+    '<input class="qm-edit-field" data-f="category" placeholder="Category (optional)" />' +
     '<input class="qm-edit-field" data-f="time" type="number" min="0" placeholder="Est. time (min)" />' +
     '<select class="qm-edit-field" data-f="status">' +
     '<option value="active">Active</option>' +
@@ -815,6 +1290,7 @@ window.editService = function(id) {
 
   item.querySelector('[data-f="name"]').value = service.name || '';
   item.querySelector('[data-f="desc"]').value = service.description || '';
+  item.querySelector('[data-f="category"]').value = service.category || '';
   item.querySelector('[data-f="time"]').value = service.estimatedTime || 0;
   item.querySelector('[data-f="status"]').value = service.status || 'active';
 
@@ -825,6 +1301,7 @@ window.editService = function(id) {
       await servicesDB.update(id, {
         name: name,
         description: item.querySelector('[data-f="desc"]').value.trim(),
+        category: item.querySelector('[data-f="category"]').value.trim(),
         estimatedTime: parseInt(item.querySelector('[data-f="time"]').value) || 0,
         status: item.querySelector('[data-f="status"]').value,
         updatedAt: firebase.database.ServerValue.TIMESTAMP
@@ -1133,7 +1610,7 @@ function escapeHtml(text) {
 // INITIALIZATION
 // ============================================================
 
-async function initializeApp() {
+async function initializeApp(profile = currentOrganizationProfile) {
   try {
     // Load initial data
     currentCounters = await countersDB.getAll();
@@ -1143,6 +1620,7 @@ async function initializeApp() {
 
     renderCounters(currentCounters);
     renderServices(currentServices);
+    renderScheduledServices(currentServices);
     renderAssignments(currentAssignments, currentCounters, currentServices);
     renderCustomizeSettings();
 
@@ -1159,7 +1637,9 @@ async function initializeApp() {
     servicesDB.listen(data => {
       currentServices = data;
       renderServices(data);
+      renderScheduledServices(data);
       renderQueueStatus(currentQueueData, currentServices);
+      syncPublicOrganizationMeta().catch(err => console.log('Public meta sync failed', err));
     });
 
     assignmentsDB.listen(data => {
@@ -1175,6 +1655,9 @@ async function initializeApp() {
 
     initTabs();
     attachEventListeners();
+    // Load Open Hours UI
+    await loadInitialOpenHours();
+    await syncPublicOrganizationMeta(profile);
     showMessage('Queue manager loaded', 'success');
   } catch(err) {
     showMessage('Init error: ' + err.message, 'error');
@@ -1192,15 +1675,25 @@ auth.onAuthStateChanged(async (user) => {
   try {
     // Set current user UID for database operations
     currentUserUID = user.uid;
+    currentOrganizationProfile = null;
     
     const snap = await db.ref('users/' + user.uid).once('value');
     const profile = snap.val() || {};
+    currentOrganizationProfile = profile;
+    renderOrganizationQr(user.uid);
+    if (profile?.settings?.disabled) {
+      showMessage('Organization is temporarily disabled. Access blocked.', 'error');
+      await auth.signOut();
+      setTimeout(() => { window.location.href = '../index.html'; }, 1200);
+      return;
+    }
+
     const canAccess = await waitlessCanAccessOrganizationTools(user, profile);
     if(!canAccess) {
       window.location.href = 'dashboard.html';
       return;
     }
-    await initializeApp();
+    await initializeApp(profile);
   } catch(err) {
     showMessage('Auth error: ' + err.message, 'error');
   }

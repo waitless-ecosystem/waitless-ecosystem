@@ -439,12 +439,143 @@
       margin-bottom: 10px;
     }
 
+    .customer-lookup-result {
+      min-height: 20px;
+      margin: 0 0 12px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #475569;
+    }
+
+    .customer-lookup-result.success {
+      color: #166534;
+    }
+
+    .customer-lookup-result.error {
+      color: #b91c1c;
+    }
+
     /* Service Selection View */
     .services-container {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
       gap: 16px;
+      align-items: start;
+      grid-auto-flow: row dense;
       margin-bottom: 18px;
+    }
+
+    .category-selection-intro {
+      grid-column: 1 / -1;
+      margin-bottom: 12px;
+    }
+
+    .service-category-header {
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    .service-category-header h3 {
+      font-size: 24px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 8px;
+    }
+
+    .service-category-header p {
+      font-size: 16px;
+      color: #64748b;
+    }
+
+    .service-category-grid {
+      display: grid;
+      grid-column: 1 / -1;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .category-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 8px;
+      min-height: 140px;
+      background: linear-gradient(180deg, #f0f9ff 0%, #e0f2fe 100%);
+      border: 2px solid #0ea5e9;
+      border-radius: 16px;
+      padding: 20px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-weight: 600;
+      color: #0c4a6e;
+    }
+
+    .category-card:hover {
+      background: linear-gradient(180deg, #e0f2fe 0%, #cffafe 100%);
+      border-color: #0284c7;
+      transform: translateY(-2px);
+      box-shadow: 0 12px 24px rgba(2, 132, 199, 0.15);
+    }
+
+    .category-card:active {
+      transform: translateY(0);
+    }
+
+    .category-card strong {
+      font-size: 18px;
+      display: block;
+    }
+
+    .category-card span {
+      font-size: 14px;
+      color: #0284c7;
+      font-weight: 500;
+    }
+
+    .category-filter-header {
+      grid-column: 1 / -1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #f0f9ff;
+      border: 1px solid #bae6fd;
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-bottom: 12px;
+    }
+
+    .category-filter-label {
+      font-weight: 600;
+      color: #0c4a6e;
+    }
+
+    .category-filter-label strong {
+      color: #0284c7;
+    }
+
+    #change-category-btn {
+      background: #bae6fd;
+      color: #0c4a6e;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13px;
+      transition: all 0.2s ease;
+    }
+
+    #change-category-btn:hover {
+      background: #7dd3fc;
+    }
+
+    .button-small {
+      padding: 6px 12px;
+      font-size: 13px;
+      min-height: auto;
     }
 
       .service-card {
@@ -456,8 +587,12 @@
         transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
         text-align: center;
         box-shadow: 0 10px 22px rgba(15, 23, 42, 0.06);
-        width: 100%;
-        min-height: 180px;
+        min-height: 140px;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        justify-content: space-between;
+        min-width: 0;
         font-family: inherit;
         color: inherit;
         touch-action: manipulation;
@@ -557,6 +692,24 @@
         padding: 14px 16px;
         box-shadow: 0 14px 30px rgba(15, 23, 42, 0.10);
         z-index: 5;
+      }
+
+      .services-welcome {
+        grid-column: 1 / -1;
+        padding: 12px 16px;
+        border-radius: 12px;
+        background: linear-gradient(180deg, #fff, #f8fbff);
+        border: 1px solid #e6eefc;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .services-welcome .welcome-text {
+        font-weight: 700;
+        color: #0f172a;
       }
 
       .selected-count {
@@ -793,6 +946,27 @@
       margin-bottom: 20px;
     }
 
+    .token-result-primary-queue.token-result-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: min(72vw, 360px);
+      min-height: min(32vw, 180px);
+      padding: 18px 32px;
+      margin: 10px auto 18px;
+      border-radius: 28px;
+      background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 55%, #60a5fa 100%);
+      color: #ffffff;
+      box-shadow: 0 18px 36px rgba(37, 99, 235, 0.28);
+      text-shadow: 0 2px 8px rgba(15, 23, 42, 0.25);
+      font-size: clamp(56px, 12vw, 96px);
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      line-height: 1;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      font-style: normal;
+    }
+
     .token-result-position {
       display: inline-block;
       font-size: 22px;
@@ -951,6 +1125,13 @@
         letter-spacing: 3px;
       }
 
+      .token-result-primary-queue.token-result-number {
+        min-width: min(84vw, 340px);
+        min-height: min(38vw, 180px);
+        padding: 16px 24px;
+        font-size: clamp(50px, 15vw, 82px);
+      }
+
       .token-result-card {
         padding: 28px 20px;
       }
@@ -981,6 +1162,14 @@
       .token-result-number {
         font-size: 46px;
         letter-spacing: 2px;
+      }
+
+      .token-result-primary-queue.token-result-number {
+        min-width: min(88vw, 300px);
+        min-height: 120px;
+        padding: 14px 18px;
+        font-size: clamp(44px, 18vw, 70px);
+        border-radius: 22px;
       }
 	    }
 
@@ -1076,6 +1265,13 @@
       .token-result-number {
         font-size: 52px;
         letter-spacing: 3px;
+      }
+
+      .token-result-primary-queue.token-result-number {
+        min-width: min(70vw, 320px);
+        min-height: 130px;
+        padding: 16px 22px;
+        font-size: clamp(48px, 11vw, 84px);
       }
 
       .button-group {

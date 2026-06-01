@@ -169,6 +169,13 @@ async function loadKiosksForSelection() {
       return;
     }
 
+    if (userProfile?.settings?.disabled) {
+      showMessage('This organization is temporarily disabled.', 'error');
+      await auth.signOut();
+      setTimeout(() => { window.location.href = 'kiosk-login.html'; }, 2000);
+      return;
+    }
+
     organizationId = currentUserUID;
 
     // Load only KIOSKs from THIS user's organization

@@ -14,9 +14,9 @@
     .badge-rejected { background: #fed7d7; color: #742a2a; }
     .badge-suspended { background: #ffeae8; color: #7a1e1e; }
     .status-content { display: grid; gap: 12px; }
-    .status-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; }
-    .status-label { color: #6b7785; min-width: 120px; }
-    .status-value { font-weight: 600; color: #0b1220; }
+    .status-row { display: flex; align-items: flex-start; gap: 12px; padding: 8px 0; flex-wrap: wrap; }
+    .status-label { color: #6b7785; min-width: 140px; flex: 0 0 140px; }
+    .status-value { font-weight: 600; color: #0b1220; flex: 1 1 240px; min-width: 0; word-break: break-word; }
     .action-buttons { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-top: 16px; }
     .action-buttons button { padding: 12px 16px; border-radius: 8px; border: 0; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
     .action-buttons .primary { background: #0366d6; color: #fff; }
@@ -27,3 +27,9 @@
     .action-buttons .danger:hover { background: #c03030; }
     .account-icon { background: rgba(3,102,214,0.1); color: #0366d6; }
     .hidden-by-default { display: none; }
+
+        @media (max-width: 600px) {
+            .status-row { gap: 4px; }
+            .status-label { min-width: 100%; flex-basis: 100%; }
+            .status-value { flex-basis: 100%; }
+        }

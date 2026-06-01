@@ -82,7 +82,9 @@ async function loadOrgs(){
   try{
     const snap = await db.ref('users').once('value');
     const all = snap.val() || {};
-    orgs = Object.fromEntries(Object.entries(all).filter(([uid, p]) => (p && p.role === 'approved')));
+    orgs = Object.fromEntries(Object.entries(all).filter(([uid, p]) => {
+      return p && p.role === 'approved' && !p?.settings?.disabled;
+    }));
 
     orgSelect.innerHTML = '<option value="">-- Select organization --</option>';
     Object.entries(orgs).forEach(([uid, profile])=>{
@@ -171,11 +173,9 @@ async function renderTokens(orgId, counterId){
     Object.entries(queue).forEach(([serviceId, serviceTokens])=>{
       Object.entries(serviceTokens || {}).forEach(([tokenId, t])=>{
         const assigned = t.assignedCounterId === counterId;
-        const existing = tokensById.get(tokenId);
-        const candidate = { serviceId, tokenId, ...t, assigned };
-        if(!existing || (candidate.timestamp || 0) < (existing.timestamp || 0)){
-          tokensById.set(tokenId, candidate);
-        }
+        const stageIndex = Number(t.currentServiceIndex ?? t.serviceStageIndex ?? 0);
+        const tokenKey = `${tokenId}:${serviceId}:${stageIndex}`;
+        tokensById.set(tokenKey, { serviceId, tokenId, ...t, assigned, tokenKey, stageIndex });
       });
     });
 
@@ -231,7 +231,7 @@ async function renderTokens(orgId, counterId){
 
       const statusPill = document.createElement('span');
       statusPill.className = 'meta-pill';
-      statusPill.textContent = `Status: ${activeToken.status || 'waiting'}`;
+      statusPill.textContent = 'Status: Serving';
       metaEl.appendChild(statusPill);
 
       if((kioskCustomerSettings && kioskCustomerSettings.enabled && kioskCustomerSettings.requireName) || activeToken.customerName){
@@ -257,7 +257,7 @@ async function renderTokens(orgId, counterId){
       serveBtn.type='button';
       serveBtn.className='btn-serve';
       serveBtn.textContent='Call Next';
-      serveBtn.onclick = ()=> updateTokenStatus(orgId, activeToken.serviceId, activeToken.tokenId, 'serving', counterId, (counters[counterId]||{}).name);
+      serveBtn.onclick = ()=> updateTokenStatus(orgId, activeToken.serviceId, activeToken.tokenId, 'served', counterId, (counters[counterId]||{}).name, activeToken);
 
       const noshowBtn = document.createElement('button');
       noshowBtn.type='button';
@@ -282,9 +282,9 @@ async function renderTokens(orgId, counterId){
     tokenPanel.appendChild(tokenBody);
     // (panel insertion moved until both panels are constructed)
 
-    const calledTokens = Array.from(tokensById.values())
+    const servedTokens = Array.from(tokensById.values())
       .filter(t => (t.assigned || serviceIds.includes(t.serviceId)))
-      .filter(t => (t.status || 'waiting').toLowerCase() === 'serving')
+      .filter(t => (t.status || 'waiting').toLowerCase() === 'served')
       .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
     const noShowTokens = Array.from(tokensById.values())
@@ -323,14 +323,14 @@ async function renderTokens(orgId, counterId){
     const stateGrid = document.createElement('div');
     stateGrid.className = 'state-grid';
     stateGrid.appendChild(createTokenStatePanel({
-      title: 'Already Called Tokens',
-      subtitle: kioskCustomerSettings.recallEnabled ? 'Recall one of these if the customer comes back.' : 'These are tokens that have already been called.',
-      emptyText: 'No called tokens right now.',
-      tokens: calledTokens,
+      title: 'Served Tokens',
+      subtitle: kioskCustomerSettings.recallEnabled ? 'Recall one of these if the customer comes back.' : 'These are tokens that have already been served.',
+      emptyText: 'No served tokens right now.',
+      tokens: servedTokens,
       counterId,
       orgId,
       allowRecall: !!kioskCustomerSettings.recallEnabled,
-      kind: 'called',
+      kind: 'served',
       query: tokenFilterQuery
     }));
 
@@ -411,24 +411,14 @@ function createTokenStatePanel({ title, subtitle, emptyText, tokens, counterId, 
     const actions = document.createElement('div');
     actions.className = 'token-list-actions';
 
-    // allow recall when requested (for called tokens or no-show tokens per user request)
+    // allow recall when requested (for served tokens or no-show tokens per user request)
     if(allowRecall){
       const recallBtn = document.createElement('button');
       recallBtn.type = 'button';
       recallBtn.className = 'mini-btn mini-btn-primary';
       recallBtn.textContent = 'Recall';
-      recallBtn.onclick = () => updateTokenStatus(orgId, token.serviceId, token.tokenId, 'arrived', counterId, (counters[counterId]||{}).name);
+      recallBtn.onclick = () => updateTokenStatus(orgId, token.serviceId, token.tokenId, 'arrived', counterId, (counters[counterId]||{}).name, token);
       actions.appendChild(recallBtn);
-    }
-
-    // keep the "Still Serving" action for called tokens
-    if(kind === 'called'){
-      const doneBtn = document.createElement('button');
-      doneBtn.type = 'button';
-      doneBtn.className = 'mini-btn mini-btn-ghost';
-      doneBtn.textContent = 'Still Serving';
-      doneBtn.onclick = () => updateTokenStatus(orgId, token.serviceId, token.tokenId, 'serving', counterId, (counters[counterId]||{}).name);
-      actions.appendChild(doneBtn);
     }
 
     row.appendChild(info);
@@ -464,19 +454,76 @@ function filterTokensByQuery(tokens, query) {
   });
 }
 
-async function updateTokenStatus(orgId, serviceId, tokenId, status, counterId=null, counterName=null){
+async function updateTokenStatus(orgId, serviceId, tokenId, status, counterId=null, counterName=null, tokenRecord=null){
   try{
-    const updates = {};
-    updates[`users/${orgId}/queue/${serviceId}/${tokenId}/status`] = status;
-    updates[`users/${orgId}/queue/${serviceId}/${tokenId}/assignedCounterId`] = counterId || null;
-    updates[`users/${orgId}/queue/${serviceId}/${tokenId}/assignedCounterName`] = counterName || null;
+    const profileSnap = await db.ref(`users/${orgId}/profile`).once('value');
+    const profile = profileSnap.val() || {};
+    const organizationName = profile.name || profile.organizationName || profile.displayName || orgId;
+    const selectedServices = Array.isArray(tokenRecord?.selectedServices) ? tokenRecord.selectedServices : [];
+    const currentServiceIndex = Number(tokenRecord?.currentServiceIndex ?? tokenRecord?.serviceStageIndex ?? 0);
+    const nextService = selectedServices[currentServiceIndex + 1] || null;
+    const customerUid = String(tokenRecord?.customerUid || tokenRecord?.customerDetails?.uid || '').trim();
 
-    updates[`users/${orgId}/tokens/${tokenId}/status`] = status;
-    updates[`users/${orgId}/tokens/${tokenId}/counterId`] = counterId || null;
-    updates[`users/${orgId}/tokens/${tokenId}/counterName`] = counterName || null;
+    const currentUpdates = {
+      status,
+      assignedCounterId: counterId || null,
+      assignedCounterName: counterName || null,
+      organizationName,
+      currentServiceIndex,
+      serviceStageIndex: currentServiceIndex
+    };
 
-    await db.ref().update(updates);
-    setStatus(`Token ${tokenId} updated to ${status}`);
+    const currentUserUpdates = customerUid ? {
+      status,
+      assignedCounterId: counterId || null,
+      assignedCounterName: counterName || null,
+      counterId: counterId || null,
+      counterName: counterName || null,
+      organizationName,
+      currentServiceIndex,
+      serviceStageIndex: currentServiceIndex
+    } : null;
+
+    if (status === 'served' && nextService) {
+      const nextStageIndex = currentServiceIndex + 1;
+      const nextTokenData = {
+        ...tokenRecord,
+        serviceId: nextService.id,
+        serviceName: nextService.name || nextService.id,
+        currentServiceId: nextService.id,
+        currentServiceName: nextService.name || nextService.id,
+        currentServiceIndex: nextStageIndex,
+        serviceStageIndex: nextStageIndex,
+        assignedCounterId: null,
+        assignedCounterName: null,
+        counterId: null,
+        counterName: null,
+        status: 'waiting',
+        organizationName
+      };
+      currentUpdates.status = 'served';
+
+      await db.ref(`users/${orgId}/queue/${serviceId}/${tokenId}`).update(currentUpdates);
+      await db.ref(`users/${orgId}/tokens/${tokenId}`).update(currentUpdates);
+
+      if (customerUid) {
+        await db.ref(`appuserTokens/${customerUid}/${orgId}/${tokenId}`).update(currentUserUpdates);
+      }
+
+      await db.ref(`users/${orgId}/queue/${nextService.id}/${tokenId}`).set(nextTokenData);
+      if (customerUid) {
+        await db.ref(`appuserTokens/${customerUid}/${orgId}/${tokenId}`).set(nextTokenData);
+      }
+    } else {
+      await db.ref(`users/${orgId}/queue/${serviceId}/${tokenId}`).update(currentUpdates);
+      await db.ref(`users/${orgId}/tokens/${tokenId}`).update(currentUpdates);
+      if (customerUid) {
+        await db.ref(`appuserTokens/${customerUid}/${orgId}/${tokenId}`).update(currentUserUpdates);
+      }
+    }
+    setStatus(nextService && status === 'served'
+      ? `Token ${tokenId} served and moved to ${nextService.name || nextService.id}`
+      : `Token ${tokenId} updated to ${status}`);
     const nextCounterId = counterId || chosenCounter;
     if(nextCounterId){
       await renderTokens(orgId, nextCounterId);

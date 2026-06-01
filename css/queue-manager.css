@@ -2,9 +2,10 @@
 .qm-sidebar { display: flex; flex-direction: column; }
     .qm-main { display: flex; flex-direction: column; }
     .qm-nav { display: flex; gap: 8px; margin-bottom: 16px; border-bottom: 2px solid #e3eefc; overflow-x: auto; }
-    .qm-tab { padding: 12px 14px; border: 0; background: transparent; cursor: pointer; color: #6b7785; font-weight: 600; white-space: nowrap; transition: all 0.2s ease; border-left: 3px solid transparent; }
+    .qm-tab { padding: 12px 14px; border: 0; background: transparent; cursor: pointer; color: #6b7785; font-weight: 600; white-space: nowrap; transition: all 0.2s ease; border-left: 3px solid transparent; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
     .qm-tab.active { border-left: 3px solid #0366d6; color: #0366d6; background: rgba(3,102,214,0.08); }
     .qm-tab:hover { color: #0366d6; }
+    .qm-tab:focus { outline: none; }
     .qm-content { display: none; }
     .qm-content.active { display: block; animation: fadeIn 0.2s ease; }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -72,6 +73,73 @@
     .qm-kiosk-analytics { margin-top: 30px; padding-top: 20px; border-top: 2px solid #e8eef8; }
     .qm-meta-highlight { color: #0366d6; font-weight: 600; }
     .service-checkbox-meta { color: #6b7785; font-size: 0.85rem; }
+    .qm-schedule-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: #d1fae5;
+      color: #065f46;
+      font-size: 0.72rem;
+      font-weight: 700;
+      margin-right: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .qm-schedule-item {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 14px;
+    }
+    .qm-schedule-form {
+      display: grid;
+      gap: 12px;
+      padding-top: 8px;
+      border-top: 1px solid #e8eef8;
+    }
+    .qm-schedule-enabled-row {
+      margin: 0;
+      width: 100%;
+      justify-content: flex-start;
+    }
+    .qm-schedule-hours {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 10px;
+    }
+    .qm-schedule-hours label {
+      display: grid;
+      gap: 6px;
+      font-weight: 600;
+      color: #0b1220;
+    }
+    .qm-schedule-hours input {
+      padding: 10px 12px;
+      border: 1px solid #dbe6ef;
+      border-radius: 8px;
+      font-family: inherit;
+    }
+    .qm-schedule-days {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .qm-schedule-day-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 10px;
+      border: 1px solid #dbe6ef;
+      border-radius: 999px;
+      background: #fff;
+      cursor: pointer;
+      font-size: 0.85rem;
+      color: #0b1220;
+    }
+    .qm-schedule-day-pill input {
+      width: 16px;
+      height: 16px;
+    }
     .qm-kiosk-summary { margin-top: 20px; }
     .qm-kiosk-summary h3 { margin-bottom: 15px; }
     .qm-kiosk-summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; }
@@ -80,6 +148,84 @@
     .qm-kiosk-summary-meta { font-size: 0.9rem; color: #6b7785; margin-bottom: 4px; }
     .qm-kiosk-summary-status { font-size: 0.85rem; color: #999; }
     .qm-kiosk-summary-total { margin-top: 15px; padding: 10px; background: #e3f2fd; border-radius: 6px; text-align: center; }
+
+    .qm-org-qr-card {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(220px, 0.9fr);
+      gap: 18px;
+      align-items: center;
+      margin-bottom: 18px;
+      padding: 18px;
+      border: 1px solid #e3eefc;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
+      box-shadow: 0 12px 28px rgba(10, 20, 40, 0.06);
+    }
+
+    .qm-org-qr-card h2 {
+      margin: 0 0 8px 0;
+      color: #0b1220;
+    }
+
+    .qm-org-qr-body {
+      display: grid;
+      gap: 12px;
+      justify-items: center;
+    }
+
+    .qm-org-qr-code {
+      min-width: 210px;
+      min-height: 210px;
+      padding: 12px;
+      background: #fff;
+      border: 1px solid #e3eefc;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+    }
+
+    .qm-org-qr-meta {
+      display: grid;
+      gap: 10px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .qm-org-qr-url {
+      font-size: 0.85rem;
+      color: #6b7785;
+      word-break: break-all;
+    }
+
+    .qm-org-qr-copy-btn {
+      padding: 10px 14px;
+      border: 0;
+      border-radius: 10px;
+      background: #0366d6;
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+
+    .qm-org-qr-copy-btn:hover {
+      background: #0256ba;
+      transform: translateY(-1px);
+    }
+
+    @media (max-width: 720px) {
+      .qm-org-qr-card {
+        grid-template-columns: 1fr;
+      }
+
+      .qm-org-qr-body {
+        justify-items: stretch;
+      }
+
+      .qm-org-qr-code {
+        min-width: 0;
+      }
+    }
     @media (max-width: 900px) {
       .auth-card { grid-template-columns: 1fr !important; }
       .qm-nav { border-bottom: 2px solid #e3eefc; border-right: none; }
@@ -277,6 +423,42 @@
       width: 100%;
       padding: 14px 16px;
       border-radius: 12px;
+    }
+
+    /* ---- Open Hours UI ---- */
+    .open-hours-row { padding: 8px 0; }
+    .open-hours-row label { display: flex; align-items: center; gap: 12px; width: 100%; }
+    .open-hours-row .oh-enabled { width: 20px; height: 20px; flex: 0 0 20px; }
+    .open-hours-row strong { width: 120px; display: inline-block; }
+    .open-hours-row .oh-open,
+    .open-hours-row .oh-close { padding: 8px 10px; border: 1px solid #dbe6ef; border-radius: 8px; background: #fff; font-family: inherit; width: 110px; }
+    .open-hours-row .oh-open:focus, .open-hours-row .oh-close:focus { outline: none; border-color: #0366d6; box-shadow: 0 0 0 3px rgba(3,102,214,0.08); }
+
+    /* Action buttons for open hours */
+    #save-open-hours, #load-open-hours {
+      display: inline-block;
+      padding: 12px 16px;
+      border-radius: 12px;
+      border: 0;
+      cursor: pointer;
+      font-weight: 700;
+      color: #fff;
+      box-shadow: 0 8px 24px rgba(3,102,214,0.12);
+      margin-right: 8px;
+    }
+
+    #save-open-hours { background: linear-gradient(180deg,#0b84ff,#0366d6); }
+    #save-open-hours:hover { transform: translateY(-2px); }
+
+    #load-open-hours { background: #0a66d1; width: 100px; box-shadow: none; }
+    #load-open-hours:hover { transform: translateY(-1px); }
+
+    /* Ensure responsive layout */
+    @media (max-width: 720px) {
+      .open-hours-row label { flex-direction: column; align-items: flex-start; gap: 8px; }
+      .open-hours-row strong { width: auto; }
+      .open-hours-row .oh-open, .open-hours-row .oh-close { width: 100%; }
+      #save-open-hours, #load-open-hours { width: 100%; margin-bottom: 8px; }
     }
 
     @media (max-width: 640px) {
