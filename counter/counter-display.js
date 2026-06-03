@@ -27,7 +27,24 @@ let renderRunId = 0;
 let kioskCustomerSettings = { enabled: false, requireName: false, requirePhone: false, recallEnabled: false };
 let tokenFilterQuery = '';
 
-const ACTIVE_TOKEN_STATUSES = new Set(['waiting', 'arrived']);
+const ACTIVE_TOKEN_STATUSES = new Set(['waiting', 'arrived', 'scheduled']);
+
+function parseTimestampMs(value) {
+  if (value instanceof Date) {
+    const time = value.getTime();
+    return Number.isFinite(time) && time > 0 ? time : null;
+  }
+
+  if (typeof value === 'string') {
+    const parsed = Date.parse(value);
+    if (Number.isFinite(parsed) && parsed > 0) {
+      return parsed;
+    }
+  }
+
+  const numeric = Number(value || 0);
+  return Number.isFinite(numeric) && numeric > 0 ? numeric : null;
+}
 
 function setStatus(txt){ if(statusEl) statusEl.textContent = txt; }
 
@@ -164,6 +181,7 @@ async function renderTokens(orgId, counterId){
   const currentRunId = ++renderRunId;
   tokensEl.innerHTML = '';
   try{
+    const nowMs = Date.now();
     if(currentRunId !== renderRunId) return;
     const queueSnap = await db.ref(`users/${orgId}/queue`).once('value');
     const queue = queueSnap.val() || {};
@@ -183,7 +201,18 @@ async function renderTokens(orgId, counterId){
     const assignment = assignSnap.val() || { services: [] };
     const serviceIds = Array.isArray(assignment.services) ? assignment.services : Object.values(assignment.services || {});
     const visible = Array.from(tokensById.values())
-      .filter(t => (t.assigned || serviceIds.includes(t.serviceId)))
+      .filter(t => {
+        const scheduledAt = parseTimestampMs(t.scheduledFor || t.deferredUntil);
+        if (scheduledAt !== null && scheduledAt > nowMs) {
+          return false;
+        }
+
+        if (t.assignedCounterId) {
+          return String(t.assignedCounterId).trim() === String(counterId).trim();
+        }
+
+        return serviceIds.includes(t.serviceId);
+      })
       .filter(t => ACTIVE_TOKEN_STATUSES.has((t.status || 'waiting').toLowerCase()));
 
     if(currentRunId !== renderRunId) return;
@@ -208,6 +237,14 @@ async function renderTokens(orgId, counterId){
     if(activeToken){
       const item = document.createElement('div');
       item.className = 'token';
+      const normalizedStatus = String(activeToken.status || 'waiting').toLowerCase();
+      const statusText = normalizedStatus === 'scheduled'
+        ? 'Status: Scheduled'
+        : normalizedStatus === 'arrived'
+          ? 'Status: Arrived'
+          : normalizedStatus === 'waiting'
+            ? 'Status: Waiting'
+            : `Status: ${normalizedStatus || 'Waiting'}`;
 
       const stage = document.createElement('div');
       stage.className = 'token-stage';
@@ -231,7 +268,7 @@ async function renderTokens(orgId, counterId){
 
       const statusPill = document.createElement('span');
       statusPill.className = 'meta-pill';
-      statusPill.textContent = 'Status: Serving';
+      statusPill.textContent = statusText;
       metaEl.appendChild(statusPill);
 
       if((kioskCustomerSettings && kioskCustomerSettings.enabled && kioskCustomerSettings.requireName) || activeToken.customerName){

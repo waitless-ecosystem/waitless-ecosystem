@@ -324,11 +324,81 @@ const servicesDB = {
 const assignmentsDB = {
   async save(counterId, serviceIds = []) {
     if(!counterId) throw new Error('Counter required');
-    await db.ref(`users/${currentUserUID}/assignments/${counterId}`).set({
-      counterId,
-      services: serviceIds,
-      updatedAt: firebase.database.ServerValue.TIMESTAMP
+    const normalizedServiceIds = Array.from(new Set((serviceIds || []).map((serviceId) => String(serviceId || '').trim()).filter(Boolean)));
+    const assignmentRef = db.ref(`users/${currentUserUID}/assignments/${counterId}`);
+    const previousSnap = await assignmentRef.once('value');
+    const previousAssignment = previousSnap.val() || {};
+    const previousServiceIds = Array.from(new Set((previousAssignment.services || []).map((serviceId) => String(serviceId || '').trim()).filter(Boolean)));
+
+    if (normalizedServiceIds.length === 0) {
+      await assignmentRef.remove();
+    } else {
+      await assignmentRef.set({
+        counterId,
+        services: normalizedServiceIds,
+        updatedAt: firebase.database.ServerValue.TIMESTAMP
+      });
+    }
+
+    const counter = currentCounters[counterId] || {};
+    const counterName = String(counter.name || counter.counterName || counterId || 'Counter').trim();
+    const affectedServiceIds = Array.from(new Set([...previousServiceIds, ...normalizedServiceIds]));
+    if (affectedServiceIds.length === 0) {
+      return;
+    }
+
+    const queueSnap = await db.ref(`users/${currentUserUID}/queue`).once('value');
+    const queueData = queueSnap.val() || {};
+    const tokenSnap = await db.ref(`users/${currentUserUID}/tokens`).once('value');
+    const tokenDataById = tokenSnap.val() || {};
+    const serviceSet = new Set(normalizedServiceIds);
+    const updates = {};
+
+    affectedServiceIds.forEach((serviceId) => {
+      const serviceQueue = queueData[serviceId] || {};
+      const shouldAssign = serviceSet.has(serviceId);
+
+      Object.entries(serviceQueue || {}).forEach(([tokenId]) => {
+        const basePath = `users/${currentUserUID}/queue/${serviceId}/${tokenId}`;
+        const nextCounterId = shouldAssign ? counterId : null;
+        const nextCounterName = shouldAssign ? counterName : null;
+
+        updates[`${basePath}/assignedCounterId`] = nextCounterId;
+        updates[`${basePath}/assignedCounterName`] = nextCounterName;
+        updates[`${basePath}/resolvedCounterName`] = nextCounterName;
+        updates[`${basePath}/counterId`] = nextCounterId;
+        updates[`${basePath}/counterName`] = nextCounterName;
+        updates[`${basePath}/counter`] = nextCounterName;
+        updates[`${basePath}/updatedAt`] = firebase.database.ServerValue.TIMESTAMP;
+
+        const mirrorToken = tokenDataById[tokenId] || {};
+        if (Object.keys(mirrorToken).length > 0) {
+          const tokenBasePath = `users/${currentUserUID}/tokens/${tokenId}`;
+          updates[`${tokenBasePath}/assignedCounterId`] = nextCounterId;
+          updates[`${tokenBasePath}/assignedCounterName`] = nextCounterName;
+          updates[`${tokenBasePath}/resolvedCounterName`] = nextCounterName;
+          updates[`${tokenBasePath}/counterId`] = nextCounterId;
+          updates[`${tokenBasePath}/counterName`] = nextCounterName;
+          updates[`${tokenBasePath}/counter`] = nextCounterName;
+          updates[`${tokenBasePath}/updatedAt`] = firebase.database.ServerValue.TIMESTAMP;
+        }
+
+        const customerUid = String(serviceQueue?.[tokenId]?.customerUid || mirrorToken.customerUid || '').trim();
+        if (customerUid) {
+          const customerBasePath = `appuserTokens/${customerUid}/${currentUserUID}/${tokenId}`;
+          updates[`${customerBasePath}/assignedCounterId`] = nextCounterId;
+          updates[`${customerBasePath}/assignedCounterName`] = nextCounterName;
+          updates[`${customerBasePath}/resolvedCounterName`] = nextCounterName;
+          updates[`${customerBasePath}/counterId`] = nextCounterId;
+          updates[`${customerBasePath}/counterName`] = nextCounterName;
+          updates[`${customerBasePath}/counter`] = nextCounterName;
+        }
+      });
     });
+
+    if (Object.keys(updates).length > 0) {
+      await db.ref().update(updates);
+    }
   },
 
   async getForCounter(counterId) {
@@ -381,7 +451,47 @@ const queueDB = {
   },
 
   async deleteAllTokens() {
-    await db.ref(`users/${currentUserUID}/queue`).remove();
+    // Collect all token IDs from queue and tokens mirrors, and remove them
+    const queueSnap = await db.ref(`users/${currentUserUID}/queue`).once('value');
+    const queueData = queueSnap.val() || {};
+    const tokenSnap = await db.ref(`users/${currentUserUID}/tokens`).once('value');
+    const tokenData = tokenSnap.val() || {};
+
+    const updates = {};
+    const queueTokenIds = new Set();
+
+    Object.entries(queueData).forEach(([serviceId, serviceQueue]) => {
+      Object.keys(serviceQueue || {}).forEach((tokenId) => {
+        queueTokenIds.add(tokenId);
+        updates[`users/${currentUserUID}/queue/${serviceId}/${tokenId}`] = null;
+        updates[`users/${currentUserUID}/tokens/${tokenId}`] = null;
+
+        const customerUid = String((serviceQueue && serviceQueue[tokenId] && serviceQueue[tokenId].customerUid) || (tokenData[tokenId] && tokenData[tokenId].customerUid) || '').trim();
+        if (customerUid) {
+          updates[`appuserTokens/${customerUid}/${currentUserUID}/${tokenId}`] = null;
+        }
+      });
+    });
+
+    // Also remove any leftover tokens present in tokens mirror but not in queue
+    Object.keys(tokenData || {}).forEach((tokenId) => {
+      if (!queueTokenIds.has(tokenId)) {
+        updates[`users/${currentUserUID}/tokens/${tokenId}`] = null;
+        const customerUid = String(tokenData[tokenId] && tokenData[tokenId].customerUid || '').trim();
+        if (customerUid) {
+          updates[`appuserTokens/${customerUid}/${currentUserUID}/${tokenId}`] = null;
+        }
+      }
+    });
+
+    if (Object.keys(updates).length === 0) {
+      // Nothing to update; ensure queue root removed
+      await db.ref(`users/${currentUserUID}/queue`).remove();
+      await db.ref(`users/${currentUserUID}/tokens`).remove();
+      return;
+    }
+
+    await db.ref().update(updates);
   },
 
   async listenByService(serviceId, callback) {

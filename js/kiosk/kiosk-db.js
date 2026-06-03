@@ -566,7 +566,12 @@ const kioskTokenDB = {
    */
   async generateTokenNumber(organizationId = null, serviceId = null) {
     const prefix = await tokenFactory.resolveOrganizationTokenPrefix(db, organizationId);
-    return tokenFactory.generateSequentialTokenNumber(db, { organizationId, prefix, serviceId });
+    return tokenFactory.generateSequentialTokenNumber(db, {
+      organizationId,
+      prefix,
+      serviceId,
+      skipOpenHoursCheck: true
+    });
   },
 
   /**

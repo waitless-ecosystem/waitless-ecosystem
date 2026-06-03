@@ -23,13 +23,19 @@ const state = {
     loading: false,
     ongoing: [],
     past: [],
+    ongoingVisibleCount: 3,
     pastVisibleCount: 3,
     totalOngoing: 0,
     totalPast: 0,
     lastLoadedAt: null,
-    error: ''
+    error: '',
+    tokenSnapshots: {},
+    recentNotifications: []
   },
   tokenHistoryRef: null,
+  tokenQueueRefs: {},
+  tokenNotificationPrefs: {},
+  tokenHistoryRefreshTimer: null,
   scanner: null
 };
 
@@ -240,6 +246,7 @@ if (isPastTokenStatus(status)) {
 function renderTokenItem(token, type = 'ongoing') {
   const status = normalizeTokenStatus(token?.status) || 'waiting';
   const serviceName = token?.serviceName || token?.serviceId || 'Service';
+  const tokenKey = token?.tokenKey || getTokenHistoryKey(token);
   // Prefer hydrated display labels if present to avoid recomputing without queue snapshot
   let displayData;
   if (token?.counterLabel && token?.estimateTimeLabel && token?.livePositionLabel) {
@@ -264,6 +271,7 @@ function renderTokenItem(token, type = 'ongoing') {
   const customerName = token?.customerName || 'Walk-in';
   const customerPhone = token?.customerPhone || token?.customerDetails?.phone || '';
   const orgLabel = token?.organizationName || token?.orgName || token?.resolvedOrganizationName || token?.orgId || token?.organizationId || 'Unknown org';
+  const notificationsEnabled = type !== 'past' && isTokenNotificationsEnabled(tokenKey);
 
   if (type === 'past') {
     return `
@@ -284,7 +292,18 @@ function renderTokenItem(token, type = 'ongoing') {
           <div class="token-item-number">${escapeHtml(displayData.tokenNumber)}</div>
           <div class="token-item-meta">${escapeHtml(serviceName)}</div>
         </div>
-        <span class="token-status-pill ${type === 'past' ? 'past' : ''} ${isServingNow ? 'serving' : ''}">${escapeHtml(statusLabel)}</span>
+        <div class="token-item-actions">
+          <span class="token-status-pill ${type === 'past' ? 'past' : ''} ${isServingNow ? 'serving' : ''}">${escapeHtml(statusLabel)}</span>
+          <button
+            type="button"
+            class="secondary button-small token-notify-btn ${notificationsEnabled ? 'active' : ''}"
+            data-token-key="${escapeHtml(tokenKey)}"
+            data-notify-enabled="${notificationsEnabled ? '1' : '0'}"
+            aria-pressed="${notificationsEnabled ? 'true' : 'false'}"
+          >
+            ${notificationsEnabled ? 'Notifications on' : 'Notify updates'}
+          </button>
+        </div>
       </div>
       <div class="token-item-meta">
         <div><strong>Token:</strong> ${escapeHtml(displayData.tokenNumber)}</div>
@@ -300,11 +319,34 @@ function renderTokenItem(token, type = 'ongoing') {
   `;
 }
 
+function renderTokenNotificationArea() {
+  const listEl = $('#token-notification-list');
+  if (!listEl) return;
+
+  const notifications = Array.isArray(state.tokenHistory.recentNotifications)
+    ? state.tokenHistory.recentNotifications
+    : [];
+
+  if (notifications.length === 0) {
+    listEl.innerHTML = '<div class="token-list-empty">No updates yet.</div>';
+    return;
+  }
+
+  listEl.innerHTML = notifications.map((entry) => `
+    <div class="token-notification-item">
+      <div class="token-notification-title">${escapeHtml(entry.title || 'Token update')}</div>
+      <div class="token-notification-body">${escapeHtml(entry.body || '')}</div>
+      <div class="token-notification-time">${escapeHtml(entry.timeLabel || '')}</div>
+    </div>
+  `).join('');
+}
+
 function renderTokenHistory() {
   const section = $('#token-history-section');
   const summaryEl = $('#token-history-summary');
   const ongoingList = $('#ongoing-token-list');
   const pastList = $('#past-token-list');
+  const ongoingToggleBtn = $('#ongoing-token-toggle-btn');
   const pastLoadMoreBtn = $('#past-token-load-more-btn');
 
   if (!section || !summaryEl || !ongoingList || !pastList) return;
@@ -315,6 +357,7 @@ function renderTokenHistory() {
     summaryEl.textContent = 'Sign in required';
     ongoingList.innerHTML = '<div class="token-list-empty">Sign in to view your booked tokens.</div>';
     pastList.innerHTML = '<div class="token-list-empty">Sign in to view your booked tokens.</div>';
+    renderTokenNotificationArea();
     return;
   }
 
@@ -326,13 +369,22 @@ function renderTokenHistory() {
     summaryEl.textContent = `${state.tokenHistory.totalOngoing} ongoing • ${state.tokenHistory.totalPast} past`;
   }
 
+  const ongoingVisibleCount = Math.max(3, Number(state.tokenHistory.ongoingExpanded ? state.tokenHistory.ongoing.length : state.tokenHistory.ongoingVisibleCount || 3));
+  const visibleOngoingTokens = state.tokenHistory.ongoing.slice(0, ongoingVisibleCount);
+
   ongoingList.innerHTML = state.tokenHistory.loading
     ? '<div class="token-list-empty">Loading ongoing tokens...</div>'
     : state.tokenHistory.error
       ? `<div class="token-list-empty">${escapeHtml(state.tokenHistory.error)}</div>`
-    : state.tokenHistory.ongoing.length > 0
-      ? state.tokenHistory.ongoing.map((token) => renderTokenItem(token, 'ongoing')).join('')
+    : visibleOngoingTokens.length > 0
+      ? visibleOngoingTokens.map((token) => renderTokenItem(token, 'ongoing')).join('')
       : '<div class="token-list-empty">No ongoing tokens found.</div>';
+
+  if (ongoingToggleBtn) {
+    const hasMoreOngoingTokens = !state.tokenHistory.loading && !state.tokenHistory.error && state.tokenHistory.ongoing.length > ongoingVisibleCount;
+    ongoingToggleBtn.classList.toggle('hidden', !hasMoreOngoingTokens);
+    ongoingToggleBtn.textContent = state.tokenHistory.ongoingExpanded ? 'Show less' : `See more (${state.tokenHistory.ongoing.length - ongoingVisibleCount})`;
+  }
 
   pastList.innerHTML = state.tokenHistory.loading
     ? '<div class="token-list-empty">Loading past tokens...</div>'
@@ -350,25 +402,34 @@ function renderTokenHistory() {
       ? `Load more (${state.tokenHistory.past.length - visibleCount})`
       : 'Load more';
   }
+
+  renderTokenNotificationArea();
 }
 
 async function loadTokenHistory() {
   const currentUid = getCurrentAppUserUid();
 
   if (!currentUid) {
+    stopTokenQueueListeners();
     state.tokenHistory = {
       loading: false,
       ongoing: [],
       past: [],
+      ongoingExpanded: false,
+      ongoingVisibleCount: 3,
       pastVisibleCount: 3,
       totalOngoing: 0,
       totalPast: 0,
       lastLoadedAt: null,
-      error: ''
+      error: '',
+      tokenSnapshots: {},
+      recentNotifications: []
     };
     renderTokenHistory();
     return;
   }
+
+  state.tokenNotificationPrefs = loadTokenNotificationPrefs(currentUid);
 
   state.tokenHistory = {
     ...state.tokenHistory,
@@ -468,7 +529,34 @@ async function loadTokenHistory() {
       }
     }));
 
-    const ownedTokens = hydratedTokens.filter((token) => isTokenOwnedByCurrentUser(token));
+    const ownedTokens = hydratedTokens.filter((token) => isTokenOwnedByCurrentUser(token)).map((token) => ({
+      ...token,
+      tokenKey: getTokenHistoryKey(token)
+    }));
+
+    const previousSnapshots = state.tokenHistory.tokenSnapshots || {};
+    const nextSnapshots = {};
+    const notificationEvents = [];
+
+    ownedTokens.forEach((token) => {
+      const tokenKey = token.tokenKey;
+      nextSnapshots[tokenKey] = {
+        status: normalizeTokenStatus(token.status),
+        counterLabel: String(token.counterLabel || '').trim(),
+        livePositionLabel: String(token.livePositionLabel || '').trim(),
+        estimateTimeLabel: String(token.estimateTimeLabel || '').trim()
+      };
+
+      const previousToken = previousSnapshots[tokenKey];
+      const changeSummary = getTokenChangeSummary(previousToken, nextSnapshots[tokenKey]);
+      if (changeSummary && isTokenNotificationsEnabled(tokenKey)) {
+        notificationEvents.push({
+          tokenNumber: token.tokenNumber,
+          tokenKey,
+          changeSummary
+        });
+      }
+    });
 
     ownedTokens.sort((left, right) => Number(right.timestamp || 0) - Number(left.timestamp || 0));
 
@@ -479,13 +567,24 @@ async function loadTokenHistory() {
       loading: false,
       ongoing: ongoing.slice(0, 12),
       past: past.slice(0, 12),
+      ongoingExpanded: !!state.tokenHistory.ongoingExpanded,
+      ongoingVisibleCount: state.tokenHistory.ongoingExpanded ? ongoing.length : 3,
       pastVisibleCount: state.tokenHistory.pastVisibleCount || 3,
       totalOngoing: ongoing.length,
       totalPast: past.length,
       lastLoadedAt: Date.now(),
-      error: ''
+      error: '',
+      tokenSnapshots: nextSnapshots,
+      recentNotifications: state.tokenHistory.recentNotifications || []
     };
+
+    syncTokenQueueListeners(ongoing);
+
+    notificationEvents.forEach((event) => {
+      emitTokenNotification(`Token ${event.tokenNumber}`, event.changeSummary).catch(() => {});
+    });
   } catch (err) {
+    stopTokenQueueListeners();
     state.tokenHistory = {
       ...state.tokenHistory,
       loading: false,
@@ -501,6 +600,9 @@ function stopTokenHistoryListener() {
     state.tokenHistoryRef.off();
     state.tokenHistoryRef = null;
   }
+  clearTimeout(state.tokenHistoryRefreshTimer);
+  state.tokenHistoryRefreshTimer = null;
+  stopTokenQueueListeners();
 }
 
 function startTokenHistoryListener() {
@@ -535,6 +637,172 @@ function showMessage(message, type = 'info') {
     el.textContent = '';
     el.className = 'message';
   }, 4500);
+}
+
+function getTokenHistoryKey(token) {
+  return [
+    String(token?.orgId || token?.organizationId || token?.resolvedOrganizationId || '').trim(),
+    String(token?.serviceId || '').trim(),
+    String(token?.id || '').trim(),
+    String(token?.tokenNumber || '').trim()
+  ].join('::');
+}
+
+function getTokenNotificationStorageKey(uid) {
+  return `wAITLESS_token_notifications_${String(uid || '').trim()}`;
+}
+
+function loadTokenNotificationPrefs(uid) {
+  if (!uid) return {};
+  try {
+    const raw = window.localStorage.getItem(getTokenNotificationStorageKey(uid));
+    return raw ? JSON.parse(raw) || {} : {};
+  } catch (_) {
+    return {};
+  }
+}
+
+function saveTokenNotificationPrefs(uid) {
+  if (!uid) return;
+  try {
+    window.localStorage.setItem(getTokenNotificationStorageKey(uid), JSON.stringify(state.tokenNotificationPrefs || {}));
+  } catch (_) {
+    // Ignore storage failures.
+  }
+}
+
+function isTokenNotificationsEnabled(tokenKey) {
+  return !!state.tokenNotificationPrefs?.[tokenKey];
+}
+
+function setTokenNotificationsEnabled(tokenKey, enabled) {
+  const currentUid = getCurrentAppUserUid();
+  if (!tokenKey) return;
+  if (!state.tokenNotificationPrefs || typeof state.tokenNotificationPrefs !== 'object') {
+    state.tokenNotificationPrefs = {};
+  }
+  if (enabled) {
+    state.tokenNotificationPrefs[tokenKey] = true;
+  } else {
+    delete state.tokenNotificationPrefs[tokenKey];
+  }
+  saveTokenNotificationPrefs(currentUid);
+}
+
+async function emitTokenNotification(title, body) {
+  const message = body || '';
+  const notificationTitle = String(title || 'Token update').trim() || 'Token update';
+  const notificationBody = String(message || '').trim();
+
+  state.tokenHistory = {
+    ...state.tokenHistory,
+    recentNotifications: [
+      {
+        title: notificationTitle,
+        body: notificationBody,
+        timeLabel: new Date().toLocaleString()
+      },
+      ...(state.tokenHistory.recentNotifications || [])
+    ].slice(0, 5)
+  };
+  renderTokenNotificationArea();
+
+  if ('Notification' in window) {
+    if (Notification.permission === 'granted') {
+      try {
+        new Notification(notificationTitle, { body: notificationBody });
+      } catch (_) {
+        showMessage(`${notificationTitle}${notificationBody ? `: ${notificationBody}` : ''}`, 'info');
+      }
+      return;
+    }
+
+    if (Notification.permission === 'default') {
+      try {
+        const permission = await Notification.requestPermission();
+        if (permission === 'granted') {
+          new Notification(notificationTitle, { body: notificationBody });
+          return;
+        }
+      } catch (_) {
+        // fall through to in-app message
+      }
+    }
+  }
+
+  showMessage(`${notificationTitle}${notificationBody ? `: ${notificationBody}` : ''}`, 'info');
+}
+
+function getTokenChangeSummary(previousToken, nextToken) {
+  if (!previousToken || !nextToken) return '';
+
+  const changes = [];
+  const previousStatus = normalizeTokenStatus(previousToken.status);
+  const nextStatus = normalizeTokenStatus(nextToken.status);
+  const previousCounter = String(previousToken.counterLabel || previousToken.assignedCounterName || previousToken.counterName || '').trim();
+  const nextCounter = String(nextToken.counterLabel || nextToken.assignedCounterName || nextToken.counterName || '').trim();
+  const previousPosition = String(previousToken.livePositionLabel || '').trim();
+  const nextPosition = String(nextToken.livePositionLabel || '').trim();
+
+  if (previousStatus !== nextStatus) {
+    changes.push(`status ${previousStatus || 'waiting'} -> ${nextStatus || 'waiting'}`);
+  }
+  if (previousPosition !== nextPosition && nextPosition) {
+    changes.push(`position ${nextPosition}`);
+  }
+  if (previousCounter !== nextCounter && nextCounter) {
+    changes.push(`counter ${nextCounter}`);
+  }
+
+  return changes.join(' • ');
+}
+
+function stopTokenQueueListeners() {
+  Object.values(state.tokenQueueRefs || {}).forEach((ref) => {
+    try {
+      ref.off('value');
+    } catch (_) {
+      // ignore listener cleanup errors
+    }
+  });
+  state.tokenQueueRefs = {};
+}
+
+function scheduleTokenHistoryReload() {
+  clearTimeout(state.tokenHistoryRefreshTimer);
+  state.tokenHistoryRefreshTimer = setTimeout(() => {
+    loadTokenHistory().catch(() => {});
+  }, 150);
+}
+
+function syncTokenQueueListeners(tokens = []) {
+  const desiredPaths = new Map();
+
+  (tokens || []).forEach((token) => {
+    if (!token?.orgId || !token?.serviceId) return;
+    const path = `users/${token.orgId}/queue/${token.serviceId}`;
+    desiredPaths.set(path, true);
+  });
+
+  Object.entries(state.tokenQueueRefs || {}).forEach(([path, ref]) => {
+    if (desiredPaths.has(path)) return;
+    try {
+      ref.off('value');
+    } catch (_) {
+      // ignore listener cleanup errors
+    }
+    delete state.tokenQueueRefs[path];
+  });
+
+  desiredPaths.forEach((_, path) => {
+    if (state.tokenQueueRefs[path]) return;
+    const queueRef = db.ref(path);
+    state.tokenQueueRefs[path] = queueRef;
+    queueRef.on('value', () => {
+      if (!getCurrentAppUserUid()) return;
+      scheduleTokenHistoryReload();
+    });
+  });
 }
 
 function getLoginUrl() {
@@ -1067,22 +1335,12 @@ async function issueToken(serviceId, service, buttonEl = null) {
     const prefix = await tokenFactory.resolveOrganizationTokenPrefix(db, state.orgId);
     const tokenId = tokenFactory.generateTokenId('TOKEN');
     const bookingPrefix = state.onlineBookingMode ? `${prefix}OB` : prefix;
-    let tokenNumber;
-    let generationBlocked = false;
-    try {
-      tokenNumber = await tokenFactory.generateSequentialTokenNumber(db, {
-        organizationId: state.orgId,
-        prefix: bookingPrefix,
-        serviceId
-      });
-    } catch (err) {
-      if (String(err.message || '').toLowerCase().includes('currently closed')) {
-        generationBlocked = true;
-        tokenNumber = tokenFactory.generateLegacyTokenNumber(tokenId) || tokenId;
-      } else {
-        throw err;
-      }
-    }
+    const tokenNumber = await tokenFactory.generateSequentialTokenNumber(db, {
+      organizationId: state.orgId,
+      prefix: bookingPrefix,
+      serviceId,
+      skipOpenHoursCheck: true
+    });
 
     const counterInfo = resolveCounterForService(serviceId) || {};
     const customerUid = currentUid;
@@ -1432,6 +1690,33 @@ function wireEvents() {
   $('#past-token-load-more-btn')?.addEventListener('click', () => {
     state.tokenHistory.pastVisibleCount = Math.max(3, Number(state.tokenHistory.pastVisibleCount || 3) + 3);
     renderTokenHistory();
+  });
+
+  $('#ongoing-token-toggle-btn')?.addEventListener('click', () => {
+    state.tokenHistory.ongoingExpanded = !state.tokenHistory.ongoingExpanded;
+    renderTokenHistory();
+  });
+
+  $('#ongoing-token-list')?.addEventListener('click', async (event) => {
+    const button = event.target?.closest?.('.token-notify-btn');
+    if (!button) return;
+
+    const tokenKey = String(button.dataset.tokenKey || '').trim();
+    if (!tokenKey) return;
+
+    const enabled = button.dataset.notifyEnabled !== '1';
+    setTokenNotificationsEnabled(tokenKey, enabled);
+
+    if (enabled && 'Notification' in window && Notification.permission === 'default') {
+      try {
+        await Notification.requestPermission();
+      } catch (_) {
+        // ignore permission errors and keep the in-app toggle enabled
+      }
+    }
+
+    renderTokenHistory();
+    showMessage(enabled ? 'Token updates enabled.' : 'Token updates muted.', 'success');
   });
 
   $('#close-token-overlay-btn')?.addEventListener('click', hideTokenOverlay);

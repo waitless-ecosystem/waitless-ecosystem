@@ -35,6 +35,15 @@
           <button id="refresh-token-history-btn" class="secondary" type="button">Refresh</button>
         </div>
       </div>
+      <div id="token-notification-panel" class="token-notification-panel" aria-live="polite" aria-label="Token notifications">
+        <div class="section-head notification-head">
+          <h3>Notifications</h3>
+          <p class="lead">Live updates for your tokens appear here.</p>
+        </div>
+        <div id="token-notification-list" class="token-notification-list">
+          <div class="token-list-empty">No updates yet.</div>
+        </div>
+      </div>
       <div class="history-grid">
         <article class="history-column">
           <div class="section-head">
@@ -42,6 +51,9 @@
             <p class="lead">Waiting, queued, or currently serving.</p>
           </div>
           <div id="ongoing-token-list" class="token-list"></div>
+          <div class="ongoing-token-footer">
+            <button id="ongoing-token-toggle-btn" class="secondary hidden" type="button">See more</button>
+          </div>
         </article>
         <article class="history-column">
           <div class="section-head">

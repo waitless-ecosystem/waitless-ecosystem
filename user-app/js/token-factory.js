@@ -223,7 +223,7 @@
 
     return checkOpenHours.then(async (openHours) => {
       const now = new Date();
-      if (orgIdForCheck && openHours && Object.keys(openHours).length > 0) {
+      if (!options.skipOpenHoursCheck && orgIdForCheck && openHours && Object.keys(openHours).length > 0) {
         const allowed = isWithinOpenHoursConfig(openHours, now);
         if (!allowed) {
           return Promise.reject(new Error('Organization is currently closed according to configured open hours'));

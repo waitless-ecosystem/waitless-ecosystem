@@ -377,22 +377,12 @@ async function issueToken(service, buttonEl) {
     const prefix = await tokenFactory.resolveOrganizationTokenPrefix(db, orgId);
     const bookingPrefix = `${prefix}OB`;
     const tokenId = tokenFactory.generateTokenId('TOKEN');
-    let tokenNumber;
-    let generationBlocked = false;
-    try {
-      tokenNumber = await tokenFactory.generateSequentialTokenNumber(db, {
-        organizationId: orgId,
-        prefix: bookingPrefix,
-        serviceId: service.id
-      });
-    } catch (err) {
-      if (String(err.message || '').toLowerCase().includes('currently closed')) {
-        generationBlocked = true;
-        tokenNumber = tokenFactory.generateLegacyTokenNumber(tokenId) || tokenId;
-      } else {
-        throw err;
-      }
-    }
+    const tokenNumber = await tokenFactory.generateSequentialTokenNumber(db, {
+      organizationId: orgId,
+      prefix: bookingPrefix,
+      serviceId: service.id,
+      skipOpenHoursCheck: true
+    });
 
     const appUser = appUserSnap.val() || {};
     const customerUid = String(appUser.uid || user.uid).trim();
@@ -468,55 +458,6 @@ async function issueToken(service, buttonEl) {
       return;
     }
 
-    if (generationBlocked) {
-      // Organization closed — automatically schedule for the next open slot.
-      try {
-        const openSnap = await db.ref(`users/${orgId}/settings/openHours`).once('value');
-        const openHours = openSnap.val() || {};
-        function parseHM(v) {
-          if (!v) return null;
-          const parts = String(v || '').split(':');
-          if (parts.length < 2) return null;
-          return { h: parseInt(parts[0], 10), m: parseInt(parts[1], 10) };
-        }
-        function findNextOpenStart(hoursObj, fromDt) {
-          for (let i = 0; i < 8; i++) {
-            const candidate = new Date(fromDt.getTime() + i * 24 * 3600 * 1000);
-            const key = ['sun','mon','tue','wed','thu','fri','sat'][candidate.getDay()];
-            const conf = hoursObj && hoursObj[key];
-            if (!conf || !conf.enabled) continue;
-            const open = parseHM(conf.open);
-            if (!open) continue;
-            const start = new Date(candidate);
-            start.setHours(open.h, open.m, 0, 0);
-            if (start.getTime() >= fromDt.getTime()) return start;
-          }
-          return null;
-        }
-        const now = new Date();
-        const nextOpen = findNextOpenStart(openHours, now);
-        if (nextOpen) {
-          const deferredUntil = nextOpen.getTime();
-          await db.ref(`users/${orgId}/queue/${service.id}/${tokenId}`).update({
-            deferredUntil,
-            scheduledFor: nextOpen.toISOString(),
-            status: 'scheduled'
-          });
-          await db.ref(`appuserTokens/${customerUid}/${orgId}/${tokenId}`).update({
-            deferredUntil,
-            scheduledFor: nextOpen.toISOString(),
-            status: 'scheduled'
-          });
-          const counterLabel = counterInfo.counterName || 'Waiting';
-          updateResult(
-            `Token created: ${tokenNumber} | Customer: ${customerName || customerEmail || customerUid || 'Unknown'} | Counter: ${counterLabel} | ETA: ${nextOpen.toLocaleString()} | Live Position: Scheduled`
-          );
-          return;
-        }
-      } catch (_) {
-        // ignore and continue to compute ETA
-      }
-    }
     // Compute estimate as now + sum(estimated minutes of tokens ahead in this service queue)
     try {
       const queueSnap = await db.ref(`users/${orgId}/queue/${service.id}`).once('value');
