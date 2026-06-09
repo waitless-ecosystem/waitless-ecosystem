@@ -256,6 +256,135 @@
       max-width: 720px;
     }
 
+    .qm-booking-slot-card {
+      margin-top: 16px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .qm-booking-slot-card h3 {
+      margin: 0;
+      color: #0b1220;
+    }
+
+    .qm-booking-slot-card .muted {
+      margin: 0;
+    }
+
+    .qm-field-row {
+      display: grid;
+      gap: 6px;
+      color: #0b1220;
+    }
+
+    .qm-field-row input {
+      padding: 10px 12px;
+      border: 1px solid #dbe6ef;
+      border-radius: 8px;
+      font-family: inherit;
+    }
+
+    .qm-field-row input:focus {
+      outline: none;
+      border-color: #0366d6;
+      box-shadow: 0 0 0 3px rgba(3,102,214,0.1);
+    }
+
+    .qm-online-bookings-summary {
+      margin: 14px 0;
+      padding: 12px 14px;
+      border: 1px solid #e3eefc;
+      border-radius: 10px;
+      background: #f8fbff;
+      color: #1f2d3d;
+      font-size: 0.92rem;
+    }
+
+    .qm-online-bookings-summary.warning {
+      border-color: #f59e0b;
+      background: #fffbeb;
+      color: #92400e;
+    }
+
+    .qm-online-bookings-table-wrap {
+      border: 1px solid #e6edf8;
+      border-radius: 10px;
+      overflow: auto;
+      background: #fff;
+    }
+
+    .qm-online-bookings-table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 920px;
+    }
+
+    .qm-online-bookings-table th,
+    .qm-online-bookings-table td {
+      padding: 10px 12px;
+      text-align: left;
+      border-bottom: 1px solid #edf3fb;
+      vertical-align: top;
+    }
+
+    .qm-online-bookings-table th {
+      background: #fbfdff;
+      color: #0b1220;
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+
+    .qm-online-bookings-table td {
+      color: #334155;
+      font-size: 0.88rem;
+    }
+
+    .qm-booking-status-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .qm-booking-status-scheduled { background: #dbeafe; color: #1e3a8a; }
+    .qm-booking-status-waiting { background: #ede9fe; color: #4c1d95; }
+    .qm-booking-status-serving { background: #dcfce7; color: #14532d; }
+    .qm-booking-status-done { background: #e2e8f0; color: #1e293b; }
+
+    .qm-reminder-state {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 700;
+    }
+
+    .qm-reminder-state.sent { background: #dcfce7; color: #14532d; }
+    .qm-reminder-state.pending { background: #fef3c7; color: #92400e; }
+    .qm-reminder-state.failed { background: #fee2e2; color: #991b1b; }
+
+    .qm-inline-reminder-btn {
+      padding: 6px 10px;
+      font-size: 0.8rem;
+      border: 0;
+      border-radius: 6px;
+      background: #0366d6;
+      color: #fff;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .qm-inline-reminder-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
     .qm-customize-card h3 {
       margin: 0 0 8px 0;
       color: #0b1220;

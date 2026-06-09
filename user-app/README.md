@@ -21,7 +21,7 @@ This folder contains a separate mobile-friendly application for organization sta
 - `js/token-factory.js` - local copy of the token helpers
 
 ## Notes
-- The app uses the shared Firebase config from `js/config/firebase-config.js`.
+- The app uses the local Firebase config from `js/config/firebase-config.js`.
 - The app uses Firebase Authentication anonymously and stores the user profile in `appuser/{uid}`.
 - The organization QR is generated from `pages/queue-manager.html` and points to this app with `orgId` in the URL.
 - The app is designed to load only the scanned organization and does not ask for a password.

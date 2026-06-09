@@ -64,6 +64,12 @@ async function syncPublicOrganizationMeta(profile = currentOrganizationProfile) 
       allowOnlineBooking: !!kioskCustomerDetailsSettings.allowOnlineBooking,
       serviceCategoriesEnabled: !!kioskCustomerDetailsSettings.serviceCategoriesEnabled,
       scheduledServicesEnabled: !!kioskCustomerDetailsSettings.scheduledServicesEnabled,
+      onlineBookingSlotsEnabled: !!kioskCustomerDetailsSettings.onlineBookingSlotsEnabled,
+      onlineBookingSlotDurationMinutes: Number(kioskCustomerDetailsSettings.onlineBookingSlotDurationMinutes || 0),
+      onlineBookingSlotCapacity: Number(kioskCustomerDetailsSettings.onlineBookingSlotCapacity || 0),
+      basicModeEnabled: !!kioskCustomerDetailsSettings.basicModeEnabled,
+      bookingReminderEnabled: !!kioskCustomerDetailsSettings.bookingReminderEnabled,
+      bookingReminderLeadMinutes: Number(kioskCustomerDetailsSettings.bookingReminderLeadMinutes || 0),
       tokenSequenceResetMinutes: Number(kioskCustomerDetailsSettings.tokenSequenceResetMinutes || 0),
       serviceCount: Object.keys(currentServices || {}).length,
       updatedAt: firebase.database.ServerValue.TIMESTAMP
@@ -116,6 +122,8 @@ let currentCounters = {};
 let currentServices = {};
 let currentAssignments = {};
 let currentQueueData = {};
+let onlineBookingReminderIntervalId = null;
+let onlineBookingReminderRunning = false;
 let kioskCustomerDetailsSettings = {
   enabled: false,
   requireName: false,
@@ -123,8 +131,16 @@ let kioskCustomerDetailsSettings = {
   recallEnabled: false,
   serviceCategoriesEnabled: false,
   scheduledServicesEnabled: false,
+  onlineBookingSlotsEnabled: true,
+  onlineBookingSlotDurationMinutes: 30,
+  onlineBookingSlotCapacity: 1,
   basicModeEnabled: false,
-  allowOnlineBooking: false
+  allowOnlineBooking: false,
+  bookingReminderEnabled: false,
+  bookingReminderLeadMinutes: 30,
+  bookingReminderEmailjsPublicKey: '',
+  bookingReminderEmailjsServiceId: '',
+  bookingReminderEmailjsTemplateId: ''
 };
 
 function normalizeCustomerDetailSettings(raw) {
@@ -136,11 +152,19 @@ function normalizeCustomerDetailSettings(raw) {
     recallEnabled: !!data.recallEnabled,
     serviceCategoriesEnabled: !!data.serviceCategoriesEnabled,
     scheduledServicesEnabled: !!data.scheduledServicesEnabled,
+    onlineBookingSlotsEnabled: data.onlineBookingSlotsEnabled !== undefined ? !!data.onlineBookingSlotsEnabled : true,
+    onlineBookingSlotDurationMinutes: Math.max(5, Number(data.onlineBookingSlotDurationMinutes || 30) || 30),
+    onlineBookingSlotCapacity: Math.max(1, Number(data.onlineBookingSlotCapacity || 1) || 1),
     basicModeEnabled: !!data.basicModeEnabled,
     mobileAppBlocked: !!data.mobileAppBlocked,
     allowOnlineBooking: !!data.allowOnlineBooking,
     autoReturnSeconds: Number(data.autoReturnSeconds || 0),
-    tokenSequenceResetMinutes: Number(data.tokenSequenceResetMinutes || 0)
+    tokenSequenceResetMinutes: Number(data.tokenSequenceResetMinutes || 0),
+    bookingReminderEnabled: !!data.bookingReminderEnabled,
+    bookingReminderLeadMinutes: Math.max(1, Number(data.bookingReminderLeadMinutes || 30) || 30),
+    bookingReminderEmailjsPublicKey: String(data.bookingReminderEmailjsPublicKey || '').trim(),
+    bookingReminderEmailjsServiceId: String(data.bookingReminderEmailjsServiceId || '').trim(),
+    bookingReminderEmailjsTemplateId: String(data.bookingReminderEmailjsTemplateId || '').trim()
   };
 }
 
@@ -148,6 +172,13 @@ function syncCustomizeControlsWithBasicMode() {
   const basicModeEnabled = !!$('#collect-basic-enabled')?.checked;
   const mobileAppBlocked = !!$('#block-mobile-app-enabled')?.checked;
   const scheduledServicesEnabled = !!$('#scheduled-services-enabled')?.checked;
+  const bookingSlotsEnabled = $('#online-booking-slots-enabled');
+  const bookingSlotDurationInput = $('#online-booking-slot-duration-minutes');
+  const bookingReminderEnabledInput = $('#booking-reminder-enabled');
+  const bookingReminderLeadInput = $('#booking-reminder-lead-minutes');
+  const bookingReminderPublicKeyInput = $('#booking-reminder-emailjs-public-key');
+  const bookingReminderServiceIdInput = $('#booking-reminder-emailjs-service-id');
+  const bookingReminderTemplateIdInput = $('#booking-reminder-emailjs-template-id');
   const detailsEnabledInput = $('#collect-customer-details-enabled');
   const nameInput = $('#collect-customer-name-required');
   const phoneInput = $('#collect-customer-phone-required');
@@ -155,6 +186,7 @@ function syncCustomizeControlsWithBasicMode() {
   const nameRow = $('#customer-name-required-row');
   const phoneRow = $('#customer-phone-required-row');
   const customizeCard = $('#customer-details-customize-card');
+  const bookingSlotCard = document.querySelector('.qm-booking-slot-card');
   const customizeStatus = $('#customize-settings-status');
 
   if(detailsEnabledInput) {
@@ -201,9 +233,45 @@ function syncCustomizeControlsWithBasicMode() {
     }
   }
 
+  if (bookingSlotsEnabled) {
+    bookingSlotsEnabled.disabled = basicModeEnabled;
+    if (basicModeEnabled) {
+      bookingSlotsEnabled.checked = false;
+    }
+  }
+
+  if (bookingSlotDurationInput) {
+    bookingSlotDurationInput.disabled = basicModeEnabled || !bookingSlotsEnabled?.checked;
+    if (basicModeEnabled) {
+      bookingSlotDurationInput.value = '';
+    }
+  }
+
+  if (bookingReminderEnabledInput) {
+    bookingReminderEnabledInput.disabled = basicModeEnabled;
+    if (basicModeEnabled) {
+      bookingReminderEnabledInput.checked = false;
+    }
+  }
+
+  const reminderFieldsDisabled = basicModeEnabled || !bookingReminderEnabledInput?.checked;
+  if (bookingReminderLeadInput) {
+    bookingReminderLeadInput.disabled = reminderFieldsDisabled;
+  }
+  if (bookingReminderPublicKeyInput) {
+    bookingReminderPublicKeyInput.disabled = reminderFieldsDisabled;
+  }
+  if (bookingReminderServiceIdInput) {
+    bookingReminderServiceIdInput.disabled = reminderFieldsDisabled;
+  }
+  if (bookingReminderTemplateIdInput) {
+    bookingReminderTemplateIdInput.disabled = reminderFieldsDisabled;
+  }
+
   if(nameRow) nameRow.style.display = basicModeEnabled ? 'none' : (detailsEnabledInput?.checked ? '' : 'none');
   if(phoneRow) phoneRow.style.display = basicModeEnabled ? 'none' : (detailsEnabledInput?.checked ? '' : 'none');
   if(customizeCard) customizeCard.style.display = basicModeEnabled ? 'none' : '';
+  if(bookingSlotCard) bookingSlotCard.style.display = basicModeEnabled ? 'none' : '';
 
   if(customizeStatus && basicModeEnabled) {
     customizeStatus.textContent = 'Basic mode is on. Other customization options are hidden.';
@@ -233,6 +301,10 @@ function initTabs() {
         setTimeout(() => {
           initializeCharts(currentCounters, currentServices, currentAssignments);
         }, 100);
+      }
+
+      if(tabName === 'online-bookings') {
+        renderOnlineBookings(currentQueueData, currentServices);
       }
     });
   });
@@ -287,7 +359,12 @@ const servicesDB = {
       description: description.trim(),
       category: category.trim(),
       status: 'active',
+      onlineBookingEnabled: true,
       estimatedTime: parseInt(estimatedTime) || 0,
+      scheduledServiceEnabled: false,
+      schedule: null,
+      bookingSlotMinutes: 0,
+      bookingSlotCapacity: 1,
       createdAt: firebase.database.ServerValue.TIMESTAMP
     };
     await db.ref(`users/${currentUserUID}/services/${id}`).set(serviceData);
@@ -456,13 +533,17 @@ const queueDB = {
     const queueData = queueSnap.val() || {};
     const tokenSnap = await db.ref(`users/${currentUserUID}/tokens`).once('value');
     const tokenData = tokenSnap.val() || {};
+    const appuserTokensSnap = await db.ref('appuserTokens').once('value');
+    const appuserTokensData = appuserTokensSnap.val() || {};
 
     const updates = {};
     const queueTokenIds = new Set();
+    const allTokenIdsToDelete = new Set();
 
     Object.entries(queueData).forEach(([serviceId, serviceQueue]) => {
       Object.keys(serviceQueue || {}).forEach((tokenId) => {
         queueTokenIds.add(tokenId);
+        allTokenIdsToDelete.add(tokenId);
         updates[`users/${currentUserUID}/queue/${serviceId}/${tokenId}`] = null;
         updates[`users/${currentUserUID}/tokens/${tokenId}`] = null;
 
@@ -475,6 +556,7 @@ const queueDB = {
 
     // Also remove any leftover tokens present in tokens mirror but not in queue
     Object.keys(tokenData || {}).forEach((tokenId) => {
+      allTokenIdsToDelete.add(tokenId);
       if (!queueTokenIds.has(tokenId)) {
         updates[`users/${currentUserUID}/tokens/${tokenId}`] = null;
         const customerUid = String(tokenData[tokenId] && tokenData[tokenId].customerUid || '').trim();
@@ -483,6 +565,21 @@ const queueDB = {
         }
       }
     });
+
+    // Fallback sweep: remove org token copies from appuserTokens even when queue data
+    // has missing customerUid (common with legacy kiosk/online-booking writes).
+    if (allTokenIdsToDelete.size > 0) {
+      Object.entries(appuserTokensData).forEach(([appUserId, orgMap]) => {
+        const orgTokens = orgMap && orgMap[currentUserUID];
+        if (!orgTokens || typeof orgTokens !== 'object') return;
+
+        allTokenIdsToDelete.forEach((tokenId) => {
+          if (Object.prototype.hasOwnProperty.call(orgTokens, tokenId)) {
+            updates[`appuserTokens/${appUserId}/${currentUserUID}/${tokenId}`] = null;
+          }
+        });
+      });
+    }
 
     if (Object.keys(updates).length === 0) {
       // Nothing to update; ensure queue root removed
@@ -568,6 +665,11 @@ const organizationSettingsDB = {
       mobileAppBlocked: !!normalized.mobileAppBlocked,
       allowOnlineBooking: !!normalized.allowOnlineBooking,
       autoReturnSeconds: Number(normalized.autoReturnSeconds || 0),
+      bookingReminderEnabled: !!normalized.bookingReminderEnabled,
+      bookingReminderLeadMinutes: Math.max(1, Number(normalized.bookingReminderLeadMinutes || 30) || 30),
+      bookingReminderEmailjsPublicKey: String(normalized.bookingReminderEmailjsPublicKey || '').trim(),
+      bookingReminderEmailjsServiceId: String(normalized.bookingReminderEmailjsServiceId || '').trim(),
+      bookingReminderEmailjsTemplateId: String(normalized.bookingReminderEmailjsTemplateId || '').trim(),
       tokenSequenceResetMinutes: Number(normalized.tokenSequenceResetMinutes || 0),
       updatedAt: firebase.database.ServerValue.TIMESTAMP,
       updatedBy: auth.currentUser ? auth.currentUser.uid : currentUserUID
@@ -639,6 +741,7 @@ function renderServices(services) {
       '<div class="qm-item-meta">' + escapeHtml(service.description || '(no description)') + '</div>' +
       (service.category ? '<div class="qm-item-meta">Category: <span class="qm-meta-highlight">' + escapeHtml(service.category) + '</span></div>' : '') +
       (service.scheduledServiceEnabled ? '<div class="qm-item-meta"><span class="qm-schedule-badge">Scheduled</span> ' + escapeHtml(formatServiceScheduleSummary(service)) + '</div>' : '') +
+      (service.scheduledServiceEnabled ? '<div class="qm-item-meta"><span class="qm-schedule-badge qm-slot-badge">Slots</span> ' + escapeHtml(formatServiceBookingSlotSummary(service)) + '</div>' : '') +
       '<div class="qm-item-meta">Est. time: <span class="qm-meta-highlight">' + (service.estimatedTime || 0) + '</span> min' +
       ' | Status: <span class="qm-meta-highlight">' + escapeHtml(service.status || 'active') + '</span></div>' +
       '</div>' +
@@ -720,6 +823,14 @@ function formatServiceScheduleSummary(service) {
   return `${dayText} • ${open} - ${close}`;
 }
 
+function formatServiceBookingSlotSummary(service) {
+  const slotMinutes = Number(service?.bookingSlotMinutes || service?.schedule?.slotMinutes || service?.slotDurationMinutes || 0) || 0;
+  if (!service?.scheduledServiceEnabled) {
+    return 'Time slots are off';
+  }
+  return `${slotMinutes || 'Auto'} min slots`;
+}
+
 function toggleScheduledServicesTabVisibility(forceVisible) {
   const tab = document.querySelector('.qm-tab[data-tab="scheduled-services"]');
   const panel = $('#scheduled-services');
@@ -770,7 +881,7 @@ function renderScheduledServices(services) {
     const days = Array.isArray(schedule.days) ? schedule.days : [];
     const open = schedule.open || '09:00';
     const close = schedule.close || '17:00';
-
+    const slotMinutes = Number(service?.bookingSlotMinutes || schedule.slotMinutes || service?.slotDurationMinutes || service?.estimatedTime || 30) || 30;
     const item = document.createElement('div');
     item.className = 'qm-item qm-schedule-item';
     item.dataset.id = serviceId;
@@ -782,12 +893,19 @@ function renderScheduledServices(services) {
       </div>
       <div class="qm-schedule-form">
         <label class="qm-checkbox-row qm-schedule-enabled-row">
+          <input type="checkbox" class="online-booking-enabled" ${service.onlineBookingEnabled === false ? '' : 'checked'} />
+          <span>Allow online booking for this service</span>
+        </label>
+        <label class="qm-checkbox-row qm-schedule-enabled-row">
           <input type="checkbox" class="scheduled-service-enabled" ${enabled ? 'checked' : ''} />
           <span>Service is scheduled only</span>
         </label>
         <div class="qm-schedule-hours">
           <label>Open <input type="time" class="scheduled-service-open" value="${escapeHtml(open)}" /></label>
           <label>Close <input type="time" class="scheduled-service-close" value="${escapeHtml(close)}" /></label>
+        </div>
+        <div class="qm-schedule-hours">
+          <label>Slot duration (minutes) <input type="number" min="1" step="1" class="scheduled-service-slot-minutes" value="${escapeHtml(slotMinutes)}" /></label>
         </div>
         <div class="qm-schedule-days">
           ${dayKeys.map((day, index) => `
@@ -951,6 +1069,324 @@ function renderQueueStatus(queueData, services) {
   el.innerHTML = html;
 }
 
+function parseDateTimeMs(value) {
+  if (value === null || value === undefined || value === '') return null;
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  const date = new Date(value);
+  const ms = date.getTime();
+  return Number.isFinite(ms) ? ms : null;
+}
+
+function formatDateTimeValue(value) {
+  const ms = parseDateTimeMs(value);
+  if (!ms) return 'Not scheduled';
+  return new Date(ms).toLocaleString();
+}
+
+function isOnlineBookingToken(token) {
+  const source = String(token?.source || '').trim().toLowerCase();
+  const kioskId = String(token?.kioskId || '').trim().toUpperCase();
+  const kioskName = String(token?.kioskName || '').trim().toLowerCase();
+
+  if (source === 'mobile-app' || source === 'mobile app' || source === 'online-booking') {
+    return true;
+  }
+
+  if (kioskId === 'ONLINE_BOOKING') {
+    return true;
+  }
+
+  if (kioskName === 'online booking') {
+    return true;
+  }
+
+  return false;
+}
+
+function collectOnlineBookings(queueData, services) {
+  const bookings = [];
+  Object.entries(queueData || {}).forEach(([serviceId, serviceQueue]) => {
+    const service = services?.[serviceId] || {};
+    Object.entries(serviceQueue || {}).forEach(([tokenId, token]) => {
+      if (!isOnlineBookingToken(token)) return;
+
+      const scheduledMs = parseDateTimeMs(token.scheduledFor) || parseDateTimeMs(token.bookingSlotEtaMs);
+      bookings.push({
+        tokenId,
+        serviceId,
+        serviceName: token?.serviceName || service?.name || serviceId,
+        tokenNumber: token?.tokenNumber || tokenId,
+        customerName: token?.customerName || '',
+        customerEmail: token?.customerEmail || '',
+        customerUid: token?.customerUid || '',
+        status: String(token?.status || 'waiting').toLowerCase(),
+        scheduledMs,
+        scheduledFor: token?.scheduledFor || null,
+        slotLabel: token?.bookingSlotKey || '',
+        livePosition: token?.livePosition || token?.bookingSlotPosition || null,
+        reminderEmailSentAt: token?.reminderEmailSentAt || null,
+        reminderEmailStatus: token?.reminderEmailStatus || '',
+        reminderEmailLastAttemptAt: token?.reminderEmailLastAttemptAt || null,
+        reminderEmailError: token?.reminderEmailError || ''
+      });
+    });
+  });
+
+  bookings.sort((left, right) => {
+    const leftTime = left.scheduledMs || Number.MAX_SAFE_INTEGER;
+    const rightTime = right.scheduledMs || Number.MAX_SAFE_INTEGER;
+    if (leftTime !== rightTime) return leftTime - rightTime;
+    return String(left.tokenNumber).localeCompare(String(right.tokenNumber));
+  });
+
+  return bookings;
+}
+
+function getBookingReminderConfig() {
+  return {
+    enabled: !!kioskCustomerDetailsSettings.bookingReminderEnabled,
+    leadMinutes: Math.max(1, Number(kioskCustomerDetailsSettings.bookingReminderLeadMinutes || 30) || 30),
+    publicKey: String(kioskCustomerDetailsSettings.bookingReminderEmailjsPublicKey || '').trim(),
+    serviceId: String(kioskCustomerDetailsSettings.bookingReminderEmailjsServiceId || '').trim(),
+    templateId: String(kioskCustomerDetailsSettings.bookingReminderEmailjsTemplateId || '').trim()
+  };
+}
+
+function hasCompleteEmailJsConfig(config) {
+  if (!config) return false;
+  return !!(config.publicKey && config.serviceId && config.templateId);
+}
+
+function getReminderStatusBadge(booking) {
+  if (booking.reminderEmailSentAt) {
+    return '<span class="qm-reminder-state sent">Sent</span>';
+  }
+  if (String(booking.reminderEmailStatus || '').toLowerCase() === 'failed') {
+    return '<span class="qm-reminder-state failed">Failed</span>';
+  }
+  return '<span class="qm-reminder-state pending">Pending</span>';
+}
+
+function getBookingStatusBadge(status) {
+  const normalized = String(status || 'waiting').toLowerCase();
+  const safe = ['scheduled', 'waiting', 'serving', 'done'].includes(normalized) ? normalized : 'waiting';
+  return `<span class="qm-booking-status-badge qm-booking-status-${safe}">${safe}</span>`;
+}
+
+function getOnlineBookingByTokenId(tokenId) {
+  const bookings = collectOnlineBookings(currentQueueData, currentServices);
+  return bookings.find((booking) => booking.tokenId === tokenId) || null;
+}
+
+async function updateBookingReminderFields(booking, fields) {
+  if (!booking || !booking.serviceId || !booking.tokenId) return;
+  const updates = {};
+  const queueBasePath = `users/${currentUserUID}/queue/${booking.serviceId}/${booking.tokenId}`;
+  Object.entries(fields || {}).forEach(([key, value]) => {
+    updates[`${queueBasePath}/${key}`] = value;
+  });
+
+  const customerUid = String(booking.customerUid || '').trim();
+  if (customerUid) {
+    const customerBasePath = `appuserTokens/${customerUid}/${currentUserUID}/${booking.tokenId}`;
+    Object.entries(fields || {}).forEach(([key, value]) => {
+      updates[`${customerBasePath}/${key}`] = value;
+    });
+  }
+
+  if (Object.keys(updates).length > 0) {
+    await db.ref().update(updates);
+  }
+}
+
+async function sendReminderThroughEmailJs(booking) {
+  const config = getBookingReminderConfig();
+  if (!config.publicKey || !config.serviceId || !config.templateId) {
+    throw new Error('Reminder email requires EmailJS keys in Customize.');
+  }
+
+  const recipient = String(booking.customerEmail || '').trim();
+  if (!recipient || !recipient.includes('@')) {
+    throw new Error('Booking has no valid customer email.');
+  }
+
+  const scheduleLabel = formatDateTimeValue(booking.scheduledFor || booking.scheduledMs);
+  const response = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      service_id: config.serviceId,
+      template_id: config.templateId,
+      user_id: config.publicKey,
+      template_params: {
+        to_email: recipient,
+        to_name: booking.customerName || 'Customer',
+        organization_name: currentOrganizationProfile?.profile?.name || currentOrganizationProfile?.name || currentUserUID,
+        token_number: booking.tokenNumber,
+        service_name: booking.serviceName,
+        scheduled_time: scheduleLabel,
+        slot_label: booking.slotLabel || 'N/A',
+        live_position: booking.livePosition || 'N/A'
+      }
+    })
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Email send failed (${response.status}): ${errorText || 'Unknown error'}`);
+  }
+}
+
+async function sendBookingReminderNow(tokenId) {
+  const booking = getOnlineBookingByTokenId(tokenId);
+  if (!booking) {
+    showMessage('Booking not found. Try refresh.', 'error');
+    return;
+  }
+
+  try {
+    await sendReminderThroughEmailJs(booking);
+    await updateBookingReminderFields(booking, {
+      reminderEmailSentAt: firebase.database.ServerValue.TIMESTAMP,
+      reminderEmailStatus: 'sent',
+      reminderEmailLastAttemptAt: firebase.database.ServerValue.TIMESTAMP,
+      reminderEmailError: null,
+      updatedAt: firebase.database.ServerValue.TIMESTAMP
+    });
+    showMessage(`Reminder email sent for ${booking.tokenNumber}.`, 'success');
+  } catch (err) {
+    await updateBookingReminderFields(booking, {
+      reminderEmailStatus: 'failed',
+      reminderEmailLastAttemptAt: firebase.database.ServerValue.TIMESTAMP,
+      reminderEmailError: String(err?.message || 'Failed to send reminder').slice(0, 250),
+      updatedAt: firebase.database.ServerValue.TIMESTAMP
+    });
+    showMessage('Reminder email failed: ' + err.message, 'error');
+  }
+}
+
+window.sendBookingReminderNow = sendBookingReminderNow;
+
+function renderOnlineBookings(queueData, services) {
+  const summaryEl = $('#online-bookings-summary');
+  const listEl = $('#online-bookings-list');
+  if (!summaryEl || !listEl) return;
+
+  const bookings = collectOnlineBookings(queueData, services);
+  const scheduledBookings = bookings.filter((booking) => booking.status === 'scheduled');
+  const sentReminders = bookings.filter((booking) => booking.reminderEmailSentAt).length;
+  const config = getBookingReminderConfig();
+  const hasKeys = hasCompleteEmailJsConfig(config);
+  const setupWarning = config.enabled && !hasKeys
+    ? ' Email reminders are enabled, but EmailJS keys are missing in Customize.'
+    : '';
+
+  summaryEl.textContent = `${bookings.length} online booking(s), ${scheduledBookings.length} scheduled, ${sentReminders} reminder email(s) sent. Auto-reminder: ${config.enabled ? `ON (${config.leadMinutes} min before)` : 'OFF'}.${setupWarning}`;
+  summaryEl.classList.toggle('warning', !!setupWarning);
+
+  if (!bookings.length) {
+    listEl.innerHTML = '<p class="muted small">No online bookings found yet.</p>';
+    return;
+  }
+
+  let html = '<div class="qm-online-bookings-table-wrap"><table class="qm-online-bookings-table"><thead><tr>' +
+    '<th>Token</th><th>Customer</th><th>Service</th><th>Scheduled Time</th><th>Status</th><th>Reminder</th><th>Action</th>' +
+    '</tr></thead><tbody>';
+
+  bookings.forEach((booking) => {
+    const customerLabel = booking.customerName || booking.customerEmail || booking.customerUid || 'Unknown customer';
+    const reminderBadge = getReminderStatusBadge(booking);
+    const reminderMeta = booking.reminderEmailSentAt
+      ? ` at ${escapeHtml(formatDate(booking.reminderEmailSentAt))}`
+      : (booking.reminderEmailError ? ` (${escapeHtml(booking.reminderEmailError)})` : '');
+    const disableManualButton = !booking.customerEmail || booking.reminderEmailSentAt || !hasKeys;
+    const sendButtonTitle = !hasKeys
+      ? 'Configure EmailJS keys in Customize first'
+      : (!booking.customerEmail ? 'Customer email is missing' : (booking.reminderEmailSentAt ? 'Reminder already sent' : 'Send reminder now'));
+
+    html += '<tr>' +
+      `<td><strong>${escapeHtml(booking.tokenNumber)}</strong><div class="qm-item-meta">${escapeHtml(booking.slotLabel || '')}</div></td>` +
+      `<td>${escapeHtml(customerLabel)}<div class="qm-item-meta">${escapeHtml(booking.customerEmail || '')}</div></td>` +
+      `<td>${escapeHtml(booking.serviceName)}<div class="qm-item-meta">Position: ${escapeHtml(String(booking.livePosition || '-'))}</div></td>` +
+      `<td>${escapeHtml(formatDateTimeValue(booking.scheduledFor || booking.scheduledMs))}</td>` +
+      `<td>${getBookingStatusBadge(booking.status)}</td>` +
+      `<td>${reminderBadge}<span class="qm-item-meta">${reminderMeta}</span></td>` +
+        `<td><button type="button" class="qm-inline-reminder-btn" title="${escapeHtml(sendButtonTitle)}" onclick="sendBookingReminderNow('${escapeHtml(booking.tokenId)}')" ${disableManualButton ? 'disabled' : ''}>Send Now</button></td>` +
+      '</tr>';
+  });
+
+  html += '</tbody></table></div>';
+  listEl.innerHTML = html;
+}
+
+async function processAutomaticBookingReminders() {
+  if (!currentUserUID || onlineBookingReminderRunning) return;
+
+  const config = getBookingReminderConfig();
+  if (!config.enabled) return;
+  if (!hasCompleteEmailJsConfig(config)) return;
+
+  onlineBookingReminderRunning = true;
+  try {
+    const nowMs = Date.now();
+    const leadMs = config.leadMinutes * 60000;
+    const bookings = collectOnlineBookings(currentQueueData, currentServices)
+      .filter((booking) => booking.status === 'scheduled')
+      .filter((booking) => !booking.reminderEmailSentAt)
+      .filter((booking) => !!booking.customerEmail)
+      .filter((booking) => {
+        const scheduledMs = booking.scheduledMs;
+        if (!scheduledMs) return false;
+        const diff = scheduledMs - nowMs;
+        if (diff < 0 || diff > leadMs) return false;
+        const lastAttemptMs = parseDateTimeMs(booking.reminderEmailLastAttemptAt);
+        if (!lastAttemptMs) return true;
+        return (nowMs - lastAttemptMs) >= 10 * 60000;
+      });
+
+    for (const booking of bookings) {
+      try {
+        await sendReminderThroughEmailJs(booking);
+        await updateBookingReminderFields(booking, {
+          reminderEmailSentAt: firebase.database.ServerValue.TIMESTAMP,
+          reminderEmailStatus: 'sent',
+          reminderEmailLastAttemptAt: firebase.database.ServerValue.TIMESTAMP,
+          reminderEmailError: null,
+          updatedAt: firebase.database.ServerValue.TIMESTAMP
+        });
+      } catch (err) {
+        await updateBookingReminderFields(booking, {
+          reminderEmailStatus: 'failed',
+          reminderEmailLastAttemptAt: firebase.database.ServerValue.TIMESTAMP,
+          reminderEmailError: String(err?.message || 'Failed to send reminder').slice(0, 250),
+          updatedAt: firebase.database.ServerValue.TIMESTAMP
+        });
+      }
+    }
+  } finally {
+    onlineBookingReminderRunning = false;
+  }
+}
+
+function startOnlineBookingReminderWorker() {
+  if (onlineBookingReminderIntervalId) {
+    clearInterval(onlineBookingReminderIntervalId);
+    onlineBookingReminderIntervalId = null;
+  }
+
+  onlineBookingReminderIntervalId = window.setInterval(() => {
+    processAutomaticBookingReminders().catch((err) => {
+      console.log('Auto reminder run failed', err);
+    });
+  }, 60000);
+
+  processAutomaticBookingReminders().catch((err) => {
+    console.log('Initial auto reminder run failed', err);
+  });
+}
+
 // ============================================================
 // EVENT HANDLERS
 // ============================================================
@@ -1035,6 +1471,14 @@ function attachEventListeners() {
     });
   }
 
+  const refreshOnlineBookingsBtn = $('#refresh-online-bookings');
+  if (refreshOnlineBookingsBtn) {
+    refreshOnlineBookingsBtn.addEventListener('click', () => {
+      renderOnlineBookings(currentQueueData, currentServices);
+      showMessage('Online bookings refreshed.', 'success');
+    });
+  }
+
   const reloadScheduledServicesBtn = $('#reload-scheduled-services');
   if (reloadScheduledServicesBtn) {
     reloadScheduledServicesBtn.addEventListener('click', () => {
@@ -1055,15 +1499,24 @@ function attachEventListeners() {
         const rows = document.querySelectorAll('.qm-schedule-item');
         for (const row of rows) {
           const serviceId = row.dataset.id;
+          const onlineBookingEnabled = !!row.querySelector('.online-booking-enabled')?.checked;
           const enabled = !!row.querySelector('.scheduled-service-enabled')?.checked;
           const open = row.querySelector('.scheduled-service-open')?.value || '';
           const close = row.querySelector('.scheduled-service-close')?.value || '';
           const days = Array.from(row.querySelectorAll('.scheduled-service-day:checked')).map((input) => input.value);
+          const slotMinutes = Number(row.querySelector('.scheduled-service-slot-minutes')?.value || 0) || 0;
           const currentService = currentServices[serviceId] || {};
+          const serviceMinutes = Number(currentService.estimatedTime || currentService.serviceEstimatedTime || 0) || 0;
+          const slotCapacity = serviceMinutes > 0 && slotMinutes > 0
+            ? Math.max(1, Math.floor(slotMinutes / serviceMinutes))
+            : 1;
           const mergedService = {
             ...currentService,
+            onlineBookingEnabled,
             scheduledServiceEnabled: enabled,
-            schedule: enabled ? { days, open, close } : null,
+            schedule: enabled ? { days, open, close, slotMinutes, capacity: slotCapacity } : null,
+            bookingSlotMinutes: enabled ? slotMinutes : 0,
+            bookingSlotCapacity: enabled ? slotCapacity : 1,
             updatedAt: firebase.database.ServerValue.TIMESTAMP
           };
 
@@ -1149,14 +1602,24 @@ function attachEventListeners() {
 
   const basicModeInput = $('#collect-basic-enabled');
   if(basicModeInput) {
-    basicModeInput.addEventListener('change', () => {
+    basicModeInput.addEventListener('change', async () => {
       syncCustomizeControlsWithBasicMode();
-      showMessage(
-        basicModeInput.checked
-          ? 'Basic mode is on.'
-          : 'Basic mode is off.',
-        'info'
-      );
+
+      const saveBtn = $('#save-customer-detail-settings');
+      if (!saveBtn) {
+        showMessage('Basic mode changed, but save button was not found.', 'error');
+        return;
+      }
+
+      // Persist immediately so the setting is always written to DB when toggled.
+      saveBtn.click();
+    });
+  }
+
+  const bookingReminderEnabledInput = $('#booking-reminder-enabled');
+  if (bookingReminderEnabledInput) {
+    bookingReminderEnabledInput.addEventListener('change', () => {
+      syncCustomizeControlsWithBasicMode();
     });
   }
 
@@ -1170,6 +1633,13 @@ function attachEventListeners() {
       const recallEnabled = basicModeEnabled ? false : !!$('#collect-recall-enabled')?.checked;
       const serviceCategoriesEnabled = !!$('#service-categories-enabled')?.checked;
       const scheduledServicesEnabled = basicModeEnabled ? false : !!$('#scheduled-services-enabled')?.checked;
+      const onlineBookingSlotsEnabled = basicModeEnabled ? false : !!$('#online-booking-slots-enabled')?.checked;
+      const onlineBookingSlotDurationMinutes = Math.max(5, Number($('#online-booking-slot-duration-minutes')?.value || 30) || 30);
+      const bookingReminderEnabled = !!$('#booking-reminder-enabled')?.checked;
+      const bookingReminderLeadMinutes = Math.max(1, Number($('#booking-reminder-lead-minutes')?.value || 30) || 30);
+      const bookingReminderEmailjsPublicKey = String($('#booking-reminder-emailjs-public-key')?.value || '').trim();
+      const bookingReminderEmailjsServiceId = String($('#booking-reminder-emailjs-service-id')?.value || '').trim();
+      const bookingReminderEmailjsTemplateId = String($('#booking-reminder-emailjs-template-id')?.value || '').trim();
       const mobileAppBlocked = basicModeEnabled ? false : !!$('#block-mobile-app-enabled')?.checked;
       const allowOnlineBooking = !!$('#allow-online-booking-enabled')?.checked;
       const tokenResetMinutes = Number($('#token-sequence-reset-minutes')?.value || 0);
@@ -1183,6 +1653,13 @@ function attachEventListeners() {
           recallEnabled,
           serviceCategoriesEnabled,
           scheduledServicesEnabled,
+          onlineBookingSlotsEnabled,
+          onlineBookingSlotDurationMinutes,
+          bookingReminderEnabled,
+          bookingReminderLeadMinutes,
+          bookingReminderEmailjsPublicKey,
+          bookingReminderEmailjsServiceId,
+          bookingReminderEmailjsTemplateId,
           basicModeEnabled,
           mobileAppBlocked,
           allowOnlineBooking,
@@ -1290,6 +1767,20 @@ function renderCustomizeSettings() {
   if(categoriesInput) categoriesInput.checked = !!kioskCustomerDetailsSettings.serviceCategoriesEnabled;
   const scheduledServicesInput = $('#scheduled-services-enabled');
   if(scheduledServicesInput) scheduledServicesInput.checked = !!kioskCustomerDetailsSettings.scheduledServicesEnabled;
+  const bookingSlotsInput = $('#online-booking-slots-enabled');
+  if (bookingSlotsInput) bookingSlotsInput.checked = !!kioskCustomerDetailsSettings.onlineBookingSlotsEnabled;
+  const bookingSlotDurationInput = $('#online-booking-slot-duration-minutes');
+  if (bookingSlotDurationInput) bookingSlotDurationInput.value = kioskCustomerDetailsSettings.onlineBookingSlotDurationMinutes || '';
+  const bookingReminderEnabledInput = $('#booking-reminder-enabled');
+  if (bookingReminderEnabledInput) bookingReminderEnabledInput.checked = !!kioskCustomerDetailsSettings.bookingReminderEnabled;
+  const bookingReminderLeadInput = $('#booking-reminder-lead-minutes');
+  if (bookingReminderLeadInput) bookingReminderLeadInput.value = kioskCustomerDetailsSettings.bookingReminderLeadMinutes || 30;
+  const reminderPublicKeyInput = $('#booking-reminder-emailjs-public-key');
+  if (reminderPublicKeyInput) reminderPublicKeyInput.value = kioskCustomerDetailsSettings.bookingReminderEmailjsPublicKey || '';
+  const reminderServiceIdInput = $('#booking-reminder-emailjs-service-id');
+  if (reminderServiceIdInput) reminderServiceIdInput.value = kioskCustomerDetailsSettings.bookingReminderEmailjsServiceId || '';
+  const reminderTemplateIdInput = $('#booking-reminder-emailjs-template-id');
+  if (reminderTemplateIdInput) reminderTemplateIdInput.value = kioskCustomerDetailsSettings.bookingReminderEmailjsTemplateId || '';
   const basicModeInput = $('#collect-basic-enabled');
   if(basicModeInput) basicModeInput.checked = !!kioskCustomerDetailsSettings.basicModeEnabled;
   const mobileAppBlockedInput = $('#block-mobile-app-enabled');
@@ -1320,6 +1811,7 @@ function renderCustomizeSettings() {
 
   toggleScheduledServicesTabVisibility();
   renderScheduledServices(currentServices);
+  renderOnlineBookings(currentQueueData, currentServices);
 }
 
 window.editCounter = function(id) {
@@ -1733,6 +2225,7 @@ async function initializeApp(profile = currentOrganizationProfile) {
     renderScheduledServices(currentServices);
     renderAssignments(currentAssignments, currentCounters, currentServices);
     renderCustomizeSettings();
+    renderOnlineBookings(currentQueueData, currentServices);
 
     // Render counter cards for assignments
     renderCounterCards(currentCounters, currentServices);
@@ -1749,6 +2242,7 @@ async function initializeApp(profile = currentOrganizationProfile) {
       renderServices(data);
       renderScheduledServices(data);
       renderQueueStatus(currentQueueData, currentServices);
+      renderOnlineBookings(currentQueueData, currentServices);
       syncPublicOrganizationMeta().catch(err => console.log('Public meta sync failed', err));
     });
 
@@ -1761,10 +2255,12 @@ async function initializeApp(profile = currentOrganizationProfile) {
     queueDB.listenAll(data => {
       currentQueueData = data;
       renderQueueStatus(currentQueueData, currentServices);
+      renderOnlineBookings(currentQueueData, currentServices);
     });
 
     initTabs();
     attachEventListeners();
+    startOnlineBookingReminderWorker();
     // Load Open Hours UI
     await loadInitialOpenHours();
     await syncPublicOrganizationMeta(profile);

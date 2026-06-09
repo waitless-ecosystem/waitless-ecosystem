@@ -42,13 +42,26 @@
         <div>
           <p class="eyebrow">Step 2</p>
           <h2 id="booking-selected-org-title">Generate a token</h2>
-          <p id="booking-selected-org-subtitle" class="lead" style="color:#64748b;">Choose a service to continue.</p>
+          <p id="booking-selected-org-subtitle" class="lead" style="color:#64748b;">Choose booking date first, then select a service and time slot.</p>
         </div>
         <button id="booking-back-btn" class="secondary" type="button">Back to organizations</button>
       </div>
       <div class="card-copy">
-        <p class="lead" style="color:#64748b;">This booking uses the online token prefix with <strong>OB</strong> appended after the organization prefix.</p>
+        <p class="lead" style="color:#64748b;">This booking uses the online token prefix with <strong>OB</strong> appended after the organization prefix. Services that use scheduled booking will show only valid slots, and full slots will be removed automatically.</p>
       </div>
+      <section id="booking-date-panel" class="booking-date-panel">
+        <div>
+          <p class="eyebrow">Step 3</p>
+          <h3>Select booking date</h3>
+          <p class="lead" style="color:#64748b;">Pick the date first. Service selection opens after a date is chosen.</p>
+        </div>
+        <div class="booking-date-row">
+          <label for="booking-date-input">Booking date</label>
+          <input id="booking-date-input" type="date" />
+        </div>
+        <div id="booking-date-status" class="booking-date-status">Select a date to continue.</div>
+      </section>
+      <section id="booking-slot-panel" class="booking-slot-panel hidden"></section>
       <div id="booking-categories-panel" class="service-grid hidden"></div>
       <div id="booking-services-grid" class="service-grid"></div>
       <div id="booking-result" class="booking-result empty">Select a service to create a token.</div>
@@ -60,7 +73,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-  <script src="../js/config/firebase-config.js"></script>
+  <script src="js/config/firebase-config.js"></script>
   <script src="js/token-factory.js"></script>
   <script src="js/online-booking.js"></script>
 </body>

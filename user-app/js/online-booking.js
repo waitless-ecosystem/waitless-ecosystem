@@ -11,6 +11,9 @@ const state = {
   organizations: [],
   selectedOrg: null,
   selectedServices: [],
+  selectedService: null,
+  selectedSlot: null,
+  selectedBookingDate: '',
   selectedServiceCategory: '',
   assignments: {},
   counters: {}
@@ -129,6 +132,239 @@ function formatEtaLabel(minutes) {
   });
 }
 
+function formatTimeLabel(value) {
+  const numericValue = Number(value || 0);
+  if (!Number.isFinite(numericValue) || numericValue <= 0) {
+    return 'Unknown time';
+  }
+
+  const date = new Date(numericValue);
+  if (Number.isNaN(date.getTime())) {
+    return 'Unknown time';
+  }
+
+  return date.toLocaleString([], {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit'
+  });
+}
+
+function getOnlineBookingSlotSettings() {
+  const meta = state.selectedOrg?.meta || {};
+  return {
+    enabled: meta.onlineBookingSlotsEnabled !== undefined ? !!meta.onlineBookingSlotsEnabled : true,
+    slotMinutes: Math.max(5, Number(meta.onlineBookingSlotDurationMinutes || 30) || 30)
+  };
+}
+
+function formatSlotSummary(slot) {
+  if (!slot) return 'Select a slot to continue.';
+  const etaLabel = new Date(slot.etaMs).toLocaleString();
+  return `${slot.label} | Live position: #${slot.position} in this slot | ETA: ${etaLabel}`;
+}
+
+function getTodayDateInputValue() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function getSelectedBookingDateTime() {
+  const raw = String(state.selectedBookingDate || '').trim();
+  if (!raw) return null;
+
+  const [yearText, monthText, dayText] = raw.split('-');
+  const year = Number(yearText);
+  const month = Number(monthText);
+  const day = Number(dayText);
+  if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) {
+    return null;
+  }
+
+  const date = new Date(year, month - 1, day, 0, 0, 0, 0);
+  if (Number.isNaN(date.getTime())) return null;
+
+  const now = new Date();
+  const isToday = date.getFullYear() === now.getFullYear()
+    && date.getMonth() === now.getMonth()
+    && date.getDate() === now.getDate();
+
+  return isToday ? now : date;
+}
+
+function renderBookingDatePanel() {
+  const dateInput = $('#booking-date-input');
+  const dateStatus = $('#booking-date-status');
+  if (!dateInput || !dateStatus) return;
+
+  const minDate = getTodayDateInputValue();
+  dateInput.min = minDate;
+  dateInput.value = state.selectedBookingDate || '';
+
+  if (!state.selectedBookingDate) {
+    dateStatus.textContent = 'Select a date to continue.';
+  } else {
+    const selected = getSelectedBookingDateTime();
+    dateStatus.textContent = selected
+      ? `Selected date: ${new Date(selected).toLocaleDateString()}`
+      : 'Select a valid date to continue.';
+  }
+
+  if (!dateInput.dataset.bound) {
+    dateInput.dataset.bound = 'true';
+    dateInput.addEventListener('change', () => {
+      state.selectedBookingDate = String(dateInput.value || '').trim();
+      state.selectedService = null;
+      state.selectedSlot = null;
+      renderSelectedOrganization();
+    });
+  }
+}
+
+async function loadServiceSlots(service) {
+  const orgId = state.selectedOrg?.uid;
+  if (!orgId || !service) return [];
+  const slotSettings = getOnlineBookingSlotSettings();
+  const bookingDateTime = getSelectedBookingDateTime();
+  if (!bookingDateTime) return [];
+  const [queueSnap, openHoursSnap] = await Promise.all([
+    db.ref(`users/${orgId}/queue/${service.id}`).once('value'),
+    db.ref(`users/${orgId}/settings/openHours`).once('value')
+  ]);
+  const queueData = queueSnap.val() || {};
+  const openHours = openHoursSnap.val() || {};
+  return tokenFactory.buildServiceBookingSlots(service, queueData, bookingDateTime, {
+    defaultSlotMinutes: slotSettings.slotMinutes,
+    forceEnabled: slotSettings.enabled,
+    openHours
+  });
+}
+
+function renderBookingSlotPanel(service, slots) {
+  const panel = $('#booking-slot-panel');
+  if (!panel) return;
+
+  if (!state.selectedService || !service) {
+    panel.innerHTML = '';
+    panel.classList.add('hidden');
+    return;
+  }
+
+  const slotSettings = getOnlineBookingSlotSettings();
+  const slotConfig = tokenFactory.getServiceBookingSlotConfig(service, {
+    defaultSlotMinutes: slotSettings.slotMinutes,
+    forceEnabled: slotSettings.enabled
+  });
+  const selectedSlot = state.selectedSlot
+    ? slots.find((slot) => slot.key === state.selectedSlot.key) || null
+    : null;
+
+  if (!slotSettings.enabled) {
+    panel.innerHTML = `
+      <div class="booking-slot-empty">Online time-slot booking is disabled for this organization.</div>
+    `;
+    panel.classList.remove('hidden');
+    return;
+  }
+
+  if (!slots.length) {
+    panel.innerHTML = `
+      <div class="booking-slot-panel-header">
+        <div>
+          <p class="eyebrow">Step 3</p>
+          <h3>${escapeHtml(service.name || 'Service')}</h3>
+          <p class="lead" style="color:#64748b;">No booking slots are available right now for this service.</p>
+        </div>
+        <button type="button" class="secondary" id="booking-change-service-btn">Change service</button>
+      </div>
+      <div class="booking-slot-empty">This service has no open slots left or its estimated duration is longer than the configured slot length.</div>
+    `;
+    panel.classList.remove('hidden');
+    panel.querySelector('#booking-change-service-btn')?.addEventListener('click', () => {
+      state.selectedService = null;
+      state.selectedSlot = null;
+      renderSelectedOrganization();
+    });
+    return;
+  }
+
+  panel.innerHTML = `
+    <div class="booking-slot-panel-header">
+      <div>
+        <p class="eyebrow">Step 3</p>
+        <h3>${escapeHtml(service.name || 'Service')}</h3>
+        <p class="lead" style="color:#64748b;">Choose an available slot. Full slots and slots that cannot fit this service are hidden.</p>
+      </div>
+      <button type="button" class="secondary" id="booking-change-service-btn">Change service</button>
+    </div>
+    <div class="booking-slot-summary">
+      <div class="summary-line"><span>Slot length</span><strong>${escapeHtml(String(slotSettings.slotMinutes))} min</strong></div>
+      <div class="summary-line"><span>Bookings per slot</span><strong>${escapeHtml(String(slotConfig.slotCapacity))}</strong></div>
+      <div class="summary-line"><span>Service estimate</span><strong>${escapeHtml(String(service.estimatedTime || 0))} min</strong></div>
+    </div>
+    <div id="booking-slot-grid" class="booking-slot-grid"></div>
+    <div class="booking-slot-actions">
+      <button type="button" class="primary" id="booking-confirm-slot-btn" ${selectedSlot ? '' : 'disabled'}>Get Token</button>
+    </div>
+  `;
+
+  panel.classList.remove('hidden');
+  panel.querySelector('#booking-change-service-btn')?.addEventListener('click', () => {
+    state.selectedService = null;
+    state.selectedSlot = null;
+    renderSelectedOrganization();
+  });
+
+  const confirmBtn = panel.querySelector('#booking-confirm-slot-btn');
+  confirmBtn?.addEventListener('click', async () => {
+    if (!state.selectedService || !state.selectedSlot) {
+      updateResult('Choose an available time slot first.', true);
+      return;
+    }
+    await issueToken(state.selectedService, confirmBtn, state.selectedSlot);
+  });
+
+  const grid = panel.querySelector('#booking-slot-grid');
+  if (!grid) return;
+
+  grid.innerHTML = '';
+  slots.forEach((slot) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'booking-slot-card' + (selectedSlot && selectedSlot.key === slot.key ? ' selected' : '');
+    button.innerHTML = `
+      <div class="booking-slot-time">${escapeHtml(slot.label)}</div>
+      <div class="booking-slot-meta">Live position in this slot: #${escapeHtml(String(slot.position))}</div>
+      <div class="booking-slot-meta">ETA: ${escapeHtml(new Date(slot.etaMs).toLocaleString())}</div>
+      <div class="booking-slot-position">${escapeHtml(String(slot.remaining))} slot${slot.remaining === 1 ? '' : 's'} left</div>
+    `;
+    button.addEventListener('click', () => {
+      state.selectedSlot = slot;
+      renderBookingSlotPanel(service, slots);
+    });
+    grid.appendChild(button);
+  });
+}
+
+async function openBookingSlotPicker(service) {
+  state.selectedService = service;
+  state.selectedSlot = null;
+
+  try {
+    const slots = await loadServiceSlots(service);
+    renderBookingSlotPanel(service, slots);
+    $('#booking-slot-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch (err) {
+    console.error('Failed to load booking slots', err);
+    updateResult('Failed to load booking slots: ' + String(err.message || err), true);
+  }
+}
+
 function renderOrgCards() {
   const grid = $('#booking-org-grid');
   const searchValue = normalizeText(state.search);
@@ -196,20 +432,27 @@ function renderSelectedOrganization() {
   const subtitleEl = $('#booking-selected-org-subtitle');
   const categoriesPanel = $('#booking-categories-panel');
   const servicesGrid = $('#booking-services-grid');
+  const slotPanel = $('#booking-slot-panel');
 
-  if (!section || !titleEl || !subtitleEl || !categoriesPanel || !servicesGrid) return;
+  if (!section || !titleEl || !subtitleEl || !categoriesPanel || !servicesGrid || !slotPanel) return;
 
   if (!state.selectedOrg) {
     section.classList.add('hidden');
     categoriesPanel.innerHTML = '';
     servicesGrid.innerHTML = '';
+    slotPanel.innerHTML = '';
+    slotPanel.classList.add('hidden');
     return;
   }
 
+  renderBookingDatePanel();
+
   const org = state.selectedOrg;
   const services = state.selectedServices;
-  const categories = getCategories(services);
+  const bookableServices = services.filter((service) => service.onlineBookingEnabled !== false);
+  const categories = getCategories(bookableServices);
   const categoryMode = !!org.meta?.serviceCategoriesEnabled && categories.length > 1;
+  const slotSettings = getOnlineBookingSlotSettings();
 
   section.classList.remove('hidden');
   titleEl.textContent = org.name || 'Generate a token';
@@ -236,6 +479,8 @@ function renderSelectedOrganization() {
     allOption.textContent = 'All services';
     allOption.addEventListener('click', () => {
       state.selectedServiceCategory = 'all';
+      state.selectedService = null;
+      state.selectedSlot = null;
       renderSelectedOrganization();
     });
     grid.appendChild(allOption);
@@ -247,6 +492,8 @@ function renderSelectedOrganization() {
       categoryCard.innerHTML = `<strong>${escapeHtml(category.label)}</strong><span>${category.count} service${category.count === 1 ? '' : 's'}</span>`;
       categoryCard.addEventListener('click', () => {
         state.selectedServiceCategory = category.value;
+        state.selectedService = null;
+        state.selectedSlot = null;
         renderSelectedOrganization();
       });
       grid.appendChild(categoryCard);
@@ -260,8 +507,16 @@ function renderSelectedOrganization() {
   }
 
   const filteredServices = categoryMode && state.selectedServiceCategory && state.selectedServiceCategory !== 'all'
-    ? services.filter((service) => normalizeCategory(service.category) === state.selectedServiceCategory)
-    : services;
+    ? bookableServices.filter((service) => normalizeCategory(service.category) === state.selectedServiceCategory)
+    : bookableServices;
+
+  if (!state.selectedBookingDate || !getSelectedBookingDateTime()) {
+    categoriesPanel.classList.add('hidden');
+    servicesGrid.innerHTML = '<p class="booking-empty">Select booking date first to view available services.</p>';
+    slotPanel.innerHTML = '';
+    slotPanel.classList.add('hidden');
+    return;
+  }
 
   servicesGrid.innerHTML = '';
   if (filteredServices.length === 0) {
@@ -280,6 +535,8 @@ function renderSelectedOrganization() {
     servicesGrid.appendChild(header);
     header.querySelector('#booking-change-category-btn')?.addEventListener('click', () => {
       state.selectedServiceCategory = '';
+      state.selectedService = null;
+      state.selectedSlot = null;
       renderSelectedOrganization();
     });
   }
@@ -291,13 +548,20 @@ function renderSelectedOrganization() {
       <h4>${escapeHtml(service.name || `Service ${index + 1}`)}</h4>
       <p>${escapeHtml(service.description || 'Please select this service to continue.')}</p>
       <p class="meta">Estimated time: ${escapeHtml(service.estimatedTime ? `${service.estimatedTime} min` : 'N/A')}</p>
+      ${slotSettings.enabled ? `<p class="meta">Time-slot booking available</p>` : ''}
     `;
 
     const button = document.createElement('button');
     button.className = 'primary';
     button.type = 'button';
-    button.textContent = 'Get Token';
-    button.addEventListener('click', () => issueToken(service, button));
+    button.textContent = slotSettings.enabled ? 'Choose slot' : 'Get Token';
+    button.addEventListener('click', async () => {
+      if (slotSettings.enabled) {
+        await openBookingSlotPicker(service);
+        return;
+      }
+      await issueToken(service, button, null);
+    });
     card.appendChild(button);
 
     servicesGrid.appendChild(card);
@@ -328,6 +592,9 @@ async function selectOrganization(orgId) {
     };
     state.selectedServices = services;
     state.selectedServiceCategory = '';
+    state.selectedService = null;
+    state.selectedSlot = null;
+    state.selectedBookingDate = '';
 
     renderSelectedOrganization();
     $('#booking-token-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -337,8 +604,13 @@ async function selectOrganization(orgId) {
   }
 }
 
-async function issueToken(service, buttonEl) {
+async function issueToken(service, buttonEl, selectedSlot = null) {
   if (!state.selectedOrg) return;
+
+  if (!state.selectedBookingDate || !getSelectedBookingDateTime()) {
+    updateResult('Select a booking date before choosing service and slot.', true);
+    return;
+  }
 
   const user = auth.currentUser;
   if (!user) {
@@ -398,6 +670,23 @@ async function issueToken(service, buttonEl) {
     const serviceScheduleMessage = serviceScheduleBlocked
       ? `Selected service is only available ${tokenFactory.formatServiceScheduleLabel(serviceScheduleState.serviceData)}${serviceScheduleNextStart ? `. Next available: ${serviceScheduleNextStart.toLocaleString()}.` : '.'}`
       : '';
+    const slotSettings = getOnlineBookingSlotSettings();
+
+    let slotData = null;
+    if (slotSettings.enabled) {
+      if (!selectedSlot) {
+        updateResult('Choose an available time slot before booking.', true);
+        return;
+      }
+
+      const availableSlots = await loadServiceSlots(service);
+      slotData = availableSlots.find((slot) => slot.key === selectedSlot.key) || null;
+      if (!slotData) {
+        updateResult('That slot is no longer available. Please choose another one.', true);
+        await openBookingSlotPicker(service);
+        return;
+      }
+    }
 
     const tokenData = tokenFactory.createBaseTokenData({
       tokenId,
@@ -412,7 +701,17 @@ async function issueToken(service, buttonEl) {
       customerName,
       customerPhone,
       customerEmail,
-      source: 'mobile-app'
+      source: 'mobile-app',
+      status: 'waiting',
+      bookingSlotKey: slotData?.key || null,
+      bookingSlotStartMs: slotData?.startMs || null,
+      bookingSlotEndMs: slotData?.endMs || null,
+      bookingSlotPosition: slotData?.position || null,
+      bookingSlotCapacity: slotData?.capacity || null,
+      bookingSlotOccupied: slotData?.occupied || null,
+      bookingSlotEtaMs: slotData?.etaMs || null,
+      scheduledFor: slotData ? new Date(slotData.etaMs).toISOString() : null,
+      livePosition: slotData?.position || null
     });
 
     const updates = {};
@@ -423,7 +722,10 @@ async function issueToken(service, buttonEl) {
       kioskId: 'ONLINE_BOOKING',
       kioskName: 'Online Booking',
       assignedCounterId: counterInfo.counterId || null,
-      assignedCounterName: counterInfo.counterName || null
+      assignedCounterName: counterInfo.counterName || null,
+      livePosition: slotData?.position || null,
+      position: slotData?.position || null,
+      status: 'waiting'
     };
 
     updates[`appuserTokens/${customerUid}/${orgId}/${tokenId}`] = {
@@ -434,10 +736,36 @@ async function issueToken(service, buttonEl) {
       kioskId: 'ONLINE_BOOKING',
       kioskName: 'Online Booking',
       assignedCounterId: counterInfo.counterId || null,
-      assignedCounterName: counterInfo.counterName || null
+      assignedCounterName: counterInfo.counterName || null,
+      livePosition: slotData?.position || null,
+      position: slotData?.position || null,
+      status: 'waiting'
     };
 
     await db.ref().update(updates);
+
+    if (slotData) {
+      const slotEta = new Date(slotData.etaMs);
+      const slotUpdates = {
+        status: 'scheduled',
+        scheduledFor: slotEta.toISOString(),
+        bookingSlotKey: slotData.key,
+        bookingSlotStartMs: slotData.startMs,
+        bookingSlotEndMs: slotData.endMs,
+        bookingSlotPosition: slotData.position,
+        bookingSlotCapacity: slotData.capacity,
+        bookingSlotOccupied: slotData.occupied,
+        bookingSlotEtaMs: slotData.etaMs,
+        livePosition: slotData.position,
+        position: slotData.position
+      };
+
+      await db.ref(`users/${orgId}/queue/${service.id}/${tokenId}`).update(slotUpdates);
+      await db.ref(`appuserTokens/${customerUid}/${orgId}/${tokenId}`).update(slotUpdates);
+
+      updateResult(`Token created: ${tokenNumber} | Customer: ${customerName || customerEmail || customerUid || 'Unknown'} | Counter: ${counterInfo.counterName || 'Waiting'} | ETA: ${formatTimeLabel(slotData.etaMs)} | Live Position: #${slotData.position} in this slot`);
+      return;
+    }
 
     if (serviceScheduleBlocked) {
       const deferredUntil = serviceScheduleNextStart ? serviceScheduleNextStart.getTime() : null;
@@ -657,6 +985,9 @@ function bindEvents() {
     state.selectedOrg = null;
     state.selectedServices = [];
     state.selectedServiceCategory = '';
+    state.selectedService = null;
+    state.selectedSlot = null;
+    state.selectedBookingDate = '';
     renderSelectedOrganization();
     updateResult('Select a service to create a token.');
   });

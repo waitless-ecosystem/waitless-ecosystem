@@ -69,6 +69,14 @@ function isOngoingTokenStatus(status) {
   return ['waiting', 'new', 'queued', 'pending', 'serving', 'processing', 'recall', 'called', 'hold'].includes(normalized) || !isPastTokenStatus(normalized);
 }
 
+function getPastTokenStatusLabel(status) {
+  const normalized = normalizeTokenStatus(status);
+  if (['no-show', 'noshow', 'missed', 'expired'].includes(normalized)) {
+    return 'No Show';
+  }
+  return 'Finished';
+}
+
 function formatTokenTimestamp(timestamp) {
   const numericValue = Number(timestamp || 0);
   if (!Number.isFinite(numericValue) || numericValue <= 0) return 'Unknown time';
@@ -266,7 +274,7 @@ function renderTokenItem(token, type = 'ongoing') {
     || /now\s+serving/i.test(String(displayData.livePositionLabel || ''))
   );
   const statusLabel = type === 'past'
-    ? status.replace(/[-_]/g, ' ')
+    ? getPastTokenStatusLabel(status)
     : (isServingNow ? 'Serving' : status.replace(/[-_]/g, ' '));
   const customerName = token?.customerName || 'Walk-in';
   const customerPhone = token?.customerPhone || token?.customerDetails?.phone || '';
@@ -274,12 +282,16 @@ function renderTokenItem(token, type = 'ongoing') {
   const notificationsEnabled = type !== 'past' && isTokenNotificationsEnabled(tokenKey);
 
   if (type === 'past') {
+    const pastStatusClass = statusLabel === 'No Show' ? 'no-show' : 'finished';
     return `
       <div class="token-item token-item-past">
-        <div class="token-item-number">${escapeHtml(displayData.tokenNumber)}</div>
+        <div class="token-item-top">
+          <div class="token-item-number">${escapeHtml(displayData.tokenNumber)}</div>
+          <span class="token-status-pill past ${escapeHtml(pastStatusClass)}">${escapeHtml(statusLabel)}</span>
+        </div>
         <div class="token-item-meta">
           <div><strong>Token:</strong> ${escapeHtml(displayData.tokenNumber)}</div>
-                    <div><strong>Organization:</strong> ${escapeHtml(orgLabel)}</div>
+          <div><strong>Organization:</strong> ${escapeHtml(orgLabel)}</div>
         </div>
       </div>
     `;
