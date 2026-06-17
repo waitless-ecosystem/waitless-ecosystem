@@ -3,26 +3,71 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>EcoSystem Mobile App</title>
+  <title>Appointment Booking</title>
   <link rel="stylesheet" href="css/app.css" />
 </head>
 <body>
   <div class="app-shell">
     <header class="app-hero">
       <div>
-        <p class="eyebrow">Mobile view</p>
-        <h1>EcoSystem Pocket App</h1>
-        <p class="lead">Sign in with your app account, then scan an organization QR to load services, generate tokens, and track queue status.</p>
+        <p class="eyebrow">Appointment booking</p>
+        <h1>Queue Appointments</h1>
+        <p class="lead">Use this page after scanning an organization QR code to generate a token and track your booking.</p>
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
-        <div class="user-panel" id="user-panel" aria-live="polite">
-          <!-- Filled by app with signed-in user name/email -->
+        <div class="user-panel" id="user-panel" aria-live="polite"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
+          <a class="secondary booking-link" href="index.html">QR scan</a>
+          <a class="secondary booking-link" href="online-booking.html">Online booking</a>
         </div>
-        <a class="secondary booking-link" href="online-booking.html">Online booking</a>
-        <a class="secondary booking-link" href="selectpage.html">Home</a>
-        
+        <div class="app-badge">Appointments</div>
       </div>
     </header>
+
+    <section id="token-history-section" class="app-card">
+      <div class="card-header-row">
+        <div>
+          <p class="eyebrow">My tokens</p>
+          <h2>Ongoing and past bookings</h2>
+          <p class="lead">Check the tokens you booked from this app or kiosk.</p>
+        </div>
+        <div class="history-actions">
+          <span id="token-history-summary" class="status-pill">Loading</span>
+          <button id="refresh-token-history-btn" class="secondary" type="button">Refresh</button>
+        </div>
+      </div>
+      <div id="token-notification-panel" class="token-notification-panel" aria-live="polite" aria-label="Token notifications">
+        <div class="section-head notification-head">
+          <h3>Notifications</h3>
+          <p class="lead">Live updates for your tokens appear here.</p>
+        </div>
+        <div id="token-notification-list" class="token-notification-list">
+          <div class="token-list-empty">No updates yet.</div>
+        </div>
+      </div>
+      <div class="history-grid">
+        <article class="history-column">
+          <div class="section-head">
+            <h3>Ongoing tokens</h3>
+            <p class="lead">Waiting, queued, or currently serving.</p>
+          </div>
+          <div id="ongoing-token-list" class="token-list"></div>
+          <div class="ongoing-token-footer">
+            <button id="ongoing-token-toggle-btn" class="secondary hidden" type="button">See more</button>
+          </div>
+        </article>
+        <article class="history-column">
+          <div class="section-head">
+            <h3>Past tokens</h3>
+            <p class="lead">Completed, cancelled, or otherwise finished.</p>
+          </div>
+          <div id="past-token-list" class="token-list"></div>
+          <div class="past-token-footer">
+            <button id="past-token-load-more-btn" class="secondary hidden" type="button">Load more</button>
+          </div>
+        </article>
+      </div>
+    </section>
 
     <div id="message" class="message" role="status" aria-live="polite"></div>
 
@@ -57,30 +102,38 @@
       </form>
     </section>
 
-    <section id="scan-section" class="app-card app-grid-card">
+    <section id="blocked-panel" class="app-card hidden">
       <div class="card-copy">
-        <p class="eyebrow">Scan in</p>
-        <h2>Scan Organization QR</h2>
-        <p class="lead">Point your camera at the QR from Queue Manager to load the correct organization.</p>
-      </div>
-      <div class="scanner-wrap">
-        <div id="qr-reader" class="qr-reader"></div>
-        <div class="scan-actions">
-          <button id="start-scan-btn" class="secondary" type="button">Start scanner</button>
-          <button id="stop-scan-btn" class="secondary" type="button">Stop scanner</button>
-        </div>
+        <p class="eyebrow">Access blocked</p>
+        <h2>This process is not allowed by organization.</h2>
+        <p class="lead">Mobile token generation is currently disabled for this organization.</p>
       </div>
     </section>
 
-    <section class="app-card">
+    <section id="org-panel" class="app-card hidden">
       <div class="card-copy">
-        <p class="eyebrow">Next step</p>
-        <h2>Go to appointment page</h2>
-        <p class="lead">After scanning a QR code, you will be taken to the booking page. You can also open it directly if you already know the organization ID.</p>
+        <p class="eyebrow">Token process</p>
+        <h2>Generate a token</h2>
+        <p class="lead">Select a category first if available, then choose the service you need.</p>
       </div>
-      <div class="scan-actions">
-        <a class="primary" href="appointment.html">Open appointment page</a>
+      <div id="categories-panel" class="service-grid hidden"></div>
+      <div id="services-grid" class="service-grid"></div>
+    </section>
+
+    <section id="tracker-section" class="app-card">
+      <div class="card-copy">
+        <p class="eyebrow">Track any token</p>
+        <h2>Track your booking</h2>
+        <p class="lead">Enter a token number from any organization to see its counter, estimate time, and live position.</p>
       </div>
+      <form id="tracker-form" class="stack-form">
+        <label for="token-number-input">Token number</label>
+        <div class="input-row">
+          <input id="token-number-input" type="text" placeholder="ORG00000001" autocomplete="off" />
+          <button class="primary" type="submit">Track</button>
+        </div>
+      </form>
+      <div id="tracker-result" class="tracker-result empty">No token being tracked yet.</div>
     </section>
   </div>
 
@@ -128,7 +181,6 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-  <script src="https://unpkg.com/html5-qrcode"></script>
   <script src="../js/config/firebase-config.js"></script>
   <script src="js/token-factory.js"></script>
   <script src="js/tracker.js"></script>

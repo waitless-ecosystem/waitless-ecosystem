@@ -17,7 +17,7 @@ function showMessage(message, type = 'info') {
 function getReturnUrl() {
   const currentUrl = new URL(window.location.href);
   const isOnlineBooking = currentUrl.searchParams.get('booking') === 'online';
-  const url = new URL(isOnlineBooking ? 'online-booking.html' : 'index.html', window.location.href);
+  const url = new URL(isOnlineBooking ? 'online-booking.html' : 'selectpage.html', window.location.href);
   const orgId = currentUrl.searchParams.get('orgId');
   if (orgId) {
     url.searchParams.set('orgId', orgId);
