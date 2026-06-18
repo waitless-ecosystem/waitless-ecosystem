@@ -13,6 +13,24 @@ function showMessage(message, type = 'info') {
   el.textContent = message;
   el.className = `message ${type}`;
 }
+function isValidSriLankanPhone(phone) {
+  // Remove spaces, dashes and other non-digits
+  phone = phone.replace(/\D/g, '');
+
+  // Valid Sri Lankan mobile prefixes
+  const validPrefixes = [
+    '070', '071', '072', '074',
+    '075', '076', '077', '078'
+  ];
+
+  // Must be exactly 10 digits
+  if (phone.length !== 10) {
+    return false;
+  }
+
+  const prefix = phone.substring(0, 3);
+  return validPrefixes.includes(prefix);
+}
 
 function getReturnUrl() {
   const currentUrl = new URL(window.location.href);
@@ -120,6 +138,13 @@ signupForm?.addEventListener('submit', async (e) => {
     showMessage('Please enter name, email, phone and password.', 'error');
     return;
   }
+  if (!isValidSriLankanPhone(phone)) {
+    showMessage(
+      'Enter a valid Sri Lankan mobile number (070, 071, 072, 074, 075, 076, 077, 078) with exactly 10 digits.',
+      'error'
+    );
+    return;
+  }
   if (password.length < 6) { showMessage('Password must be at least 6 characters.', 'error'); return; }
   signupBtn.disabled = true;
   signupBtn.textContent = 'Creating...';
@@ -164,6 +189,13 @@ checkBtn?.addEventListener('click', async () => {
       const name = ($('#name-input')?.value || user.displayName || '').trim();
       const email = user.email || ($('#email-input')?.value || '').trim();
       const phone = ($('#phone-input')?.value || '').trim();
+      if (!isValidSriLankanPhone(phone)) {
+        showMessage(
+          'Enter a valid mobile number ',
+          'error'
+        );
+        return;
+      }
       await ensureAppUserExistsAndRedirect(user, { name, email, phone });
     } else {
       showMessage('Email not yet verified. Check your inbox and click the verification link.', 'error');
