@@ -33,6 +33,16 @@ function formatDate(ts){
   catch(_) { return String(ts); }
 }
 
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, ch => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    '\'': '&#39;'
+  }[ch]));
+}
+
 // Wire tab buttons (existing ids used as tabs)
 ['#show-login','#show-register','#show-reset'].forEach(id=>{
   const btn = document.querySelector(id);
@@ -122,16 +132,36 @@ if(refreshBtn){
 $('#register-form').addEventListener('submit', async e=>{
   e.preventDefault();
   const email = $('#register-email').value.trim();
+  const organizationName = $('#register-organization').value.trim();
+  const contactNumber = $('#register-contact').value.trim();
+  const address = $('#register-address').value.trim();
   const password = $('#register-password').value;
+  if (!organizationName || !contactNumber || !address) {
+    showMessage('Please fill in organization name, contact number, and address.', 'error');
+    return;
+  }
   try{
     const userCred = await auth.createUserWithEmailAndPassword(email, password);
     const uid = userCred.user.uid;
     const salt = generateSalt();
+    const now = firebase.database.ServerValue.TIMESTAMP;
+    const profileData = {
+      email,
+      name: organizationName,
+      contactNumber,
+      address,
+      updatedAt: now
+    };
     const updates = {};
     updates['users/' + uid + '/email'] = email;
     updates['users/' + uid + '/role'] = 'pending';
-    updates['users/' + uid + '/createdAt'] = firebase.database.ServerValue.TIMESTAMP;
+    updates['users/' + uid + '/createdAt'] = now;
     updates['users/' + uid + '/cryptoSalt'] = salt;
+    updates['users/' + uid + '/name'] = organizationName;
+    updates['users/' + uid + '/displayName'] = organizationName;
+    updates['users/' + uid + '/organizationName'] = organizationName;
+    updates['users/' + uid + '/updatedAt'] = now;
+    updates['users/' + uid + '/profile'] = profileData;
     await db.ref().update(updates);
     showMessage('Registration successful. Awaiting approval (role: pending).', 'success');
     showSection('#profile-section');
@@ -185,12 +215,23 @@ $('#signout').addEventListener('click', async ()=>{
 async function renderProfile(user){
   const info = $('#profile-info');
   if(!user) { info.innerHTML='Not signed in'; return; }
-  info.innerHTML = `<p><strong>UID:</strong> ${user.uid}</p><p><strong>Email:</strong> ${user.email}</p>`;
 
   const adminPanel = $('#admin-panel');
   if(!adminPanel) return;
   const snap = await db.ref('users/' + user.uid).once('value');
-  const superAdmin = await isSuperAdmin(user, snap.val() || {});
+  const profile = snap.val() || {};
+  const profileData = profile.profile || {};
+  const superAdmin = await isSuperAdmin(user, profile);
+
+  info.innerHTML = `
+    <p><strong>Organization:</strong> ${escapeHtml(profileData.name || profile.name || profile.organizationName || user.email || 'N/A')}</p>
+    <p><strong>Email:</strong> ${escapeHtml(profile.email || user.email || 'N/A')}</p>
+    <p><strong>Contact Number:</strong> ${escapeHtml(profileData.contactNumber || 'N/A')}</p>
+    <p><strong>Address:</strong> ${escapeHtml(profileData.address || 'N/A')}</p>
+    <p><strong>UID:</strong> ${escapeHtml(user.uid)}</p>
+    <p><strong>Role:</strong> ${escapeHtml(profile.role || 'pending')}</p>
+    <p><strong>Created At:</strong> ${escapeHtml(formatDate(profile.createdAt || user.metadata.creationTime))}</p>
+  `;
   if(superAdmin){
     adminPanel.classList.remove('hidden');
     await loadPendingUsers();

@@ -24,10 +24,38 @@ let activeListeners = [];
 let chosenOrg = null;
 let chosenCounter = null;
 let renderRunId = 0;
+let kioskCustomerSettings = { enabled: false, requireName: false, requirePhone: false, recallEnabled: false };
+let tokenFilterQuery = '';
 
-const ACTIVE_TOKEN_STATUSES = new Set(['waiting', 'arrived']);
+const ACTIVE_TOKEN_STATUSES = new Set(['waiting', 'arrived', 'scheduled']);
+
+function parseTimestampMs(value) {
+  if (value instanceof Date) {
+    const time = value.getTime();
+    return Number.isFinite(time) && time > 0 ? time : null;
+  }
+
+  if (typeof value === 'string') {
+    const parsed = Date.parse(value);
+    if (Number.isFinite(parsed) && parsed > 0) {
+      return parsed;
+    }
+  }
+
+  const numeric = Number(value || 0);
+  return Number.isFinite(numeric) && numeric > 0 ? numeric : null;
+}
 
 function setStatus(txt){ if(statusEl) statusEl.textContent = txt; }
+
+function escapeHtml(text){
+  return String(text ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 
 function setAuthUserLabel(user, profile){
   if(!authUserEl) return;
@@ -71,7 +99,9 @@ async function loadOrgs(){
   try{
     const snap = await db.ref('users').once('value');
     const all = snap.val() || {};
-    orgs = Object.fromEntries(Object.entries(all).filter(([uid, p]) => (p && p.role === 'approved')));
+    orgs = Object.fromEntries(Object.entries(all).filter(([uid, p]) => {
+      return p && p.role === 'approved' && !p?.settings?.disabled;
+    }));
 
     orgSelect.innerHTML = '<option value="">-- Select organization --</option>';
     Object.entries(orgs).forEach(([uid, profile])=>{
@@ -106,9 +136,27 @@ async function loadCounters(orgId){
     });
     counterSelect.disabled = false;
     setStatus('Counters loaded');
+    // load kiosk customer detail settings for this organization
+    await loadKioskCustomerSettings(orgId);
   }catch(err){
     console.error(err);
     setStatus('Failed to load counters: ' + err.message);
+  }
+}
+
+async function loadKioskCustomerSettings(orgId){
+  try{
+    const snap = await db.ref(`users/${orgId}/settings/kioskCustomerDetails`).once('value');
+    const raw = snap.val() || {};
+    kioskCustomerSettings = {
+      enabled: !!raw.enabled,
+      requireName: !!raw.requireName,
+      requirePhone: !!raw.requirePhone,
+      recallEnabled: !!raw.recallEnabled
+    };
+  }catch(err){
+    console.error('Failed to load kiosk customer settings', err);
+    kioskCustomerSettings = { enabled:false, requireName:false, requirePhone:false };
   }
 }
 
@@ -133,6 +181,7 @@ async function renderTokens(orgId, counterId){
   const currentRunId = ++renderRunId;
   tokensEl.innerHTML = '';
   try{
+    const nowMs = Date.now();
     if(currentRunId !== renderRunId) return;
     const queueSnap = await db.ref(`users/${orgId}/queue`).once('value');
     const queue = queueSnap.val() || {};
@@ -142,11 +191,9 @@ async function renderTokens(orgId, counterId){
     Object.entries(queue).forEach(([serviceId, serviceTokens])=>{
       Object.entries(serviceTokens || {}).forEach(([tokenId, t])=>{
         const assigned = t.assignedCounterId === counterId;
-        const existing = tokensById.get(tokenId);
-        const candidate = { serviceId, tokenId, ...t, assigned };
-        if(!existing || (candidate.timestamp || 0) < (existing.timestamp || 0)){
-          tokensById.set(tokenId, candidate);
-        }
+        const stageIndex = Number(t.currentServiceIndex ?? t.serviceStageIndex ?? 0);
+        const tokenKey = `${tokenId}:${serviceId}:${stageIndex}`;
+        tokensById.set(tokenKey, { serviceId, tokenId, ...t, assigned, tokenKey, stageIndex });
       });
     });
 
@@ -154,7 +201,18 @@ async function renderTokens(orgId, counterId){
     const assignment = assignSnap.val() || { services: [] };
     const serviceIds = Array.isArray(assignment.services) ? assignment.services : Object.values(assignment.services || {});
     const visible = Array.from(tokensById.values())
-      .filter(t => (t.assigned || serviceIds.includes(t.serviceId)))
+      .filter(t => {
+        const scheduledAt = parseTimestampMs(t.scheduledFor || t.deferredUntil);
+        if (scheduledAt !== null && scheduledAt > nowMs) {
+          return false;
+        }
+
+        if (t.assignedCounterId) {
+          return String(t.assignedCounterId).trim() === String(counterId).trim();
+        }
+
+        return serviceIds.includes(t.serviceId);
+      })
       .filter(t => ACTIVE_TOKEN_STATUSES.has((t.status || 'waiting').toLowerCase()));
 
     if(currentRunId !== renderRunId) return;
@@ -162,64 +220,347 @@ async function renderTokens(orgId, counterId){
     visible.sort((a,b)=> (a.timestamp||0) - (b.timestamp||0));
     const activeToken = visible[0] || null;
 
-    if(!activeToken){
-      tokensEl.innerHTML = '<div class="token-empty">No ongoing token for this counter.</div>';
+    // Panels will be rendered as siblings inside the workspace grid so they can appear side-by-side on wide screens.
+    const workspaceGrid = document.querySelector('.workspace-grid');
+
+    const tokenPanel = document.createElement('section');
+    tokenPanel.className = 'portrait-panel';
+    tokenPanel.appendChild(createPortraitHeader(
+      '1. Token Display',
+      activeToken ? 'Current live token for this counter' : 'No live token is active right now',
+      activeToken ? 'Active' : 'Idle'
+    ));
+
+    const tokenBody = document.createElement('div');
+    tokenBody.className = 'portrait-panel-body';
+
+    if(activeToken){
+      const item = document.createElement('div');
+      item.className = 'token';
+      const normalizedStatus = String(activeToken.status || 'waiting').toLowerCase();
+      const statusText = normalizedStatus === 'scheduled'
+        ? 'Status: Scheduled'
+        : normalizedStatus === 'arrived'
+          ? 'Status: Arrived'
+          : normalizedStatus === 'waiting'
+            ? 'Status: Waiting'
+            : `Status: ${normalizedStatus || 'Waiting'}`;
+
+      const stage = document.createElement('div');
+      stage.className = 'token-stage';
+
+      const numberEl = document.createElement('div');
+      numberEl.className = 'token-number';
+      numberEl.textContent = String(activeToken.tokenNumber || activeToken.id || '—');
+
+      const metaEl = document.createElement('div');
+      metaEl.className = 'token-meta';
+
+      const servicePill = document.createElement('span');
+      servicePill.className = 'meta-pill';
+      servicePill.innerHTML = `<strong>${escapeHtml(activeToken.serviceName || activeToken.serviceId)}</strong>`;
+      metaEl.appendChild(servicePill);
+
+      const kioskPill = document.createElement('span');
+      kioskPill.className = 'meta-pill';
+      kioskPill.textContent = activeToken.kioskName || 'Live queue';
+      metaEl.appendChild(kioskPill);
+
+      const statusPill = document.createElement('span');
+      statusPill.className = 'meta-pill';
+      statusPill.textContent = statusText;
+      metaEl.appendChild(statusPill);
+
+      if((kioskCustomerSettings && kioskCustomerSettings.enabled && kioskCustomerSettings.requireName) || activeToken.customerName){
+        const customerPill = document.createElement('span');
+        customerPill.className = 'customer-name';
+        customerPill.innerHTML = `<small>Customer</small><span>${escapeHtml(activeToken.customerName || 'Not provided')}</span>`;
+        metaEl.appendChild(customerPill);
+      }
+
+      stage.appendChild(numberEl);
+      stage.appendChild(metaEl);
+
+      const right = document.createElement('div');
+      right.className='actions actions-panel';
+      right.setAttribute('aria-label', 'token actions');
+
+      const actionsHeading = document.createElement('div');
+      actionsHeading.className = 'actions-title';
+      actionsHeading.textContent = 'Operator Actions';
+      right.appendChild(actionsHeading);
+
+      const serveBtn = document.createElement('button');
+      serveBtn.type='button';
+      serveBtn.className='btn-serve';
+      serveBtn.textContent='Call Next';
+      serveBtn.onclick = ()=> updateTokenStatus(orgId, activeToken.serviceId, activeToken.tokenId, 'served', counterId, (counters[counterId]||{}).name, activeToken);
+
+      const noshowBtn = document.createElement('button');
+      noshowBtn.type='button';
+      noshowBtn.className='btn-noshow';
+      noshowBtn.textContent='No show';
+      noshowBtn.onclick = ()=> updateTokenStatus(orgId, activeToken.serviceId, activeToken.tokenId, 'no-show', counterId, (counters[counterId]||{}).name);
+
+      right.appendChild(serveBtn);
+      right.appendChild(noshowBtn);
+
+      item.appendChild(stage);
+      item.appendChild(right);
+      tokenBody.appendChild(item);
+    } else {
+      const empty = document.createElement('div');
+      empty.className = 'token-empty';
+      empty.textContent = 'No ongoing token for this counter.';
+      tokenBody.appendChild(empty);
       setStatus('No ongoing token for the selected counter');
-      return;
     }
 
-    const item = document.createElement('div');
-    item.className = 'token';
+    tokenPanel.appendChild(tokenBody);
+    // (panel insertion moved until both panels are constructed)
 
-    const stage = document.createElement('div');
-    stage.className = 'token-stage';
+    const servedTokens = Array.from(tokensById.values())
+      .filter(t => (t.assigned || serviceIds.includes(t.serviceId)))
+      .filter(t => (t.status || 'waiting').toLowerCase() === 'served')
+      .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
-    const numberEl = document.createElement('div');
-    numberEl.className = 'token-number';
-    numberEl.textContent = String(activeToken.tokenNumber || activeToken.id || '—');
+    const noShowTokens = Array.from(tokensById.values())
+      .filter(t => (t.assigned || serviceIds.includes(t.serviceId)))
+      .filter(t => (t.status || 'waiting').toLowerCase() === 'no-show')
+      .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
-    const metaEl = document.createElement('div');
-    metaEl.className = 'token-meta';
-    metaEl.innerHTML = `<strong style="font-size:1.05rem">${activeToken.serviceName || activeToken.serviceId}</strong><div style="font-size:0.95rem;color:#475569">${activeToken.kioskName || ''}</div><div style="font-size:0.9rem;color:#6b7280">Status: ${activeToken.status || 'waiting'}</div>`;
+    const statePanel = document.createElement('section');
+    statePanel.className = 'portrait-panel';
+    statePanel.appendChild(createPortraitHeader(
+      '2. Recall and No Show Tokens',
+      'Search and manage previously handled tokens',
+      kioskCustomerSettings.recallEnabled ? 'Recall on' : 'Recall off'
+    ));
 
-    stage.appendChild(numberEl);
-    stage.appendChild(metaEl);
+    const stateBody = document.createElement('div');
+    stateBody.className = 'portrait-panel-body';
 
-    const right = document.createElement('div'); right.className='actions';
-    right.setAttribute('aria-label', 'token actions');
+    const searchWrap = document.createElement('div');
+    searchWrap.className = 'search-wrap';
+    const searchInput = document.createElement('input');
+    searchInput.type = 'search';
+    searchInput.placeholder = 'Search token, service, customer, or kiosk';
+    searchInput.value = tokenFilterQuery;
+    searchInput.addEventListener('input', () => {
+      tokenFilterQuery = searchInput.value || '';
+      renderTokens(orgId, counterId);
+    });
 
-    const serveBtn = document.createElement('button'); serveBtn.className='btn-serve'; serveBtn.textContent='Call Next';
-    serveBtn.onclick = ()=> updateTokenStatus(orgId, activeToken.serviceId, activeToken.tokenId, 'serving', counterId, (counters[counterId]||{}).name);
+    const searchLabel = document.createElement('span');
+    searchLabel.className = 'search-pill';
+    searchLabel.textContent = 'Live filter';
+    searchWrap.appendChild(searchInput);
+    searchWrap.appendChild(searchLabel);
 
-    const noshowBtn = document.createElement('button'); noshowBtn.className='btn-noshow'; noshowBtn.textContent='No show';
-    noshowBtn.onclick = ()=> updateTokenStatus(orgId, activeToken.serviceId, activeToken.tokenId, 'no-show', null, null);
+    const stateGrid = document.createElement('div');
+    stateGrid.className = 'state-grid';
+    stateGrid.appendChild(createTokenStatePanel({
+      title: 'Served Tokens',
+      subtitle: kioskCustomerSettings.recallEnabled ? 'Recall one of these if the customer comes back.' : 'These are tokens that have already been served.',
+      emptyText: 'No served tokens right now.',
+      tokens: servedTokens,
+      counterId,
+      orgId,
+      allowRecall: !!kioskCustomerSettings.recallEnabled,
+      kind: 'served',
+      query: tokenFilterQuery
+    }));
 
-    right.appendChild(serveBtn);
-    right.appendChild(noshowBtn);
+    stateGrid.appendChild(createTokenStatePanel({
+      title: 'No Show Tokens',
+      subtitle: 'Tokens marked as no-show for this counter.',
+      emptyText: 'No no-show tokens yet.',
+      tokens: noShowTokens,
+      counterId,
+      orgId,
+      // allow recall from no-show list as requested: enable when kiosk setting allows or always for no-show
+      allowRecall: true,
+      kind: 'noshow',
+      query: tokenFilterQuery
+    }));
 
-    item.appendChild(stage); item.appendChild(right);
-    tokensEl.appendChild(item);
+    stateBody.appendChild(searchWrap);
+    stateBody.appendChild(stateGrid);
+    statePanel.appendChild(stateBody);
+    // insert both panels as siblings into the workspace grid so they render side-by-side on wide screens
+    if(workspaceGrid) workspaceGrid.replaceChildren(tokenPanel, statePanel);
 
-    setStatus(`Showing 1 ongoing token for ${counters[counterId]?.name || counterId}`);
+    setStatus(`Showing live queue for ${counters[counterId]?.name || counterId}`);
   }catch(err){
     console.error(err);
     setStatus('Failed to render tokens: ' + err.message);
   }
 }
 
-async function updateTokenStatus(orgId, serviceId, tokenId, status, counterId=null, counterName=null){
+function createPortraitHeader(title, subtitle, badgeText) {
+  const header = document.createElement('div');
+  header.className = 'portrait-panel-header';
+  header.innerHTML = `<div><div class="portrait-panel-title">${title}</div><div class="portrait-panel-subtitle">${subtitle}</div></div><div class="status-chip">${badgeText}</div>`;
+  return header;
+}
+
+function createTokenStatePanel({ title, subtitle, emptyText, tokens, counterId, orgId, allowRecall, kind, query }){
+  const panel = document.createElement('section');
+  panel.className = 'state-panel';
+
+  const header = document.createElement('div');
+  header.className = 'state-panel-header';
+  const tokenCount = filterTokensByQuery(tokens, query).length;
+  header.innerHTML = `<div><div class="state-panel-title">${title}</div><div class="state-panel-subtitle">${subtitle}</div></div><div class="status-chip">${tokenCount}</div>`;
+  panel.appendChild(header);
+
+  const body = document.createElement('div');
+  body.className = 'state-panel-body';
+
+  const filteredTokens = filterTokensByQuery(tokens, query);
+  if(!filteredTokens.length){
+    const empty = document.createElement('div');
+    empty.className = 'empty-state';
+    empty.textContent = tokens.length ? 'No tokens match your search.' : emptyText;
+    body.appendChild(empty);
+    panel.appendChild(body);
+    return panel;
+  }
+
+  const list = document.createElement('div');
+  list.className = 'token-list';
+
+  filteredTokens.forEach(token => {
+    const row = document.createElement('div');
+    row.className = 'token-list-item';
+
+    const info = document.createElement('div');
+    const displayNumber = String(token.tokenNumber || token.id || '—');
+    info.innerHTML = `
+      <div class="token-list-title">${displayNumber} <span style="font-weight:700;color:#5d6e82">${escapeHtml(token.serviceName || token.serviceId)}</span></div>
+      <div class="token-list-meta">
+        <span>${escapeHtml(token.kioskName || 'Live queue')}</span>
+        <span>Status: ${escapeHtml(token.status || 'waiting')}</span>
+        ${token.customerName ? `<span>Customer: ${escapeHtml(token.customerName)}</span>` : ''}
+      </div>
+    `;
+
+    const actions = document.createElement('div');
+    actions.className = 'token-list-actions';
+
+    // allow recall when requested (for served tokens or no-show tokens per user request)
+    if(allowRecall){
+      const recallBtn = document.createElement('button');
+      recallBtn.type = 'button';
+      recallBtn.className = 'mini-btn mini-btn-primary';
+      recallBtn.textContent = 'Recall';
+      recallBtn.onclick = () => updateTokenStatus(orgId, token.serviceId, token.tokenId, 'arrived', counterId, (counters[counterId]||{}).name, token);
+      actions.appendChild(recallBtn);
+    }
+
+    row.appendChild(info);
+    row.appendChild(actions);
+    list.appendChild(row);
+  });
+
+  body.appendChild(list);
+  panel.appendChild(body);
+  return panel;
+}
+
+function filterTokensByQuery(tokens, query) {
+  const normalizedQuery = String(query || '').trim().toLowerCase();
+  if (!normalizedQuery) return tokens;
+
+  return tokens.filter(token => {
+    const haystack = [
+      token.tokenNumber,
+      token.id,
+      token.serviceName,
+      token.serviceId,
+      token.kioskName,
+      token.customerName,
+      token.customerPhone,
+      token.status
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+
+    return haystack.includes(normalizedQuery);
+  });
+}
+
+async function updateTokenStatus(orgId, serviceId, tokenId, status, counterId=null, counterName=null, tokenRecord=null){
   try{
-    const updates = {};
-    updates[`users/${orgId}/queue/${serviceId}/${tokenId}/status`] = status;
-    updates[`users/${orgId}/queue/${serviceId}/${tokenId}/assignedCounterId`] = counterId || null;
-    updates[`users/${orgId}/queue/${serviceId}/${tokenId}/assignedCounterName`] = counterName || null;
+    const profileSnap = await db.ref(`users/${orgId}/profile`).once('value');
+    const profile = profileSnap.val() || {};
+    const organizationName = profile.name || profile.organizationName || profile.displayName || orgId;
+    const selectedServices = Array.isArray(tokenRecord?.selectedServices) ? tokenRecord.selectedServices : [];
+    const currentServiceIndex = Number(tokenRecord?.currentServiceIndex ?? tokenRecord?.serviceStageIndex ?? 0);
+    const nextService = selectedServices[currentServiceIndex + 1] || null;
+    const customerUid = String(tokenRecord?.customerUid || tokenRecord?.customerDetails?.uid || '').trim();
 
-    updates[`users/${orgId}/tokens/${tokenId}/status`] = status;
-    updates[`users/${orgId}/tokens/${tokenId}/counterId`] = counterId || null;
-    updates[`users/${orgId}/tokens/${tokenId}/counterName`] = counterName || null;
+    const currentUpdates = {
+      status,
+      assignedCounterId: counterId || null,
+      assignedCounterName: counterName || null,
+      organizationName,
+      currentServiceIndex,
+      serviceStageIndex: currentServiceIndex
+    };
 
-    await db.ref().update(updates);
-    setStatus(`Token ${tokenId} updated to ${status}`);
+    const currentUserUpdates = customerUid ? {
+      status,
+      assignedCounterId: counterId || null,
+      assignedCounterName: counterName || null,
+      counterId: counterId || null,
+      counterName: counterName || null,
+      organizationName,
+      currentServiceIndex,
+      serviceStageIndex: currentServiceIndex
+    } : null;
+
+    if (status === 'served' && nextService) {
+      const nextStageIndex = currentServiceIndex + 1;
+      const nextTokenData = {
+        ...tokenRecord,
+        serviceId: nextService.id,
+        serviceName: nextService.name || nextService.id,
+        currentServiceId: nextService.id,
+        currentServiceName: nextService.name || nextService.id,
+        currentServiceIndex: nextStageIndex,
+        serviceStageIndex: nextStageIndex,
+        assignedCounterId: null,
+        assignedCounterName: null,
+        counterId: null,
+        counterName: null,
+        status: 'waiting',
+        organizationName
+      };
+      currentUpdates.status = 'served';
+
+      await db.ref(`users/${orgId}/queue/${serviceId}/${tokenId}`).update(currentUpdates);
+      await db.ref(`users/${orgId}/tokens/${tokenId}`).update(currentUpdates);
+
+      if (customerUid) {
+        await db.ref(`appuserTokens/${customerUid}/${orgId}/${tokenId}`).update(currentUserUpdates);
+      }
+
+      await db.ref(`users/${orgId}/queue/${nextService.id}/${tokenId}`).set(nextTokenData);
+      if (customerUid) {
+        await db.ref(`appuserTokens/${customerUid}/${orgId}/${tokenId}`).set(nextTokenData);
+      }
+    } else {
+      await db.ref(`users/${orgId}/queue/${serviceId}/${tokenId}`).update(currentUpdates);
+      await db.ref(`users/${orgId}/tokens/${tokenId}`).update(currentUpdates);
+      if (customerUid) {
+        await db.ref(`appuserTokens/${customerUid}/${orgId}/${tokenId}`).update(currentUserUpdates);
+      }
+    }
+    setStatus(nextService && status === 'served'
+      ? `Token ${tokenId} served and moved to ${nextService.name || nextService.id}`
+      : `Token ${tokenId} updated to ${status}`);
     const nextCounterId = counterId || chosenCounter;
     if(nextCounterId){
       await renderTokens(orgId, nextCounterId);
@@ -322,3 +663,26 @@ auth.onAuthStateChanged(async user=>{
 });
 
 setAuthUserLabel(null, null);
+
+// Cycle to the next counter option (skips empty placeholder options)
+function cycleCounterSelectNext(){
+  if(!counterSelect){ setStatus('No counter selector present'); return; }
+  if(counterSelect.disabled){ setStatus('Counter selector is disabled'); return; }
+  const options = Array.from(counterSelect.options).filter(o=>o && o.value);
+  if(!options.length){ setStatus('No available counters to select'); return; }
+  const currentValue = counterSelect.value || '';
+  const idx = options.findIndex(o=>o.value === currentValue);
+  const nextIdx = (idx < 0) ? 0 : ((idx + 1) % options.length);
+  counterSelect.value = options[nextIdx].value;
+  // trigger the change handler so the UI updates
+  counterSelect.dispatchEvent(new Event('change', { bubbles:true }));
+  setStatus(`Switched to counter: ${options[nextIdx].textContent}`);
+}
+
+// Keyboard shortcut: Ctrl+9 (or Cmd+9 on Mac) to cycle counters
+document.addEventListener('keydown', (ev)=>{
+  if((ev.ctrlKey || ev.metaKey) && (ev.key === '9' || ev.code === 'Digit9')){
+    ev.preventDefault();
+    try{ cycleCounterSelectNext(); }catch(e){ console.error(e); }
+  }
+});
