@@ -17,16 +17,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
 	const faqItems = document.querySelectorAll('.help-panel .faq-item');
 	faqItems.forEach((item) => {
-		item.addEventListener('toggle', () => {
-			if (!item.open) {
-				return;
-			}
+		const summary = item.querySelector('summary');
 
+		if (!summary) {
+			return;
+		}
+
+		summary.addEventListener('click', (event) => {
+			event.preventDefault();
+
+			const shouldOpen = !item.open;
 			faqItems.forEach((otherItem) => {
-				if (otherItem !== item) {
-					otherItem.removeAttribute('open');
-				}
+				otherItem.open = false;
 			});
+
+			if (shouldOpen) {
+				item.open = true;
+			}
 		});
 	});
 
