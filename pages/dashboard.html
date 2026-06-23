@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>EcoSystem Dashboard</title>
+  <link rel="stylesheet" href="../css/global.css" />
+  <link rel="stylesheet" href="../css/dashboard.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="brand">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect width="24" height="24" rx="4" fill="#0366d6"/><path d="M6 12h12" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <h1>Dashboard</h1>
+    </div>
+
+    <div id="message" class="message" role="status" aria-live="polite"></div>
+
+    <div id="dashboard-content">
+      <div class="dashboard-grid">
+        <div class="dashboard-card status-section">
+          <div class="card-header">
+            <div class="card-icon account-icon">👤</div>
+            <div>
+              <div class="card-title">Account Status</div>
+            </div>
+          </div>
+          <div id="status-info"></div>
+          <div class="action-buttons">
+            <button id="back-queue" class="primary hidden-by-default">Go to Queue Manager</button>
+            <button id="signout" class="secondary">Sign Out</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="../js/config/firebase-config.js"></script>
+  <script src="../js/dashboard/dashboard.js"></script>
+</body>
+</html>

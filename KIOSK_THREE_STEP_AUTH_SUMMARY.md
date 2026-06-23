@@ -89,7 +89,7 @@
 
 ## Code Changes
 
-### kiosk-login.html
+### pages/kiosk/kiosk-login.html
 
 **Added:**
 ```html
@@ -131,7 +131,7 @@
 .view.hidden { display: none !important; }
 ```
 
-### kiosk-login.js
+### js/kiosk/kiosk-login.js
 
 **Removed:**
 - ❌ Direct KIOSK selection without auth
@@ -180,7 +180,7 @@ async function loadKiosksForSelection() {
 auth.onAuthStateChanged((user) => {
   if (user && sessionStorage.getItem('kioskId')) {
     // Already in KIOSK session → redirect to interface
-    window.location.href = 'kiosk-interface.html';
+    window.location.href = 'pages/kiosk/kiosk-interface.html';
   } else if (user) {
     // Authenticated but no KIOSK session → show step 2
     goToKioskSelection();
@@ -195,8 +195,8 @@ auth.onAuthStateChanged((user) => {
 
 | File | Changes | Status |
 |------|---------|--------|
-| kiosk-login.html | Added user auth form + step indicator | ✅ Complete |
-| kiosk-login.js | Rewrote to 3-step flow | ✅ Complete |
+| pages/kiosk/kiosk-login.html | Added user auth form + step indicator | ✅ Complete |
+| js/kiosk/kiosk-login.js | Rewrote to 3-step flow | ✅ Complete |
 | firebase-rules.json | No changes needed | ✅ Already secure |
 | KIOSK_LOGIN_FLOW_UPDATE.md | Documentation | ✅ Complete |
 
@@ -280,8 +280,8 @@ Current structure supports new flow:
 
 ## Deployment Checklist
 
-- [x] Update kiosk-login.html with 3-step UI
-- [x] Rewrite kiosk-login.js with auth flow
+- [x] Update pages/kiosk/kiosk-login.html with 3-step UI
+- [x] Rewrite js/kiosk/kiosk-login.js with auth flow
 - [x] No Firebase rules changes needed
 - [ ] Test with development account
 - [ ] Test with multiple organizations
@@ -294,8 +294,8 @@ Current structure supports new flow:
 ## Rollback
 
 If issues occur:
-1. Restore previous kiosk-login.html (copy from git history)
-2. Restore previous kiosk-login.js (copy from git history)
+1. Restore previous pages/kiosk/kiosk-login.html (copy from git history)
+2. Restore previous js/kiosk/kiosk-login.js (copy from git history)
 3. Clear browser cache
 4. Reload page
 

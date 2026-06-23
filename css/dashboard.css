@@ -1,0 +1,29 @@
+/* Extracted from pages/dashboard.html */
+.dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 24px; }
+    .dashboard-card { padding: 24px; background: #fff; border-radius: 12px; box-shadow: 0 2px 12px rgba(10,20,40,0.08); border: 1px solid #e8eef8; transition: all 0.2s ease; }
+    .dashboard-card:hover { box-shadow: 0 8px 24px rgba(10,20,40,0.12); transform: translateY(-2px); }
+    .card-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+    .card-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
+    .card-title { font-size: 0.95rem; color: #6b7785; font-weight: 600; margin: 0; }
+    .card-value { font-size: 2rem; font-weight: 700; color: #0b1220; margin: 0; }
+    .card-meta { font-size: 0.85rem; color: #6b7785; margin-top: 8px; }
+    .status-section { grid-column: 1 / -1; }
+    .status-badge { display: inline-block; padding: 8px 16px; border-radius: 20px; font-weight: 600; margin-bottom: 16px; }
+    .badge-approved { background: #c6f6d5; color: #22543d; }
+    .badge-pending { background: #feebc8; color: #7c2d12; }
+    .badge-rejected { background: #fed7d7; color: #742a2a; }
+    .badge-suspended { background: #ffeae8; color: #7a1e1e; }
+    .status-content { display: grid; gap: 12px; }
+    .status-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; }
+    .status-label { color: #6b7785; min-width: 120px; }
+    .status-value { font-weight: 600; color: #0b1220; }
+    .action-buttons { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-top: 16px; }
+    .action-buttons button { padding: 12px 16px; border-radius: 8px; border: 0; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+    .action-buttons .primary { background: #0366d6; color: #fff; }
+    .action-buttons .primary:hover { background: #0256ba; }
+    .action-buttons .secondary { background: transparent; border: 1px solid #e3eefc; color: #0366d6; }
+    .action-buttons .secondary:hover { background: rgba(3,102,214,0.08); }
+    .action-buttons .danger { background: #d03838; color: #fff; }
+    .action-buttons .danger:hover { background: #c03030; }
+    .account-icon { background: rgba(3,102,214,0.1); color: #0366d6; }
+    .hidden-by-default { display: none; }

@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Queue Manager</title>
+  <link rel="stylesheet" href="../css/global.css" />
+  <link rel="stylesheet" href="../css/queue-manager.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="brand">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect width="24" height="24" rx="4" fill="#0366d6"/><path d="M6 12h12" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <h1>Queue Manager</h1>
+    </div>
+
+    <div id="message" class="message" role="status" aria-live="polite"></div>
+
+    <div class="qm-actions-bar">
+      <button id="back-to-dashboard" class="primary ghost">← Back to Dashboard</button>
+      <button id="signout" class="primary qm-signout">Sign Out</button>
+    </div>
+
+    <div class="auth-card qm-layout-card">
+      <div class="qm-sidebar">
+        <div class="qm-nav qm-sidebar-nav" role="tablist">
+          <button class="qm-tab active" data-tab="counters" role="tab">Counters</button>
+          <button class="qm-tab" data-tab="services" role="tab">Services</button>
+          <button class="qm-tab" data-tab="assignments" role="tab">Assignments</button>
+          <button class="qm-tab" data-tab="queue" role="tab">Queue</button>
+          <button class="qm-tab" data-tab="reports" role="tab">Reports</button>
+        </div>
+      </div>
+
+      <div class="qm-main">
+
+      <!-- Counters Tab -->
+      <div id="counters" class="qm-content active">
+        <h2>Counter Management</h2>
+        <div class="qm-form">
+          <input id="counter-name" placeholder="Counter name (e.g., Counter 1)" />
+          <select id="counter-status">
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+          <button id="add-counter">Add Counter</button>
+        </div>
+        <div id="counters-list" class="qm-list"></div>
+        <div class="qm-migrate-row">
+          <button id="migrate-counter-names" class="qm-migrate-btn" title="Renames obvious test values like 'one', 'twoc' to real names in Firebase">Rename Test Counter Names</button>
+        </div>
+      </div>
+
+      <!-- Services Tab -->
+      <div id="services" class="qm-content">
+        <h2>Service Management</h2>
+        <div class="qm-form">
+          <input id="service-name" placeholder="Service name (e.g., General Inquiry)" />
+          <input id="service-desc" placeholder="Description (optional)" />
+          <input id="service-time" placeholder="Estimated time (minutes)" type="number" />
+          <button id="add-service">Add Service</button>
+        </div>
+        <div id="services-list" class="qm-list"></div>
+        <div class="qm-migrate-row">
+          <button id="migrate-service-names" class="qm-migrate-btn" title="Renames obvious test values like 'one', 'two' to real names in Firebase">Rename Test Service Names</button>
+        </div>
+      </div>
+
+      <!-- Assignments Tab -->
+      <div id="assignments" class="qm-content">
+        <h2>Assign Services to Counters</h2>
+        
+        <div class="qm-assignment-counter-section">
+          <p class="lead">Select a counter and assign services</p>
+          <div id="counters-grid" class="qm-counter-grid"></div>
+        </div>
+        
+        <div id="assignment-panel" class="qm-assignment-panel">
+          <div class="qm-assignment-panel-header">
+            <div>
+              <h3 class="qm-selected-name" id="selected-counter-name"></h3>
+              <p class="qm-selected-status" id="selected-counter-status"></p>
+            </div>
+            <button onclick="clearSelection()" class="qm-change-btn">Change</button>
+          </div>
+          
+          <div class="qm-service-selection">
+            <h4 class="qm-service-selection-title">Select Services</h4>
+            <div id="services-checkboxes" class="qm-service-checkbox-grid"></div>
+            <button id="save-assignment" class="primary">Save Assignment</button>
+          </div>
+        </div>
+        
+        <div id="assignments-list" class="qm-list"></div>
+      </div>
+
+      <!-- Queue Tab -->
+      <div id="queue" class="qm-content">
+        <h2>Live Queue Dashboard</h2>
+        <p class="lead">Real-time queue status across all services and counters.</p>
+        <div id="queue-status"></div>
+      </div>
+
+      <!-- Reports Tab -->
+      <div id="reports" class="qm-content">
+        <h2>Reports & Analytics</h2>
+        <p class="lead">Visual analytics and performance metrics</p>
+        
+        <div class="qm-chart-grid">
+          <!-- Counter Usage Chart -->
+          <div class="qm-chart-panel">
+            <h4 class="qm-chart-title">Counter Activity</h4>
+            <canvas id="counterChart" height="80"></canvas>
+          </div>
+          
+          <!-- Service Popularity Chart -->
+          <div class="qm-chart-panel">
+            <h4 class="qm-chart-title">Service Distribution</h4>
+            <canvas id="serviceChart" height="80"></canvas>
+          </div>
+        </div>
+        
+        <div class="qm-chart-grid">
+          <!-- Queue Trends Chart -->
+          <div class="qm-chart-panel">
+            <h4 class="qm-chart-title">Queue Trends (Last 7 Days)</h4>
+            <canvas id="trendChart" height="80"></canvas>
+          </div>
+          
+          <!-- Peak Hours Chart -->
+          <div class="qm-chart-panel">
+            <h4 class="qm-chart-title">Peak Hours Analysis</h4>
+            <canvas id="peakHoursChart" height="80"></canvas>
+          </div>
+        </div>
+        
+        <!-- Summary Statistics -->
+        <div class="stats-grid">
+          <div class="stats-card">
+            <h4>Total Transactions</h4>
+            <div class="value" id="stat-transactions">0</div>
+          </div>
+          <div class="stats-card">
+            <h4>Avg Wait Time</h4>
+            <div class="value" id="stat-wait-time">0m</div>
+          </div>
+          <div class="stats-card">
+            <h4>Active Counters</h4>
+            <div class="value" id="stat-active-counters">0</div>
+          </div>
+          <div class="stats-card">
+            <h4>Services Offered</h4>
+            <div class="value" id="stat-services">0</div>
+          </div>
+        </div>
+
+        <!-- KIOSK Analytics Section -->
+        <div id="kiosk-analytics" class="qm-kiosk-analytics"></div>
+      </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="../js/config/firebase-config.js"></script>
+  <script src="../js/utils/constants.js"></script>
+  <script src="../js/utils/helpers.js"></script>
+  <script>
+    // Initialize Firebase
+    if(!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+  </script>
+  <script src="../js/kiosk/kiosk-db.js"></script>
+  <script src="../js/queue/queue-manager.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+</body>
+</html>

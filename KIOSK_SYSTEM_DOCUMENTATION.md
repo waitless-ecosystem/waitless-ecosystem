@@ -59,24 +59,24 @@ A professional customer-facing KIOSK (terminal) account system integrated with t
 ### 3. **Module Architecture**
 
 ```
-kiosk-db.js (Core Data Layer)
+js/kiosk/kiosk-db.js (Core Data Layer)
 ├── kioskDB (CRUD operations)
 ├── kioskAuthDB (PIN authentication)
 ├── kioskTokenDB (Token generation with tracking)
 └── kioskReportingDB (Analytics & reports)
 
-kiosk-login.js (Authentication)
+js/kiosk/kiosk-login.js (Authentication)
 ├── KIOSK selection
 ├── PIN entry interface
 └── Session management
 
-kiosk-interface.js (Customer Interface)
+js/kiosk/kiosk-interface.js (Customer Interface)
 ├── Service display
 ├── Token generation
 ├── Queue position tracking
 └── Session timeout
 
-kiosk-management.js (Admin Panel)
+js/kiosk/kiosk-management.js (Admin Panel)
 ├── KIOSK CRUD
 ├── PIN management
 ├── Activity logging
@@ -89,7 +89,7 @@ kiosk-management.js (Admin Panel)
 
 ### New Files
 
-#### 1. **kiosk-db.js** (490+ lines)
+#### 1. **js/kiosk/kiosk-db.js** (490+ lines)
 Core database operations for KIOSK system.
 
 **Key Classes:**
@@ -122,7 +122,7 @@ kioskReportingDB.getKioskStats(organizationId, kioskId, startDate, endDate)
 kioskReportingDB.getKioskServiceBreakdown(organizationId, kioskId)
 ```
 
-#### 2. **kiosk-login.html & kiosk-login.js** (Entry Point)
+#### 2. **pages/kiosk/kiosk-login.html & js/kiosk/kiosk-login.js** (Entry Point)
 KIOSK authentication interface with PIN-based login.
 
 **Features:**
@@ -139,7 +139,7 @@ KIOSK authentication interface with PIN-based login.
 4. Redirects to KIOSK interface
 5. Session stored in sessionStorage
 
-#### 3. **kiosk-interface.html & kiosk-interface.js** (Customer Interface)
+#### 3. **pages/kiosk/kiosk-interface.html & js/kiosk/kiosk-interface.js** (Customer Interface)
 Main customer-facing interface for token generation.
 
 **Features:**
@@ -158,7 +158,7 @@ Main customer-facing interface for token generation.
 - Action buttons (Get Another Token, Back to Services)
 - Footer with time and logout button
 
-#### 4. **kiosk-management.html & kiosk-management.js** (Admin Panel)
+#### 4. **pages/kiosk/kiosk-management.html & js/kiosk/kiosk-management.js** (Admin Panel)
 Comprehensive admin panel for managing KIOSKs.
 
 **Tabs:**
@@ -213,23 +213,23 @@ Added security rules for KIOSK paths:
 }
 ```
 
-#### 2. **queue-manager.html**
+#### 2. **pages/queue-manager.html**
 - Added KIOSK analytics section to Reports tab
-- Included kiosk-db.js script
+- Included js/kiosk/kiosk-db.js script
 - Added kiosk-analytics container element
 
-#### 3. **queue-manager.js**
+#### 3. **js/queue/queue-manager.js**
 - Added `renderKioskAnalytics()` function for dashboard integration
 - Loads KIOSK report data on analytics tab
 - Displays total tokens generated per KIOSK
 - Shows success rates and failure attempts
 
-#### 4. **admin.html**
+#### 4. **pages/admin.html**
 - Added "Manage KIOSKs" button
 - Added "KIOSK Terminal" button
-- Links to kiosk-management.html and kiosk-login.html
+- Links to pages/kiosk/kiosk-management.html and pages/kiosk/kiosk-login.html
 
-#### 5. **admin.js**
+#### 5. **js/admin/admin.js**
 - Added event listeners for KIOSK buttons
 - Navigation to KIOSK management and login pages
 
@@ -466,8 +466,8 @@ The KIOSK tokens are fully integrated with the queue management system:
 ### 2. **With Admin Panel**
 
 Admin panel has quick links:
-- "Manage KIOSKs" button → kiosk-management.html
-- "KIOSK Terminal" button → kiosk-login.html
+- "Manage KIOSKs" button → pages/kiosk/kiosk-management.html
+- "KIOSK Terminal" button → pages/kiosk/kiosk-login.html
 
 ### 3. **With Authentication System**
 
@@ -481,7 +481,7 @@ Admin panel has quick links:
 
 ### PIN Length
 ```javascript
-// In kiosk-db.js - kioskAuthDB.createKioskUser()
+// In js/kiosk/kiosk-db.js - kioskAuthDB.createKioskUser()
 if (!pinCode || !/^\d{4,6}$/.test(pinCode)) {
   // Change regex to allow different lengths
   // e.g., /^\d{3,8}$/ for 3-8 digits
@@ -490,7 +490,7 @@ if (!pinCode || !/^\d{4,6}$/.test(pinCode)) {
 
 ### Session Timeout
 ```javascript
-// In kiosk-interface.js
+// In js/kiosk/kiosk-interface.js
 const SESSION_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
 // Change to desired timeout in milliseconds
 ```
@@ -535,7 +535,7 @@ Auto-redirect to login:
 ```javascript
 if (elapsed > SESSION_TIMEOUT_MS) {
   showMessage('Session timeout. Returning to login...', 'error');
-  setTimeout(() => { window.location.href = 'kiosk-login.html'; }, 2000);
+  setTimeout(() => { window.location.href = 'pages/kiosk/kiosk-login.html'; }, 2000);
 }
 ```
 
@@ -690,10 +690,10 @@ A: Check that KIOSKs exist with status='active' and organization matches current
 A: Verify PIN format is 4-6 digits. Check PIN hash in kioskUsers collection.
 
 **Q: Tokens not appearing in queue manager**
-A: Ensure kiosk-db.js is loaded before queue-manager.js. Check Firebase rules allow read/write.
+A: Ensure js/kiosk/kiosk-db.js is loaded before js/queue/queue-manager.js. Check Firebase rules allow read/write.
 
 **Q: Session timeout too fast**
-A: Increase SESSION_TIMEOUT_MS in kiosk-interface.js
+A: Increase SESSION_TIMEOUT_MS in js/kiosk/kiosk-interface.js
 
 ---
 

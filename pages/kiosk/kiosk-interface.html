@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KIOSK Service Terminal</title>
+  <link rel="stylesheet" href="../../css/kiosk.css">
+</head>
+<body>
+  <!-- Header -->
+  <div class="kiosk-header">
+    <h1>📋 SERVICE QUEUE</h1>
+    <div class="kiosk-terminal-meta">
+      <span class="kiosk-terminal-label">KIOSK:</span>
+      <span id="kiosk-name-display" class="kiosk-terminal-name">KIOSK Terminal</span>
+      <span class="kiosk-terminal-id-label">ID:</span>
+      <span id="kiosk-id-display" class="kiosk-terminal-id">Loading...</span>
+    </div>
+    <div id="org-name-display" class="kiosk-org-name"></div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="kiosk-content">
+    <div id="message" class="message hidden"></div>
+
+    <!-- Service Selection View -->
+    <div id="services-view">
+      <h3 class="kiosk-step-title">Step 2: Select Service(s)</h3>
+      <form id="service-select-form" class="login-form service-select-form">
+        <div id="services-container" class="services-container">
+          <!-- Services will be loaded here -->
+        </div>
+        <div class="service-selection-actions">
+          <div id="selected-count" class="selected-count">No services selected</div>
+          <button type="button" class="button-large button-primary generate-tokens-button" id="generate-tokens-btn" disabled>
+            Generate Token
+          </button>
+        </div>
+      </form>
+      <button type="button" class="login-button login-button-muted back-to-kiosk-button" id="back-to-kiosk-btn">Back to KIOSK Selection</button>
+    </div>
+
+    <!-- Token Generation View -->
+    <div id="token-view" class="hidden">
+      <div class="token-display">
+        <h3 class="token-step-title">Step 3: Your Token</h3>
+        <p class="token-summary-intro">Show this token number to the staff when called.</p>
+        <div id="token-summary-list" class="token-summary-list"></div>
+      </div>
+
+      <div class="button-group">
+        <button type="button" class="button-large button-primary" id="new-token-btn">
+          Get Another Token
+        </button>
+        <button type="button" class="button-large button-secondary" id="reset-btn">
+          Back to Services
+        </button>
+        <button type="button" class="button-large button-danger" id="token-logout-btn">
+          Logout
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="kiosk-footer">
+    <div class="kiosk-footer-info">
+      <p>Time: <span id="current-time">--:--</span> | KIOSK: <span id="footer-kiosk-name-display">Loading...</span></p>
+    </div>
+    <button class="logout-btn" id="logout-btn">← Logout</button>
+  </div>
+
+  <!-- Firebase Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+  <script src="../../js/config/firebase-config.js"></script>
+  <script>
+    // Initialize Firebase
+    if(!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+  </script>
+  <script src="../../js/kiosk/kiosk-db.js"></script>
+  <script src="../../js/kiosk/kiosk-interface.js"></script>
+</body>
+</html>

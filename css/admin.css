@@ -1,0 +1,27 @@
+/* Admin page overrides live here. Shared account-management styles are in global.css. */
+
+.admin-kiosk-help {
+  margin: 0 0 10px 0;
+}
+
+.admin-kiosk-form {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+.admin-kiosk-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.admin-kiosk-result {
+  margin-top: 10px;
+}
+
+@media (max-width: 800px) {
+  .admin-kiosk-form {
+    grid-template-columns: 1fr;
+  }
+}

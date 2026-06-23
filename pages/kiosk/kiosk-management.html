@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KIOSK Management - Admin Panel</title>
+  <link rel="stylesheet" href="../../css/kiosk.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <h1>⚙️ KIOSK Management</h1>
+      <div class="header-actions">
+        <button class="button button-primary" id="new-kiosk-btn">+ New KIOSK</button>
+        <button class="button button-secondary" id="back-btn">← Back to Dashboard</button>
+      </div>
+    </div>
+
+    <!-- Message -->
+    <div id="message" class="message hidden"></div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" data-tab="kiosks">KIOSK Terminals</button>
+      <button class="tab" data-tab="credentials">PIN Management</button>
+      <button class="tab" data-tab="activity">Activity Logs</button>
+      <button class="tab" data-tab="reports">Reports</button>
+    </div>
+
+    <!-- Tabs Content -->
+
+    <!-- KIOSK Terminals Tab -->
+    <div id="kiosks-tab" class="tab-content">
+      <div class="stats-grid" id="kiosk-stats">
+        <div class="stat-card">
+          <div class="stat-label">Total KIOSKs</div>
+          <div class="stat-value" id="total-kiosks">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Active KIOSKs</div>
+          <div class="stat-value" id="active-kiosks">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Tokens Generated</div>
+          <div class="stat-value" id="total-tokens">0</div>
+        </div>
+      </div>
+
+      <div id="kiosks-container" class="kiosks-grid">
+        <div class="empty-state">
+          <div class="empty-state-icon">📱</div>
+          <p>No KIOSKs created yet</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- PIN Management Tab -->
+    <div id="credentials-tab" class="tab-content hidden">
+      <h3 class="kiosk-section-title">PIN Management</h3>
+      
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>KIOSK Name</th>
+              <th>Status</th>
+              <th>Created</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="credentials-table">
+            <tr>
+              <td colspan="4" class="empty-state">No KIOSKs available</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Activity Logs Tab -->
+    <div id="activity-tab" class="tab-content hidden">
+      <h3 class="kiosk-section-title">KIOSK Activity Logs</h3>
+      
+      <div class="form-row kiosk-filter-row">
+        <input type="date" id="activity-start-date" placeholder="Start Date">
+        <input type="date" id="activity-end-date" placeholder="End Date">
+        <button class="button button-primary button-full" id="filter-activity-btn">Filter</button>
+      </div>
+
+      <div id="activity-container" class="table-container">
+        <p class="empty-state">No activity logs to display</p>
+      </div>
+    </div>
+
+    <!-- Reports Tab -->
+    <div id="reports-tab" class="tab-content hidden">
+      <h3 class="kiosk-section-title">KIOSK Reports</h3>
+      
+      <div class="form-row kiosk-filter-row">
+        <select id="report-kiosk">
+          <option value="">All KIOSKs</option>
+        </select>
+        <input type="date" id="report-date" />
+        <button class="button button-primary button-full" id="generate-report-btn">Generate Report</button>
+      </div>
+
+      <div id="report-container">
+        <p class="empty-state">Generate a report to view data</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- New KIOSK Modal -->
+  <div id="new-kiosk-modal" class="modal">
+    <div class="modal-content">
+      <button class="modal-close" id="close-modal">&times;</button>
+      <div class="modal-header">Create New KIOSK</div>
+
+      <form id="new-kiosk-form">
+        <div class="form-group">
+          <label for="kiosk-name">KIOSK Name *</label>
+          <input type="text" id="kiosk-name" required placeholder="e.g., Front Desk Kiosk 1">
+        </div>
+
+        <div class="form-group">
+          <label for="kiosk-description">Description</label>
+          <textarea id="kiosk-description" placeholder="Optional description" rows="3"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="kiosk-pin">PIN Code (4-6 digits) *</label>
+          <input type="password" id="kiosk-pin" pattern="\\d{4,6}" required placeholder="1234">
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="button button-primary">Create KIOSK</button>
+          <button type="button" class="button button-secondary" id="cancel-modal">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit KIOSK Modal -->
+  <div id="edit-kiosk-modal" class="modal">
+    <div class="modal-content">
+      <button class="modal-close" id="close-edit-modal">&times;</button>
+      <div class="modal-header">Edit KIOSK</div>
+
+      <form id="edit-kiosk-form">
+        <input type="hidden" id="edit-kiosk-id">
+
+        <div class="form-group">
+          <label for="edit-kiosk-name">KIOSK Name *</label>
+          <input type="text" id="edit-kiosk-name" required>
+        </div>
+
+        <div class="form-group">
+          <label for="edit-kiosk-description">Description</label>
+          <textarea id="edit-kiosk-description" rows="3"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="edit-kiosk-status">Status</label>
+          <select id="edit-kiosk-status">
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="button button-primary">Save Changes</button>
+          <button type="button" class="button button-secondary" id="cancel-edit-modal">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Firebase Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+  <script src="../../js/config/firebase-config.js"></script>
+  <script src="../../js/utils/constants.js"></script>
+  <script src="../../js/utils/helpers.js"></script>
+  <script>
+    // Initialize Firebase
+    if(!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+  </script>
+  <script src="../../js/kiosk/kiosk-db.js"></script>
+  <script src="../../js/kiosk/kiosk-management.js"></script>
+</body>
+</html>

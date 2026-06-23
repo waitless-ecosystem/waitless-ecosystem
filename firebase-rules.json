@@ -8,21 +8,29 @@
       ".indexOn": ["role", "createdAt"],
 
       "$uid": {
-        ".read": "auth != null && (auth.uid === $uid || auth.token.superadmin === true || auth.uid === 'tcWCQtILJNcahfAQA3qakrUP9Nv1' || auth.token.email === 'contact.pasan@gmail.com')",
+        ".read": "auth != null && (auth.uid === $uid || auth.token.superadmin === true || auth.uid === 'tcWCQtILJNcahfAQA3qakrUP9Nv1' || auth.token.email === 'contact.pasan@gmail.com' || root.child('users').child(auth.uid).child('role').val() === 'superadmin')",
 
-        ".write": "auth != null && (auth.uid === $uid || auth.token.superadmin === true || auth.uid === 'tcWCQtILJNcahfAQA3qakrUP9Nv1' || auth.token.email === 'contact.pasan@gmail.com')",
+        ".write": "auth != null && (auth.token.superadmin === true || auth.uid === 'tcWCQtILJNcahfAQA3qakrUP9Nv1' || auth.token.email === 'contact.pasan@gmail.com' || root.child('users').child(auth.uid).child('role').val() === 'superadmin')",
 
         "role": {
-          ".write": "auth != null && ((auth.uid === $uid && (!data.exists()) && newData.val() === 'pending') || ((auth.token.superadmin === true || auth.uid === 'tcWCQtILJNcahfAQA3qakrUP9Nv1' || auth.token.email === 'contact.pasan@gmail.com') && (newData.val() === 'approved' || newData.val() === 'rejected' || newData.val() === 'pending')) )"
+          ".write": "auth != null && ((auth.uid === $uid && (!data.exists()) && newData.val() === 'pending') || ((auth.token.superadmin === true || auth.uid === 'tcWCQtILJNcahfAQA3qakrUP9Nv1' || auth.token.email === 'contact.pasan@gmail.com' || root.child('users').child(auth.uid).child('role').val() === 'superadmin') && (newData.val() === 'approved' || newData.val() === 'rejected' || newData.val() === 'pending')) )"
         },
 
         "cryptoSalt": {
           ".write": "auth != null && auth.uid === $uid && (!data.exists())"
         },
 
+        "email": {
+          ".write": "auth != null && auth.uid === $uid && (!data.exists())"
+        },
+
+        "createdAt": {
+          ".write": "auth != null && auth.uid === $uid && (!data.exists())"
+        },
+
         "counters": {
-          ".read": "auth != null && auth.uid === $uid",
-          ".write": "auth != null && auth.uid === $uid",
+          ".read": "auth != null && (auth.uid === $uid || auth.token.superadmin === true || auth.uid === 'tcWCQtILJNcahfAQA3qakrUP9Nv1' || auth.token.email === 'contact.pasan@gmail.com' || root.child('users').child(auth.uid).child('role').val() === 'superadmin')",
+          ".write": "auth != null && (auth.uid === $uid || auth.token.superadmin === true || auth.uid === 'tcWCQtILJNcahfAQA3qakrUP9Nv1' || auth.token.email === 'contact.pasan@gmail.com' || root.child('users').child(auth.uid).child('role').val() === 'superadmin')",
           ".indexOn": ["status"],
           "$counterId": {
             ".validate": "newData.hasChildren(['id','name','status'])"
@@ -30,8 +38,8 @@
         },
 
         "services": {
-          ".read": "auth != null && auth.uid === $uid",
-          ".write": "auth != null && auth.uid === $uid",
+          ".read": "auth != null",
+          ".write": "auth != null && (auth.uid === $uid || auth.token.superadmin === true || auth.uid === 'tcWCQtILJNcahfAQA3qakrUP9Nv1' || auth.token.email === 'contact.pasan@gmail.com' || root.child('users').child(auth.uid).child('role').val() === 'superadmin')",
           ".indexOn": ["name"],
           "$serviceId": {
             ".validate": "newData.hasChildren(['id','name'])"
@@ -39,18 +47,23 @@
         },
 
         "assignments": {
-          ".read": "auth != null && auth.uid === $uid",
-          ".write": "auth != null && auth.uid === $uid",
+          ".read": "auth != null && (auth.uid === $uid || auth.token.superadmin === true || auth.uid === 'tcWCQtILJNcahfAQA3qakrUP9Nv1' || auth.token.email === 'contact.pasan@gmail.com' || root.child('users').child(auth.uid).child('role').val() === 'superadmin')",
+          ".write": "auth != null && (auth.uid === $uid || auth.token.superadmin === true || auth.uid === 'tcWCQtILJNcahfAQA3qakrUP9Nv1' || auth.token.email === 'contact.pasan@gmail.com' || root.child('users').child(auth.uid).child('role').val() === 'superadmin')",
           "$counterId": {
             ".validate": "newData.hasChildren(['counterId','services'])"
           }
         },
 
         "queue": {
-          ".read": "auth != null && auth.uid === $uid",
-          ".write": "auth != null && auth.uid === $uid",
+          ".read": "auth != null && (auth.uid === $uid || auth.token.superadmin === true || auth.uid === 'tcWCQtILJNcahfAQA3qakrUP9Nv1' || auth.token.email === 'contact.pasan@gmail.com' || root.child('users').child(auth.uid).child('role').val() === 'superadmin')",
+          ".write": "auth != null && (auth.uid === $uid || auth.token.superadmin === true || auth.uid === 'tcWCQtILJNcahfAQA3qakrUP9Nv1' || auth.token.email === 'contact.pasan@gmail.com' || root.child('users').child(auth.uid).child('role').val() === 'superadmin')",
           "$serviceId": {
-            ".indexOn": ["timestamp","status"]
+            ".read": "auth != null",
+            ".indexOn": ["timestamp","status","customerUid"],
+            "$tokenId": {
+              ".write": "auth != null && (auth.uid === $uid || auth.token.superadmin === true || auth.uid === 'tcWCQtILJNcahfAQA3qakrUP9Nv1' || auth.token.email === 'contact.pasan@gmail.com' || root.child('users').child(auth.uid).child('role').val() === 'superadmin' || ((!data.exists()) && newData.child('customerUid').val() === auth.uid && newData.child('organizationId').val() === $uid && newData.child('serviceId').val() === $serviceId && newData.child('status').val() === 'waiting'))",
+              ".validate": "newData.hasChildren(['id','tokenNumber','serviceId','organizationId','customerUid','timestamp','status'])"
+            }
           }
         },
 
@@ -61,8 +74,8 @@
         },
 
         "kiosks": {
-          ".read": "auth != null && (auth.uid === $uid || auth.token.superadmin === true || auth.uid === 'tcWCQtILJNcahfAQA3qakrUP9Nv1' || auth.token.email === 'contact.pasan@gmail.com')",
-          ".write": "auth != null && (auth.uid === $uid || auth.token.superadmin === true || auth.uid === 'tcWCQtILJNcahfAQA3qakrUP9Nv1' || auth.token.email === 'contact.pasan@gmail.com')",
+          ".read": "auth != null && (auth.uid === $uid || auth.token.superadmin === true || auth.uid === 'tcWCQtILJNcahfAQA3qakrUP9Nv1' || auth.token.email === 'contact.pasan@gmail.com' || root.child('users').child(auth.uid).child('role').val() === 'superadmin')",
+          ".write": "auth != null && (auth.uid === $uid || auth.token.superadmin === true || auth.uid === 'tcWCQtILJNcahfAQA3qakrUP9Nv1' || auth.token.email === 'contact.pasan@gmail.com' || root.child('users').child(auth.uid).child('role').val() === 'superadmin')",
           ".indexOn": ["status"],
           "$kioskId": {
             ".validate": "newData.hasChildren(['id','name','status'])"
@@ -70,8 +83,8 @@
         },
 
         "kioskActivity": {
-          ".read": "auth != null && auth.uid === $uid",
-          ".write": "auth != null && auth.uid === $uid",
+          ".read": "auth != null && (auth.uid === $uid || auth.token.superadmin === true || auth.uid === 'tcWCQtILJNcahfAQA3qakrUP9Nv1' || auth.token.email === 'contact.pasan@gmail.com' || root.child('users').child(auth.uid).child('role').val() === 'superadmin')",
+          ".write": "auth != null && (auth.uid === $uid || auth.token.superadmin === true || auth.uid === 'tcWCQtILJNcahfAQA3qakrUP9Nv1' || auth.token.email === 'contact.pasan@gmail.com' || root.child('users').child(auth.uid).child('role').val() === 'superadmin')",
           ".indexOn": ["timestamp","kioskId"]
         }
       }
@@ -83,7 +96,7 @@
 
       "$kioskId": {
         ".read": "auth != null && (auth.uid === $kioskId || auth.token.kiosk === true)",
-        ".write": "auth != null && (root.child('users').child(auth.uid).exists() || auth.token.superadmin === true || auth.uid === 'tcWCQtILJNcahfAQA3qakrUP9Nv1' || auth.token.email === 'contact.pasan@gmail.com')",
+        ".write": "auth != null && (root.child('users').child(auth.uid).exists() || auth.token.superadmin === true || auth.uid === 'tcWCQtILJNcahfAQA3qakrUP9Nv1' || auth.token.email === 'contact.pasan@gmail.com' || root.child('users').child(auth.uid).child('role').val() === 'superadmin')",
 
         "role": {
           ".write": "root.child('users').child(auth.uid).exists() || auth.token.superadmin === true || auth.uid === 'tcWCQtILJNcahfAQA3qakrUP9Nv1' || auth.token.email === 'contact.pasan@gmail.com'"
