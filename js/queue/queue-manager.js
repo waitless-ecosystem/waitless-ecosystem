@@ -29,6 +29,10 @@ function generateId() {
   return Math.random().toString(36).substr(2, 9);
 }
 
+function normalizeServiceCategory(category) {
+  return String(category || '').trim().replace(/\s+/g, ' ');
+}
+
 function formatDate(ts) {
   if(!ts) return 'Unknown';
   try { return new Date(ts).toLocaleString(); }
@@ -48,7 +52,10 @@ function getPublicServicesRef(orgId) {
 }
 
 async function syncPublicService(orgId, serviceId, serviceData) {
-  await getPublicServicesRef(orgId).child(serviceId).set(serviceData);
+  await getPublicServicesRef(orgId).child(serviceId).set({
+    ...serviceData,
+    category: normalizeServiceCategory(serviceData?.category)
+  });
 }
 
 async function syncPublicOrganizationMeta(profile = currentOrganizationProfile) {
@@ -353,11 +360,12 @@ const servicesDB = {
   async create(name, description = '', estimatedTime = 0, category = '') {
     if(!name || name.trim().length === 0) throw new Error('Service name required');
     const id = generateId();
+    const normalizedCategory = normalizeServiceCategory(category);
     const serviceData = {
       id,
       name: name.trim(),
       description: description.trim(),
-      category: category.trim(),
+      category: normalizedCategory,
       status: 'active',
       onlineBookingEnabled: true,
       estimatedTime: parseInt(estimatedTime) || 0,
@@ -375,8 +383,17 @@ const servicesDB = {
   async update(id, data) {
     const currentSnap = await db.ref(`users/${currentUserUID}/services/${id}`).once('value');
     const currentData = currentSnap.val() || {};
-    const mergedData = { ...currentData, ...data };
-    await db.ref(`users/${currentUserUID}/services/${id}`).update(data);
+    const normalizedUpdate = {
+      ...data,
+      category: data.category !== undefined
+        ? normalizeServiceCategory(data.category)
+        : normalizeServiceCategory(currentData.category)
+    };
+    const mergedData = {
+      ...currentData,
+      ...normalizedUpdate
+    };
+    await db.ref(`users/${currentUserUID}/services/${id}`).update(normalizedUpdate);
     await syncPublicService(currentUserUID, id, mergedData);
   },
 
@@ -412,6 +429,7 @@ const assignmentsDB = {
     } else {
       await assignmentRef.set({
         counterId,
+        counterName,
         services: normalizedServiceIds,
         updatedAt: firebase.database.ServerValue.TIMESTAMP
       });
@@ -765,6 +783,7 @@ function renderAssignments(assignments, counters, services) {
 
   Object.entries(assignments).forEach(([counterId, assignment]) => {
     const counter = counters[counterId];
+    const displayCounterName = String(assignment?.counterName || counter?.name || counter?.counterName || counterId || 'Counter').trim();
     const serviceNames = assignment.services
       .map(sid => services[sid] ? services[sid].name : 'Unknown')
       .join(', ');
@@ -773,7 +792,7 @@ function renderAssignments(assignments, counters, services) {
     item.className = 'qm-item';
     item.innerHTML = `
       <div class="qm-item-info">
-        <div class="qm-item-name">${counter ? counter.name : 'Unknown Counter'}</div>
+        <div class="qm-item-name">${escapeHtml(displayCounterName)}</div>
         <div class="qm-item-meta">Services assigned: <span class="qm-meta-highlight">${assignment.services.length}</span></div>
         <div class="qm-item-meta">${serviceNames || '(none assigned)'}</div>
       </div>
@@ -1545,6 +1564,11 @@ function attachEventListeners() {
 
       const checkboxes = $$('#services-checkboxes input[type="checkbox"]:checked');
       const serviceIds = Array.from(checkboxes).map(cb => cb.value);
+
+      if (serviceIds.length === 0) {
+        showMessage('Select at least one service before saving the assignment.', 'error');
+        return;
+      }
 
       try {
         await assignmentsDB.save(counterId, serviceIds);

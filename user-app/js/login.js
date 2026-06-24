@@ -106,6 +106,17 @@ function switchTo(mode) {
   if (verificationPanel) verificationPanel.classList.add('hidden');
 }
 
+function handleAuthError(err, fallbackMessage) {
+  const code = String(err?.code || '').trim();
+  if (code === 'auth/invalid-login-credentials' || code === 'auth/user-not-found' || code === 'auth/wrong-password') {
+    showMessage('Email or password is incorrect. Use Recover if you need a reset, or Sign Up if you do not have an account yet.', 'error');
+    switchTo('recover');
+    return;
+  }
+
+  showMessage(err?.message || fallbackMessage, 'error');
+}
+
 $('#tab-signin')?.addEventListener('click', () => switchTo('signin'));
 $('#tab-signup')?.addEventListener('click', () => switchTo('signup'));
 $('#tab-recover')?.addEventListener('click', () => switchTo('recover'));
@@ -131,7 +142,7 @@ signupForm?.addEventListener('submit', async (e) => {
     showMessage('Verification email sent. Check your inbox.', 'info');
     if (verificationPanel) verificationPanel.classList.remove('hidden');
   } catch (err) {
-    showMessage(err.message || 'Failed to create account.', 'error');
+    handleAuthError(err, 'Failed to create account.');
   } finally {
     signupBtn.disabled = false;
     signupBtn.textContent = 'Create account';
@@ -150,7 +161,7 @@ resendBtn?.addEventListener('click', async () => {
     await user.sendEmailVerification();
     showMessage('Verification email resent.', 'info');
   } catch (err) {
-    showMessage(err.message || 'Failed to resend verification.', 'error');
+    handleAuthError(err, 'Failed to resend verification.');
   }
 });
 
@@ -192,7 +203,7 @@ signinForm?.addEventListener('submit', async (e) => {
     const phone = '';
     await ensureAppUserExistsAndRedirect(user, { name, email: user.email || email, phone });
   } catch (err) {
-    showMessage(err.message || 'Sign in failed.', 'error');
+    handleAuthError(err, 'Sign in failed.');
   } finally { signinBtn.disabled = false; signinBtn.textContent = 'Sign in'; }
 });
 
@@ -206,6 +217,6 @@ recoverForm?.addEventListener('submit', async (e) => {
     showMessage('Password reset email sent. Check your inbox.', 'info');
     switchTo('signin');
   } catch (err) {
-    showMessage(err.message || 'Unable to send reset email.', 'error');
+    handleAuthError(err, 'Unable to send reset email.');
   } finally { recoverBtn.disabled = false; recoverBtn.textContent = 'Send reset email'; }
 });
