@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>EcoSystem Login</title>
+  <link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+  <main class="auth-shell">
+    <section class="auth-card">
+      <p class="eyebrow">App access</p>
+      <h1 class="auth-title">Sign in to EcoSystem</h1>
+      <p class="auth-subtitle">Enter your name, email, and phone number to continue. This creates your app profile and signs you in with Firebase.</p>
+
+      <div id="message" class="message" role="status" aria-live="polite"></div>
+
+      <nav class="auth-tabs">
+        <button id="tab-signin" class="tab active">Sign In</button>
+        <button id="tab-signup" class="tab">Sign Up</button>
+        <button id="tab-recover" class="tab">Recover</button>
+      </nav>
+
+      <div id="signin-panel" class="auth-panel">
+        <form id="signin-form" class="auth-form">
+          <div class="input-row">
+            <input id="signin-email" type="email" placeholder="Email address" autocomplete="email" />
+            <input id="signin-password" type="password" placeholder="Password" autocomplete="current-password" />
+            <button id="signin-btn" class="primary" type="submit">Sign in</button>
+          </div>
+        </form>
+      </div>
+
+      <div id="signup-panel" class="auth-panel hidden">
+        <form id="signup-form" class="auth-form">
+          <div class="input-row">
+            <input id="name-input" type="text" placeholder="Full name" autocomplete="name" />
+            <input id="email-input" type="email" placeholder="Email address" autocomplete="email" />
+            <input id="password-input" type="password" placeholder="Create a password (min 6 chars)" autocomplete="new-password" />
+            <input id="phone-input" type="tel" placeholder="Phone number" autocomplete="tel" />
+            <button id="signup-btn" class="primary" type="submit">Create account</button>
+          </div>
+        </form>
+      </div>
+
+      <div id="recover-panel" class="auth-panel hidden">
+        <form id="recover-form" class="auth-form">
+          <div class="input-row">
+            <input id="recover-email" type="email" placeholder="Email address" autocomplete="email" />
+            <button id="recover-btn" class="primary" type="submit">Send reset email</button>
+          </div>
+        </form>
+      </div>
+
+      <div id="verification-panel" class="auth-note hidden">
+        <p>We've sent a verification email. Please check your inbox and click the verification link.</p>
+        <div style="display:flex;gap:.5rem;">
+          <button id="resend-verification-btn" class="secondary">Resend verification</button>
+          <button id="check-verification-btn" class="primary">I've verified</button>
+        </div>
+      </div>
+
+      <p class="auth-note">Your information is stored in Firebase under <strong>appuser</strong> for this device user.</p>
+    </section>
+  </main>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="../js/config/firebase-config.js"></script>
+  <script src="js/login.js"></script>
+</body>
+</html>
