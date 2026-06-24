@@ -244,8 +244,19 @@ const kioskTokenDB = {
       throw new Error('Organization ID, KIOSK ID, and Service ID required');
     }
 
-    const tokenNumber = this.generateTokenNumber();
-    const tokenId = this.generateTokenId();
+    const tokenId = tokenFactory.generateTokenId();
+    let tokenNumber;
+    let generationBlocked = false;
+    try {
+      tokenNumber = await this.generateTokenNumber(organizationId, serviceId);
+    } catch (err) {
+      if (String(err.message || '').toLowerCase().includes('currently closed')) {
+        generationBlocked = true;
+        tokenNumber = tokenFactory.generateLegacyTokenNumber(tokenId) || tokenId;
+      } else {
+        throw err;
+      }
+    }
 
     // Verify service exists and is active
     const servicePath = `users/${organizationId}/services/${serviceId}`;
@@ -255,21 +266,16 @@ const kioskTokenDB = {
     const serviceName = options.serviceName || serviceData.name || serviceId;
 
     try {
-      const tokenData = {
-        id: tokenId,
+      const tokenData = tokenFactory.createBaseTokenData({
+        tokenId,
         tokenNumber,
-        serviceId,
-        serviceName,
         organizationId,
         kioskId,
         kioskName,
-        customerUid: auth.currentUser?.uid || `kiosk:${kioskId}`,
-        timestamp: firebase.database.ServerValue.TIMESTAMP,
-        status: 'waiting',
-        source: 'kiosk',
-        assignedCounterId: null,
-        assignedCounterName: null
-      };
+        serviceId,
+        serviceName,
+        customerUid: auth.currentUser?.uid || `kiosk:${kioskId}`
+      });
 
       const activityId = this.generateActivityId();
       const updates = {};
@@ -288,6 +294,72 @@ const kioskTokenDB = {
       await db.ref(`users/${organizationId}/kiosks/${kioskId}/tokensGenerated`).transaction(current => {
         return (current || 0) + 1;
       });
+
+      if (generationBlocked) {
+        try {
+          const wantSchedule = window.confirm('The selected organization is currently closed. Generate a token scheduled for the next open day?');
+          if (!wantSchedule) {
+            // remove created entries and decrement counter
+            try {
+              await db.ref(`users/${organizationId}/queue/${serviceId}/${tokenId}`).remove();
+              // remove kiosk activity - find by activity metadata tokenId
+              // we know activityId used earlier in updates variable
+              if (updates && updates[`users/${organizationId}/kioskActivity/${activityId}`]) {
+                await db.ref(`users/${organizationId}/kioskActivity/${activityId}`).remove();
+              }
+              await db.ref(`users/${organizationId}/kiosks/${kioskId}/tokensGenerated`).transaction(current => {
+                return Math.max(0, (current || 0) - 1);
+              });
+            } catch (remErr) {
+              console.warn('Failed to remove declined kiosk token:', remErr);
+            }
+            await this.logKioskActivity(organizationId, kioskId, 'token_creation_declined_closed', { tokenId, tokenNumber, serviceId });
+            throw new Error('Token creation cancelled because organization is closed');
+          }
+
+          // find next open and schedule
+          const openSnap = await db.ref(`users/${organizationId}/settings/openHours`).once('value');
+          const openHours = openSnap.val() || {};
+          function parseHM(v) {
+            if (!v) return null;
+            const parts = String(v || '').split(':');
+            if (parts.length < 2) return null;
+            return { h: parseInt(parts[0], 10), m: parseInt(parts[1], 10) };
+          }
+          function findNextOpenStart(hoursObj, fromDt) {
+            for (let i = 0; i < 8; i++) {
+              const candidate = new Date(fromDt.getTime() + i * 24 * 3600 * 1000);
+              const key = ['sun','mon','tue','wed','thu','fri','sat'][candidate.getDay()];
+              const conf = hoursObj && hoursObj[key];
+              if (!conf || !conf.enabled) continue;
+              const open = parseHM(conf.open);
+              if (!open) continue;
+              const start = new Date(candidate);
+              start.setHours(open.h, open.m, 0, 0);
+              if (start.getTime() >= fromDt.getTime()) return start;
+            }
+            return null;
+          }
+
+          const now = new Date();
+          const nextOpen = findNextOpenStart(openHours, now);
+          if (nextOpen) {
+            const deferredUntil = nextOpen.getTime();
+            await db.ref(`users/${organizationId}/queue/${serviceId}/${tokenId}`).update({
+              deferredUntil,
+              scheduledFor: nextOpen.toISOString(),
+              status: 'scheduled'
+            });
+            // update kiosk activity metadata
+            if (updates && updates[`users/${organizationId}/kioskActivity/${activityId}`]) {
+              await db.ref(`users/${organizationId}/kioskActivity/${activityId}/metadata`).update({ scheduledFor: nextOpen.toISOString(), deferredUntil });
+            }
+            await this.logKioskActivity(organizationId, kioskId, 'token_scheduled_closed', { tokenId, tokenNumber, serviceId, scheduledFor: nextOpen.toISOString() });
+          }
+        } catch (schedErr) {
+          console.warn('Scheduling for closed org failed:', schedErr);
+        }
+      }
 
       return { tokenId, tokenNumber, serviceId, serviceName, organizationId, kioskId, kioskName };
     } catch (err) {
@@ -320,14 +392,28 @@ const kioskTokenDB = {
     }
 
     var opts = options || {};
-    var tokenNumber = this.generateTokenNumber();
-    var tokenId = this.generateTokenId();
+    var tokenNumber = await this.generateTokenNumber(organizationId, primaryServiceId);
+    var tokenId = tokenFactory.generateTokenId();
 
     var serviceSnap = await db.ref('users/' + organizationId + '/services/' + primaryServiceId).once('value');
     var serviceData = serviceSnap.val();
     if (!serviceData) throw new Error('Primary service not found');
 
     var primaryServiceName = opts.primaryServiceName || serviceData.name || primaryServiceId;
+    var organizationName = String(opts.organizationName || '').trim();
+    var customerDetails = opts.customerDetails || null;
+
+    var cleanedCustomerDetails = null;
+    if (customerDetails && typeof customerDetails === 'object') {
+      var customerName = String(customerDetails.name || '').trim();
+      var customerPhone = String(customerDetails.phone || '').trim();
+      if (customerName || customerPhone) {
+        cleanedCustomerDetails = {
+          name: customerName,
+          phone: customerPhone
+        };
+      }
+    }
 
     var cleanedServices = selectedServices.map(function(s) {
       return {
@@ -337,31 +423,45 @@ const kioskTokenDB = {
       };
     });
 
-    var tokenData = {
-      id: tokenId,
+    var customerUid = opts.customerUid || (cleanedCustomerDetails && cleanedCustomerDetails.uid) || (auth.currentUser ? auth.currentUser.uid : ('kiosk:' + kioskId));
+
+    var tokenData = tokenFactory.createBaseTokenData({
+      tokenId: tokenId,
       tokenNumber: tokenNumber,
       organizationId: organizationId,
+      organizationName: organizationName || organizationId,
       kioskId: kioskId,
       kioskName: kioskName,
-      primaryServiceId: primaryServiceId,
-      primaryServiceName: primaryServiceName,
       serviceId: primaryServiceId,
       serviceName: primaryServiceName,
-      selectedServices: cleanedServices,
-      selectedServiceIds: cleanedServices.map(function(s) { return s.id; }),
-      selectedServiceNames: cleanedServices.map(function(s) { return s.name; }),
-      serviceCount: cleanedServices.length,
-      timestamp: firebase.database.ServerValue.TIMESTAMP,
-      status: 'waiting',
-      source: 'kiosk',
-      assignedCounterId: null,
-      assignedCounterName: null,
-      customerUid: auth.currentUser ? auth.currentUser.uid : ('kiosk:' + kioskId)
-    };
+      customerUid: customerUid
+    });
+
+    tokenData.primaryServiceId = primaryServiceId;
+    tokenData.primaryServiceName = primaryServiceName;
+    tokenData.serviceId = primaryServiceId;
+    tokenData.serviceName = primaryServiceName;
+    tokenData.currentServiceId = primaryServiceId;
+    tokenData.currentServiceName = primaryServiceName;
+    tokenData.currentServiceIndex = 0;
+    tokenData.serviceStageIndex = 0;
+    tokenData.selectedServices = cleanedServices;
+    tokenData.selectedServiceIds = cleanedServices.map(function(s) { return s.id; });
+    tokenData.selectedServiceNames = cleanedServices.map(function(s) { return s.name; });
+    tokenData.serviceCount = cleanedServices.length;
+
+    if (cleanedCustomerDetails) {
+      tokenData.customerDetails = cleanedCustomerDetails;
+      tokenData.customerName = cleanedCustomerDetails.name || null;
+      tokenData.customerPhone = cleanedCustomerDetails.phone || null;
+    }
 
     var activityId = this.generateActivityId();
     var updates = {};
     updates['users/' + organizationId + '/queue/' + primaryServiceId + '/' + tokenId] = tokenData;
+    if (customerUid && !String(customerUid).startsWith('kiosk:')) {
+      updates['appuserTokens/' + customerUid + '/' + organizationId + '/' + tokenId] = tokenData;
+    }
     updates['users/' + organizationId + '/kioskActivity/' + activityId] = {
       id: activityId,
       kioskId: kioskId,
@@ -372,6 +472,7 @@ const kioskTokenDB = {
         primaryServiceId: primaryServiceId,
         primaryServiceName: primaryServiceName,
         serviceCount: cleanedServices.length,
+        hasCustomerDetails: !!cleanedCustomerDetails,
         tokenId: tokenId
       },
       userId: auth.currentUser ? auth.currentUser.uid : 'unknown'
@@ -463,10 +564,14 @@ const kioskTokenDB = {
    * Generate unique token number (e.g., "A001")
    * @returns {string} Token number
    */
-  generateTokenNumber() {
-    const prefix = String.fromCharCode(65 + Math.floor(Math.random() * 26)); // A-Z
-    const number = String(Math.floor(Math.random() * 10000)).padStart(4, '0');
-    return prefix + number;
+  async generateTokenNumber(organizationId = null, serviceId = null) {
+    const prefix = await tokenFactory.resolveOrganizationTokenPrefix(db, organizationId);
+    return tokenFactory.generateSequentialTokenNumber(db, {
+      organizationId,
+      prefix,
+      serviceId,
+      skipOpenHoursCheck: true
+    });
   },
 
   /**
@@ -474,7 +579,7 @@ const kioskTokenDB = {
    * @returns {string} Token ID
    */
   generateTokenId() {
-    return 'TOKEN_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    return tokenFactory.generateTokenId();
   },
 
   /**

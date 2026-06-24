@@ -40,12 +40,22 @@
           <p class="muted small">No account? <a href="#" id="show-register-link">Create one</a></p>
         </section>
 
-        <section id="register-section" class="panel" aria-labelledby="show-register">
+<section id="register-section" class="panel" aria-labelledby="show-register">
           <h2>Create account</h2>
           <p class="lead">Get started with EcoSystem.</p>
           <form id="register-form">
+            
             <label for="register-email">Email</label>
             <div class="input-wrap"><input id="register-email" type="email" placeholder="you@example.com" required /></div>
+
+            <label for="register-organization">Organization Name</label>
+            <div class="input-wrap"><input id="register-organization" type="text" placeholder="Company or Organization" required /></div>
+
+            <label for="register-contact">Contact Number</label>
+            <div class="input-wrap"><input id="register-contact" type="tel" placeholder="+1 (555) 000-0000" required /></div>
+
+            <label for="register-address">Address</label>
+            <div class="input-wrap"><input id="register-address" type="text" placeholder="123 Main St, City, Country" required /></div>
 
             <label for="register-password">Password</label>
             <div class="input-wrap">
