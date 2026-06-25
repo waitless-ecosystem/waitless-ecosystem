@@ -304,11 +304,22 @@ function renderSelectedOrganization() {
   });
 }
 
+// 💡 online-booking.js ඇතුළත selectOrganization(orgId) function එක මේ විදිහට වෙනස් කරන්න:
 async function selectOrganization(orgId) {
   try {
-    const snap = await db.ref(`publicOrganizations/${orgId}`).once('value');
-    const profile = snap.val() || {};
-    const meta = profile.meta || {};
+    // ❌ කලින් තිබුණු ක්‍රමය: const snap = await db.ref(`publicOrganizations/${orgId}`).once('value');
+    
+    //  නිවැරදි ක්‍රමය: meta සහ services වෙන වෙනම ඩවුන්ලෝඩ් කිරීම (Rules වලට අනුකූලයි)
+    const [metaSnap, servicesSnap] = await Promise.all([
+      db.ref(`publicOrganizations/${orgId}/meta`).once('value'),
+      db.ref(`publicOrganizations/${orgId}/services`).once('value')
+    ]);
+
+    const meta = metaSnap.val() || {};
+    const servicesData = servicesSnap.val() || {};
+    
+    // profile object එකක් ලෙස සකසා ගැනීම
+    const profile = { meta, services: servicesData };
     const services = getPublicServices(profile);
 
     const [assignmentsSnap, countersSnap] = await Promise.all([
