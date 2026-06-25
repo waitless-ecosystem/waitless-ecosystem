@@ -58,6 +58,113 @@ button, input, select { font: inherit; }
   box-shadow: var(--shadow);
   padding: 32px;
   backdrop-filter: blur(24px);
+  position: relative;
+}
+.tutorial-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.tutorial-toggle {
+  min-width: 34px;
+  min-height: 34px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06);
+  color: #fff;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0 8px;
+}
+.tutorial-toggle:hover {
+  background: rgba(255,255,255,0.12);
+}
+.tutorial-panel {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 14px;
+  background: rgba(0,0,0,0.65);
+  z-index: 999;
+}
+.tutorial-panel-card {
+  width: min(500px, 100%);
+  max-height: min(84vh, 720px);
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 24px;
+  padding: 14px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  display: grid;
+}
+.tutorial-step-wrap {
+  display: grid;
+  gap: 10px;
+}
+.tutorial-media { text-align: center; margin-bottom: 10px; }
+.tutorial-screenshot {
+  max-width: 100%;
+  max-height: 340px;
+  width: auto;
+  height: auto;
+  border-radius: 14px;
+  display: inline-block;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.tutorial-step-text { color: var(--muted); font-size: 0.88rem; line-height: 1.35; padding: 4px 2px; }
+.tutorial-controls { display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap: wrap; }
+.tutorial-controls button { padding: 7px 10px; font-size: 0.85rem; }
+#tutorial-done { padding: 8px 12px; font-size: 0.88rem; }
+.tutorial-step-indicator { color: var(--muted); font-weight:600; font-size:0.88rem; }
+.tutorial-screenshot[alt] { background: rgba(255,255,255,0.02); }
+.tutorial-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  color: #fff;
+}
+.icon-btn {
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 1.3rem;
+  cursor: pointer;
+}
+.tutorial-list {
+  margin: 0 0 20px;
+  padding: 0;
+  list-style: none;
+  color: var(--muted);
+}
+.tutorial-list li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.85rem;
+  margin-bottom: 1rem;
+  padding: 0.9rem 1rem;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+}
+.tutorial-list li p {
+  margin: 0;
+  line-height: 1.6;
+}
+.tutorial-step-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: 50%;
+  background: rgba(16, 185, 129, 0.15);
+  color: #fff;
+  font-weight: 700;
 }
 
 .auth-form {

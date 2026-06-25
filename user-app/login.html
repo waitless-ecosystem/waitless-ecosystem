@@ -11,9 +11,35 @@
     <section class="auth-card">
       <p class="eyebrow">App access</p>
       <h1 class="auth-title">Sign in to EcoSystem</h1>
-      <p class="auth-subtitle">Enter your name, email, and phone number to continue. This creates your app profile and signs you in with Firebase.</p>
+      <div class="tutorial-row">
+        <p class="auth-subtitle">Enter your name, email, and phone number to continue. This creates your app profile and signs you in with Firebase.</p>
+        <button id="tutorial-toggle" class="tutorial-toggle" aria-label="Open login tutorial">•••</button>
+      </div>
 
       <div id="message" class="message" role="status" aria-live="polite"></div>
+      <div id="tutorial-panel" class="tutorial-panel hidden" aria-hidden="true" role="dialog" aria-label="Login tutorial">
+        <div class="tutorial-panel-card">
+          <div class="tutorial-panel-header">
+            <span id="tutorial-title">Login tutorial</span>
+            <button id="tutorial-close" class="icon-btn" aria-label="Close tutorial">×</button>
+          </div>
+
+          <div class="tutorial-step-wrap">
+            <div class="tutorial-media">
+              <img id="tutorial-screenshot" class="tutorial-screenshot" src="" alt="Login tutorial screenshot" />
+            </div>
+            <div class="tutorial-step-text" id="tutorial-step-text"></div>
+            <div class="tutorial-controls">
+              <button id="tutorial-prev" class="secondary">◀ Back</button>
+              <div class="tutorial-step-indicator" id="tutorial-step-indicator">Step 1 of 4</div>
+              <button id="tutorial-next" class="primary">Next ▶</button>
+            </div>
+            <div style="text-align:center;margin-top:12px;">
+              <button id="tutorial-done" class="secondary">Done</button>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <nav class="auth-tabs">
         <button id="tab-signin" class="tab active">Sign In</button>

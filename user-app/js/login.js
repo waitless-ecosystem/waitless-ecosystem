@@ -138,16 +138,10 @@ signupForm?.addEventListener('submit', async (e) => {
     showMessage('Please enter name, email, phone and password.', 'error');
     return;
   }
-<<<<<<< HEAD
-=======
   if (!isValidSriLankanPhone(phone)) {
-    showMessage(
-      'Enter a valid Sri Lankan mobile number (070, 071, 072, 074, 075, 076, 077, 078) with exactly 10 digits.',
-      'error'
-    );
+    showMessage('Enter a valid Sri Lankan mobile number (070,071,072,074,075,076,077,078) with exactly 10 digits.', 'error');
     return;
   }
->>>>>>> poorna
   if (password.length < 6) { showMessage('Password must be at least 6 characters.', 'error'); return; }
   signupBtn.disabled = true;
   signupBtn.textContent = 'Creating...';
@@ -192,16 +186,10 @@ checkBtn?.addEventListener('click', async () => {
       const name = ($('#name-input')?.value || user.displayName || '').trim();
       const email = user.email || ($('#email-input')?.value || '').trim();
       const phone = ($('#phone-input')?.value || '').trim();
-<<<<<<< HEAD
-=======
       if (!isValidSriLankanPhone(phone)) {
-        showMessage(
-          'Enter a valid mobile number ',
-          'error'
-        );
+        showMessage('Enter a valid mobile number.', 'error');
         return;
       }
->>>>>>> poorna
       await ensureAppUserExistsAndRedirect(user, { name, email, phone });
     } else {
       showMessage('Email not yet verified. Check your inbox and click the verification link.', 'error');
@@ -247,3 +235,111 @@ recoverForm?.addEventListener('submit', async (e) => {
     showMessage(err.message || 'Unable to send reset email.', 'error');
   } finally { recoverBtn.disabled = false; recoverBtn.textContent = 'Send reset email'; }
 });
+
+function showTutorialPanel(visible) {
+  const panel = $('#tutorial-panel');
+  if (!panel) return;
+  panel.classList.toggle('hidden', !visible);
+  panel.setAttribute('aria-hidden', String(!visible));
+}
+
+function setTutorialSeen() {
+  try { localStorage.setItem('loginTutorialSeen', '1'); } catch (_) {}
+}
+
+function closeTutorialPanel() {
+  showTutorialPanel(false);
+  setTutorialSeen();
+}
+
+$('#tutorial-toggle')?.addEventListener('click', () => showTutorialPanel(true));
+$('#tutorial-close')?.addEventListener('click', closeTutorialPanel);
+$('#tutorial-got-it')?.addEventListener('click', closeTutorialPanel);
+
+// Tutorial: step-by-step data and rendering
+const tutorialSteps = [
+  {
+    title: 'Sign in',
+    text: 'Tap the Sign In tab, enter your email and password, then press Sign in.',
+    img: 'sign in01.png'
+  },
+  {
+    title: 'Create account',
+    text: 'Tap the Sign Up tab. Enter your name, email, phone and password, then press Create account.',
+    img: 'sign up02.png'
+  },
+  {
+    title: 'Verify email',
+    text: "Open your email and click the verification link. Return to login and press 'I've verified' if needed.",
+    img: 'verification05.png'
+  },
+  {
+    title: 'Recover password',
+    text: 'If you forget your password, use the Recover tab, enter your email, and send the reset email.',
+    img: 'recover03.png'
+  }
+];
+
+let tutorialIndex = 0;
+const tutorialFolder = 'main application ss'; // folder where you place images (has a space)
+
+function renderTutorialStep(idx) {
+  const step = tutorialSteps[idx];
+  const titleEl = $('#tutorial-title');
+  const imgEl = $('#tutorial-screenshot');
+  const textEl = $('#tutorial-step-text');
+  const indicator = $('#tutorial-step-indicator');
+  const prevBtn = $('#tutorial-prev');
+  const nextBtn = $('#tutorial-next');
+
+  if (titleEl) titleEl.textContent = `Login tutorial — ${step.title}`;
+  if (textEl) textEl.innerHTML = `<strong>${step.title}</strong><p>${step.text}</p>`;
+  if (indicator) indicator.textContent = `Step ${idx + 1} of ${tutorialSteps.length}`;
+
+  // Build path and encode spaces
+  const path = encodeURI(`${tutorialFolder}/${step.img}`);
+  if (imgEl) {
+    imgEl.src = path;
+    imgEl.alt = `${step.title} screenshot`;
+  }
+
+  if (prevBtn) prevBtn.disabled = idx === 0;
+  if (nextBtn) nextBtn.disabled = idx === tutorialSteps.length - 1;
+}
+
+$('#tutorial-prev')?.addEventListener('click', () => {
+  if (tutorialIndex === 0) return;
+  tutorialIndex -= 1;
+  renderTutorialStep(tutorialIndex);
+});
+
+$('#tutorial-next')?.addEventListener('click', () => {
+  if (tutorialIndex >= tutorialSteps.length - 1) return;
+  tutorialIndex += 1;
+  renderTutorialStep(tutorialIndex);
+});
+
+$('#tutorial-done')?.addEventListener('click', () => {
+  closeTutorialPanel();
+});
+
+// When opening the panel, render the current step (start at 0)
+$('#tutorial-toggle')?.addEventListener('click', () => {
+  tutorialIndex = 0;
+  renderTutorialStep(tutorialIndex);
+});
+
+document.addEventListener('click', (event) => {
+  const panel = $('#tutorial-panel');
+  if (!panel || panel.classList.contains('hidden')) return;
+  if (!event.target.closest('#tutorial-panel .tutorial-panel-card') && !event.target.closest('#tutorial-toggle')) {
+    closeTutorialPanel();
+  }
+});
+
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape') closeTutorialPanel();
+});
+
+// Note: tutorial panel opens when user clicks the three-dot button.
+// Auto-opening on first load was removed to avoid blocking form interactions.
