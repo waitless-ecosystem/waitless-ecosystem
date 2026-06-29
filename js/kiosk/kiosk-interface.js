@@ -57,7 +57,7 @@ let autoReturnSeconds = 0;
 let autoReturnTimeout = null;
 
 // Constants
-const SESSION_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
+const SESSION_TIMEOUT_MS = 24 * 60 * 60 * 1000; // 24 hours
 const INACTIVITY_CHECK_MS = 30 * 1000; // Check every 30 seconds
 
 const FRIENDLY_KIOSK_NAMES = [
@@ -469,6 +469,25 @@ function applyCustomerDetailSettingsUI() {
       : 'Check Phone';
   }
   renderCustomerWelcome();
+  updateHeroCardText(1);
+}
+
+function updateHeroCardText(step) {
+  const heroTitle = document.querySelector('.kiosk-hero-card .kiosk-step-title');
+  const heroSubtitle = document.querySelector('.kiosk-hero-card .kiosk-subtitle');
+  const heroEyebrow = document.querySelector('.kiosk-hero-card .kiosk-eyebrow');
+  
+  if (!heroTitle || !heroSubtitle) return;
+  
+  if (step === 1 && customerDetailSettings.enabled && !customerStepCompleted) {
+    if (heroEyebrow) heroEyebrow.textContent = 'Step 1: Check Profile';
+    heroTitle.textContent = 'Enter Customer Details';
+    heroSubtitle.textContent = 'Please enter your phone number to check your profile before selecting services.';
+  } else {
+    if (heroEyebrow) heroEyebrow.textContent = customerDetailSettings.enabled ? 'Step 2: Service Selection' : 'Quick Service Flow';
+    heroTitle.textContent = 'Select the services you need';
+    heroSubtitle.textContent = 'Choose one or more services, then generate a token in a few taps.';
+  }
 }
 
 function renderCustomerWelcome() {
@@ -565,6 +584,7 @@ function continueToServicesStep() {
             if (servicesStep) {
               servicesStep.classList.remove('hidden');
             }
+            updateHeroCardText(2);
             showMessage('Customer profile matched. Continue to services.', 'success');
             return;
           }
@@ -601,6 +621,7 @@ function continueToServicesStep() {
     if (servicesStep) {
       servicesStep.classList.remove('hidden');
     }
+    updateHeroCardText(2);
     if (customerLookupResult) {
       customerLookupResult.textContent = `Welcome, ${customerDetails?.name || customerLookup?.name || 'Customer'}.${displayPhone ? ` Phone: ${displayPhone}.` : ''}`;
       customerLookupResult.className = 'customer-lookup-result success';
@@ -785,6 +806,13 @@ function checkSessionTimeout() {
 function resetInactivityTimer() {
   if (inactivityTimeout) {
     clearTimeout(inactivityTimeout);
+  }
+  // Only start inactivity timer if we are NOT currently on the token view
+  if (tokenView && tokenView.classList.contains('hidden')) {
+    inactivityTimeout = setTimeout(() => {
+      console.log('Inactivity timeout reached. Resetting terminal screen.');
+      resetToServices();
+    }, 60000); // 60 seconds
   }
 }
 
@@ -1130,6 +1158,7 @@ function resetToServices() {
       servicesStep.classList.remove('hidden');
     }
   }
+  updateHeroCardText(customerDetailSettings.enabled ? 1 : 2);
   selectedServiceCategory = serviceCategoriesEnabled ? '' : 'all';
   renderServices();
   updateSelectionUI();
@@ -1223,58 +1252,70 @@ function displayTokenSummary(tokenResult, recommendedCounter = null) {
   const card = document.createElement('div');
   card.className = 'token-result-card';
 
-  const counterEl = document.createElement('div');
-  counterEl.className = 'token-result-primary-queue';
-  if (customerDetailSettings.basicModeEnabled) {
-    counterEl.classList.add('token-result-number');
-    counterEl.textContent = getCounterDisplayValue(recommendedCounter) || 'Assigned Counter';
-  }
+  const totalEstimate = (tokenResult.selectedServices || []).reduce((sum, s) => sum + (Number(s.estimatedTime || 0) || 15), 0);
+  const positionText = tokenResult.queuePosition ? `Pos. #${tokenResult.queuePosition}` : 'Calculating...';
+  const counterText = customerDetailSettings.basicModeEnabled 
+    ? (getCounterDisplayValue(recommendedCounter) || 'Assigned Counter')
+    : (tokenResult.assignedCounterName || tokenResult.assignedCounterId || 'Pending');
 
   if (customerDetailSettings.basicModeEnabled) {
-    card.appendChild(counterEl);
+    card.innerHTML = `
+      <div class="token-item-top">
+        <div>
+          <div class="token-item-number">${escapeHtml(counterText)}</div>
+          <div class="token-item-service">Assigned Counter</div>
+        </div>
+        <div class="token-item-actions">
+          <span class="token-status-pill">Ready</span>
+        </div>
+      </div>
+      
+      <div class="ticket-divider"></div>
+      
+      <div class="token-item-meta">
+        <div>
+          <strong>Token</strong>
+          <span>${escapeHtml(tokenResult.tokenNumber || 'Queue Entry')}</span>
+        </div>
+        <div>
+          <strong>Services</strong>
+          <span>${(tokenResult.selectedServices || []).map(s => escapeHtml(s.name)).join(', ')}</span>
+        </div>
+      </div>
+    `;
   } else {
-    const labelEl = document.createElement('div');
-    labelEl.className = 'token-result-label';
-    labelEl.textContent = 'Token Number';
-
-    const numberEl = document.createElement('div');
-    numberEl.className = 'token-result-number';
-    numberEl.textContent = tokenResult.tokenNumber;
-
-    const positionEl = document.createElement('div');
-    positionEl.className = 'token-result-position';
-    positionEl.textContent = tokenResult.queuePosition
-      ? `Position ${tokenResult.queuePosition} in queue`
-      : 'Calculating position...';
-
-    card.appendChild(labelEl);
-    card.appendChild(numberEl);
-    card.appendChild(positionEl);
-
-    const servicesEl = document.createElement('div');
-    servicesEl.className = 'token-result-services';
-
-    const servicesTitle = document.createElement('div');
-    servicesTitle.className = 'token-result-services-title';
-    servicesTitle.textContent = 'Selected Services';
-    servicesEl.appendChild(servicesTitle);
-
-    const servicesList = tokenResult.selectedServices || [];
-    servicesList.forEach((service) => {
-      const item = document.createElement('div');
-      item.className = 'token-result-service-item';
-      item.textContent = '✓ ' + service.name;
-      servicesEl.appendChild(item);
-    });
-
-    card.appendChild(servicesEl);
-
-    if (servicesList.length > 1) {
-      const primaryEl = document.createElement('div');
-      primaryEl.className = 'token-result-primary-queue';
-      primaryEl.textContent = 'Primary Queue: ' + (tokenResult.primaryServiceName || servicesList[0].name);
-      card.appendChild(primaryEl);
-    }
+    card.innerHTML = `
+      <div class="token-item-top">
+        <div>
+          <div class="token-item-number">${escapeHtml(tokenResult.tokenNumber)}</div>
+          <div class="token-item-service">${escapeHtml(tokenResult.primaryServiceName || 'Queue Entry')}</div>
+        </div>
+        <div class="token-item-actions">
+          <span class="token-status-pill">Active</span>
+        </div>
+      </div>
+      
+      <div class="ticket-divider"></div>
+      
+      <div class="token-item-meta">
+        <div>
+          <strong>Queue Position</strong>
+          <span>${positionText}</span>
+        </div>
+        <div>
+          <strong>Assigned Counter</strong>
+          <span>${escapeHtml(counterText)}</span>
+        </div>
+        <div>
+          <strong>Services</strong>
+          <span>${(tokenResult.selectedServices || []).map(s => escapeHtml(s.name)).join(', ')}</span>
+        </div>
+        <div>
+          <strong>Est. Service Time</strong>
+          <span>${totalEstimate} mins</span>
+        </div>
+      </div>
+    `;
   }
 
   tokenSummaryList.appendChild(card);
@@ -1317,7 +1358,14 @@ function playNotificationSound() {
 // EVENT LISTENERS
 // ============================================================
 
-serviceSelectForm.addEventListener('submit', handleGenerateTokens);
+serviceSelectForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+  if (customerDetailSettings.enabled && !customerStepCompleted) {
+    continueToServicesStep();
+  } else {
+    handleGenerateTokens(e);
+  }
+});
 bindPressAction(generateTokensBtn, handleGenerateTokens);
 bindPressAction(continueToServicesBtn, continueToServicesStep);
 
@@ -1360,6 +1408,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (servicesStep && !customerDetailSettings.enabled) {
     servicesStep.classList.remove('hidden');
   }
+  resetInactivityTimer();
   showMessage('Welcome! Select one or more services.', 'info');
 });
 

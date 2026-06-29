@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Waitless Command Center</title>
+  <link rel="stylesheet" href="../css/global.css" />
+  <link rel="stylesheet" href="../css/dashboard.css" />
+  <link rel="stylesheet" href="../css/queue-manager.css" />
+  <link rel="stylesheet" href="../shared/css/unified-ui.css" />
+</head>
+<body>
+  <!-- Sentinel: prevents index-ui.js from inserting a conflicting global topbar -->
+  <div class="wl-topbar" style="display:none!important" aria-hidden="true"></div>
+  <div class="dash-shell">
+    <!-- ===== SIDEBAR ===== -->
+    <aside class="dash-sidebar" id="dash-sidebar">
+      <div class="dash-sidebar-brand">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect width="24" height="24" rx="6" fill="#4f46e5"/><path d="M6 12h12" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <span class="dash-sidebar-title">Waitless</span>
+      </div>
+
+      <nav class="dash-sidebar-nav" aria-label="Workspace navigation">
+        <div class="dash-nav-section-label">Workspaces & Controls</div>
+        <a href="dashboard.html" class="dash-nav-link active" data-page="dashboard">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+          Dashboard
+        </a>
+        <a href="queue.html" class="dash-nav-link" data-page="queue">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>
+          Live Queue
+        </a>
+        <a href="counters.html" class="dash-nav-link" data-page="counters">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>
+          Counters
+        </a>
+        <a href="services.html" class="dash-nav-link" data-page="services">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+          Services
+        </a>
+        <a href="assignments.html" class="dash-nav-link" data-page="assignments">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+          Assignments
+        </a>
+        <a href="scheduled-services.html" class="dash-nav-link" data-page="scheduled-services">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Schedules
+        </a>
+        <a href="bookings.html" class="dash-nav-link" data-page="bookings">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+          Bookings
+        </a>
+        <a href="kiosks.html" class="dash-nav-link" data-page="kiosks">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18"/></svg>
+          Kiosks
+        </a>
+        <a href="customize.html" class="dash-nav-link" data-page="customize">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r="2.5"/><path d="M17 2H7a5 5 0 00-5 5v10a5 5 0 005 5h10a5 5 0 005-5V7a5 5 0 00-5-5z"/></svg>
+          Customize
+        </a>
+        <a href="settings.html" class="dash-nav-link" data-page="settings">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Open Hours
+        </a>
+        <a href="reports.html" class="dash-nav-link" data-page="reports">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          Reports
+        </a>
+        <a href="../display/counter-display.html" class="dash-nav-link" target="_blank" data-page="display">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          Staff Display
+        </a>
+      </nav>
+
+      <!-- Organization Info (collapsed) -->
+      <div class="dash-sidebar-org">
+        <button class="dash-org-toggle" id="org-toggle" type="button" aria-expanded="false">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span id="org-name-short">Organization</span>
+          <svg class="dash-org-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="dash-org-details" id="org-details" style="display:none;">
+          <div id="status-info">
+            <div class="dash-org-loading">Loading…</div>
+          </div>
+        </div>
+      </div>
+
+      <button id="signout" class="dash-signout-btn" type="button">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Sign Out
+      </button>
+    </aside>
+
+    <!-- Mobile sidebar toggle -->
+    <button class="dash-mobile-toggle" id="mobile-toggle" type="button" aria-label="Toggle menu">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <main class="dash-main">
+      <div class="dash-main-inner">
+
+        <!-- Header -->
+        <div class="dash-page-header">
+          <div>
+            <h1 class="dash-page-title">Command Center</h1>
+            <p class="dash-page-sub">Real-time operational overview of your queue system</p>
+          </div>
+          <div class="dash-header-meta">
+            <span class="dash-live-indicator" id="live-indicator">
+              <span class="dash-live-dot"></span>
+              LIVE
+            </span>
+            <span class="dash-clock" id="dash-clock"></span>
+          </div>
+        </div>
+
+        <div id="message" class="message" role="status" aria-live="polite" style="display:none; margin-bottom: 1.5rem;"></div>
+
+        <!-- 1. WARNINGS PANEL (TOP) -->
+        <section class="dash-section dash-warnings-section" id="warnings-section" style="display:none;">
+          <div class="dash-section-header">
+            <h2 class="dash-section-title">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              Warnings
+            </h2>
+            <span class="dash-warning-count" id="warning-count">0</span>
+          </div>
+          <div class="dash-warnings-list" id="warnings-list">
+            <!-- JS-populated warning items -->
+          </div>
+        </section>
+
+        <!-- Queue Alerts -->
+        <section class="dash-section dash-alerts-section" id="alerts-section" style="display:none;">
+          <div class="dash-section-header">
+            <h2 class="dash-section-title">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+              Queue Alerts
+            </h2>
+            <span class="dash-alert-count" id="alert-count">0</span>
+          </div>
+          <div class="dash-alerts-list" id="alerts-list">
+            <!-- JS-populated alert items -->
+          </div>
+        </section>
+
+        <!-- 2. LIVE SYSTEM SUMMARY -->
+        <section class="dash-section">
+          <div class="dash-section-header">
+            <h2 class="dash-section-title">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              Live System Summary
+            </h2>
+          </div>
+          <div class="dash-stats-strip">
+            <div class="dash-stat-card">
+              <div class="dash-stat-icon dash-stat-icon-queue">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+              </div>
+              <div class="dash-stat-body">
+                <div class="dash-stat-value" id="stat-live-queue-count">0</div>
+                <div class="dash-stat-label">Live Queue</div>
+              </div>
+            </div>
+            <div class="dash-stat-card">
+              <div class="dash-stat-icon dash-stat-icon-counters">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>
+              </div>
+              <div class="dash-stat-body">
+                <div class="dash-stat-value" id="stat-counters-count">0</div>
+                <div class="dash-stat-label">Counters</div>
+              </div>
+            </div>
+            <div class="dash-stat-card">
+              <div class="dash-stat-icon dash-stat-icon-services">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+              </div>
+              <div class="dash-stat-body">
+                <div class="dash-stat-value" id="stat-services-count">0</div>
+                <div class="dash-stat-label">Services</div>
+              </div>
+            </div>
+            <div class="dash-stat-card">
+              <div class="dash-stat-icon dash-stat-icon-kiosks">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18"/></svg>
+              </div>
+              <div class="dash-stat-body">
+                <div class="dash-stat-value" id="stat-kiosks-count">0</div>
+                <div class="dash-stat-label">Active KIOSKs</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 3. LIVE QUEUE TABLE -->
+        <section class="dash-section">
+          <div class="dash-section-header">
+            <h2 class="dash-section-title">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>
+              Live Queue
+            </h2>
+            <span class="dash-badge" id="queue-total-badge">0 tokens</span>
+          </div>
+          <div class="dash-table-wrap">
+            <table class="dash-table" id="live-queue-table">
+              <thead>
+                <tr>
+                  <th>Token #</th>
+                  <th>Service</th>
+                  <th>Counter</th>
+                  <th>Status</th>
+                  <th>Wait Time</th>
+                  <th>Customer</th>
+                </tr>
+              </thead>
+              <tbody id="live-queue-tbody">
+                <tr><td colspan="6" class="dash-table-empty">No active tokens in queue</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 4. CUSTOMERS PER SERVICE -->
+        <section class="dash-section">
+          <div class="dash-section-header">
+            <h2 class="dash-section-title">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+              Customers per Service
+            </h2>
+          </div>
+          <div class="dash-service-cards" id="service-customer-cards">
+            <div class="dash-empty-state">No services configured</div>
+          </div>
+        </section>
+
+        <!-- 5. COUNTER PERFORMANCE -->
+        <section class="dash-section">
+          <div class="dash-section-header">
+            <h2 class="dash-section-title">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+              Counter Performance
+            </h2>
+          </div>
+          <div class="dash-table-wrap">
+            <table class="dash-table" id="counter-perf-table">
+              <thead>
+                <tr>
+                  <th>Counter</th>
+                  <th>Status</th>
+                  <th>Currently Serving</th>
+                  <th>Waiting</th>
+                  <th>Served Today</th>
+                  <th>Avg Serve Time</th>
+                </tr>
+              </thead>
+              <tbody id="counter-perf-tbody">
+                <tr><td colspan="6" class="dash-table-empty">No counters configured</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 6. DAY SUMMARY -->
+        <section class="dash-section">
+          <div class="dash-section-header">
+            <h2 class="dash-section-title">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              Day Summary
+            </h2>
+            <div class="dash-date-picker-wrap">
+              <button class="dash-date-nav" id="date-prev" type="button" aria-label="Previous day">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+              </button>
+              <input type="date" id="summary-date" class="dash-date-input" />
+              <button class="dash-date-nav" id="date-next" type="button" aria-label="Next day">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Summary stats -->
+          <div class="dash-summary-stats" id="day-summary-stats">
+            <div class="dash-summary-card">
+              <div class="dash-summary-val" id="sum-total-tokens">0</div>
+              <div class="dash-summary-label">Total Tokens</div>
+            </div>
+            <div class="dash-summary-card">
+              <div class="dash-summary-val" id="sum-avg-wait">0m</div>
+              <div class="dash-summary-label">Avg Wait Time</div>
+            </div>
+            <div class="dash-summary-card">
+              <div class="dash-summary-val" id="sum-avg-serve">0m</div>
+              <div class="dash-summary-label">Avg Serve Time</div>
+            </div>
+            <div class="dash-summary-card">
+              <div class="dash-summary-val" id="sum-peak-hour">—</div>
+              <div class="dash-summary-label">Peak Hour</div>
+            </div>
+          </div>
+
+          <!-- Peak hours per counter -->
+          <div class="dash-peak-table-wrap">
+            <h3 class="dash-subsection-title">Peak Hours by Counter</h3>
+            <div class="dash-table-wrap">
+              <table class="dash-table" id="peak-hours-table">
+                <thead>
+                  <tr>
+                    <th>Counter</th>
+                    <th>Peak Hour</th>
+                    <th>Tokens in Peak</th>
+                    <th>Total Served</th>
+                  </tr>
+                </thead>
+                <tbody id="peak-hours-tbody">
+                  <tr><td colspan="4" class="dash-table-empty">Select a date to view summary</td></tr>
+                </tbody>
+              </table>
+          </div>
+        </section>
+
+        <!-- Mobile Access QR Card -->
+        <section class="dash-section qm-org-qr-card" style="margin-top: 2rem;">
+          <div class="qm-org-qr-copy">
+            <p class="eyebrow" style="color: var(--waitless-primary); font-weight: 800; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 4px 0;">Mobile access</p>
+            <h2 style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.25rem; font-weight: 800; color: var(--waitless-text); margin: 0 0 8px 0;">Organization QR</h2>
+            <p class="lead" style="color: var(--waitless-muted); font-size: 0.9rem; line-height: 1.5; margin: 0;">Scan this QR with the new mobile app to open this organization's kiosk menu.</p>
+          </div>
+          <div class="qm-org-qr-body" style="margin-top: 1rem;">
+            <div id="org-qr-code" class="qm-org-qr-code" aria-label="Organization QR code"></div>
+            <div class="qm-org-qr-meta" style="margin-top: 0.75rem;">
+              <div id="org-qr-url" class="qm-org-qr-url" style="font-size: 0.85rem; color: var(--waitless-muted); word-break: break-all; margin-bottom: 0.5rem;"></div>
+              <button id="copy-org-qr-link" class="dash-badge" type="button" style="cursor: pointer; padding: 6px 14px;">Copy mobile link</button>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script>window.WAITLESS_DASHBOARD_ROUTES = { queue: 'queue.html' };</script>
+  <script src="../js/config/firebase-config.js"></script>
+  <script src="../shared/js/role-guard.js"></script>
+  <script>WaitlessRoleGuard.requireRole({ allowed: ['business', 'admin'] });</script>
+  <script src="../js/dashboard/dashboard.js"></script>
+  <script src="../shared/js/index-ui.js"></script>
+</body>
+</html>

@@ -1,0 +1,889 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+  --waitless-bg: #f8fafc;
+  --waitless-surface: rgba(255, 255, 255, 0.82);
+  --waitless-surface-soft: #f1f5f9;
+  --waitless-text: #0f172a;
+  --waitless-muted: #64748b;
+  --waitless-line: rgba(226, 232, 240, 0.8);
+  --waitless-primary: #4f46e5;
+  --waitless-primary-hover: #4338ca;
+  --waitless-primary-dark: #3730a3;
+  --waitless-success: #10b981;
+  --waitless-danger: #ef4444;
+  --waitless-warning: #f59e0b;
+  --waitless-input-bg: #ffffff;
+  --waitless-radius: 20px;
+  --waitless-radius-sm: 12px;
+  --waitless-shadow: 0 20px 40px -15px rgba(15, 23, 42, 0.06), 0 0 0 1px rgba(15, 23, 42, 0.02);
+  --waitless-shadow-sm: 0 8px 20px -6px rgba(15, 23, 42, 0.04), 0 0 0 1px rgba(15, 23, 42, 0.01);
+  --waitless-shadow-lg: 0 30px 60px -15px rgba(15, 23, 42, 0.12), 0 0 0 1px rgba(15, 23, 42, 0.03);
+  font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --bg: var(--waitless-bg) !important;
+  --card: var(--waitless-surface) !important;
+  --accent: var(--waitless-primary) !important;
+  --muted: var(--waitless-muted) !important;
+  --text: var(--waitless-text) !important;
+  --wl-bg: var(--waitless-bg) !important;
+  --wl-surface: var(--waitless-surface) !important;
+  --wl-text: var(--waitless-text) !important;
+  --wl-muted: var(--waitless-muted) !important;
+  --wl-line: var(--waitless-line) !important;
+  --wl-primary: var(--waitless-primary) !important;
+  --wl-primary-dark: var(--waitless-primary-dark) !important;
+  --wl-shadow: var(--waitless-shadow) !important;
+}
+
+[data-theme="dark"] {
+  --waitless-bg: #0b0f19;
+  --waitless-surface: rgba(17, 24, 39, 0.82);
+  --waitless-surface-soft: #1f2937;
+  --waitless-text: #f3f4f6;
+  --waitless-muted: #9ca3af;
+  --waitless-line: rgba(75, 85, 99, 0.4);
+  --waitless-primary: #818cf8;
+  --waitless-primary-hover: #6366f1;
+  --waitless-primary-dark: #4f46e5;
+  --waitless-success: #34d399;
+  --waitless-danger: #f87171;
+  --waitless-warning: #fbbf24;
+  --waitless-input-bg: #1e293b;
+  --waitless-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  --waitless-shadow-sm: 0 8px 20px -6px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.02);
+  --waitless-shadow-lg: 0 30px 60px -15px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.08);
+  --bg: var(--waitless-bg) !important;
+  --card: var(--waitless-surface) !important;
+  --accent: var(--waitless-primary) !important;
+  --muted: var(--waitless-muted) !important;
+  --text: var(--waitless-text) !important;
+  --wl-bg: var(--waitless-bg) !important;
+  --wl-surface: var(--waitless-surface) !important;
+  --wl-text: var(--waitless-text) !important;
+  --wl-muted: var(--waitless-muted) !important;
+  --wl-line: var(--waitless-line) !important;
+  --wl-primary: var(--waitless-primary) !important;
+  --wl-primary-dark: var(--waitless-primary-dark) !important;
+  --wl-shadow: var(--waitless-shadow) !important;
+}
+
+[data-theme="dark"] body {
+  background:
+    radial-gradient(circle at 10% 20%, rgba(129, 140, 248, 0.08) 0%, transparent 40rem),
+    radial-gradient(circle at 90% 80%, rgba(52, 211, 153, 0.05) 0%, transparent 45rem),
+    var(--waitless-bg) !important;
+}
+
+html {
+  background: var(--waitless-bg);
+  scroll-behavior: smooth;
+}
+
+.wl-topbar {
+  background: var(--waitless-surface) !important;
+  border-bottom: 1px solid var(--waitless-line) !important;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.06) 0%, transparent 40rem),
+    radial-gradient(circle at 90% 80%, rgba(16, 185, 129, 0.04) 0%, transparent 45rem),
+    var(--waitless-bg) !important;
+  color: var(--waitless-text);
+  font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: var(--waitless-primary);
+  text-decoration: none;
+  transition: color 0.18s ease;
+}
+
+a:hover {
+  color: var(--waitless-primary-dark);
+}
+
+h1, h2, h3, h4, h5, h6,
+.brand h1, .wl-brand, .wl-btn, button, .tab, .qm-tab, .eyebrow, .wl-eyebrow, .wl-card-kicker, .wl-role-card strong {
+  font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+}
+
+.container,
+.app-shell,
+.admin-shell {
+  width: calc(100% - 3rem) !important;
+  max-width: 100% !important;
+  margin-inline: auto !important;
+  padding: 2rem 0 4rem !important;
+}
+
+.brand,
+.admin-brand,
+.app-hero,
+.site-header,
+.wl-topbar {
+  border-radius: var(--waitless-radius);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin: 1.5rem 0 1.5rem;
+}
+
+.brand h1,
+.admin-brand h1,
+.app-hero h1,
+.wl-page-head h1,
+.wl-hero h1 {
+  color: var(--waitless-text);
+  letter-spacing: -0.03em;
+  font-weight: 800;
+}
+
+.brand svg {
+  border-radius: 12px;
+  box-shadow: var(--waitless-shadow-sm);
+}
+
+.lead,
+.muted,
+.small,
+.section-sub,
+.admin-hero-lead,
+.card-copy p,
+.wl-muted {
+  color: var(--waitless-muted) !important;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.eyebrow,
+.wl-eyebrow,
+.wl-card-kicker {
+  color: var(--waitless-primary) !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.1em !important;
+  text-transform: uppercase !important;
+  font-size: 0.75rem !important;
+}
+
+.auth-card,
+.dashboard-card,
+.panel,
+.admin-panel-card,
+.summary-card,
+.request-column,
+.org-manage-panel,
+.app-card,
+.qm-org-qr-card,
+.qm-layout-card,
+.qm-chart-panel,
+.qm-customize-card,
+.stats-card,
+.token-overlay-panel,
+.modal-panel,
+.wl-panel,
+.wl-role-card,
+.wl-empty {
+  background: var(--waitless-surface) !important;
+  border: 1px solid var(--waitless-line) !important;
+  border-radius: var(--waitless-radius) !important;
+  box-shadow: var(--waitless-shadow) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.25s ease !important;
+}
+
+.auth-card,
+.dashboard-card,
+.panel,
+.app-card,
+.qm-layout-card,
+.admin-panel-card {
+  padding: clamp(1.25rem, 3vw, 2rem) !important;
+}
+
+.auth-card:hover,
+.dashboard-card:hover,
+.app-card:hover,
+.admin-panel-card:hover,
+.stats-card:hover,
+.qm-chart-panel:hover {
+  border-color: rgba(79, 70, 229, 0.25) !important;
+  box-shadow: var(--waitless-shadow-lg) !important;
+}
+
+input,
+select,
+textarea,
+.wl-input {
+  min-height: 48px;
+  padding: 10px 16px !important;
+  border: 1px solid var(--waitless-line) !important;
+  border-radius: var(--waitless-radius-sm) !important;
+  background: var(--waitless-input-bg) !important;
+  color: var(--waitless-text) !important;
+  font: inherit !important;
+  outline: none;
+  box-shadow: inset 0 2px 4px rgba(15, 23, 42, 0.01) !important;
+  transition: border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+.wl-input:focus {
+  border-color: var(--waitless-primary) !important;
+  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.12), inset 0 2px 4px rgba(15, 23, 42, 0.01) !important;
+}
+
+button,
+.primary,
+.secondary,
+.ghost,
+.btn,
+.button,
+.wl-btn,
+.help-action,
+.qm-tab,
+.login-button,
+a.primary,
+a.secondary {
+  border-radius: var(--waitless-radius-sm) !important;
+  font-weight: 700 !important;
+  font-family: inherit !important;
+  padding: 10px 20px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  border: 1px solid transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease !important;
+}
+
+button:hover,
+.btn:hover,
+.button:hover,
+.wl-btn:hover,
+a.primary:hover,
+a.secondary:hover {
+  transform: translateY(-1.5px);
+}
+
+button:active,
+.btn:active,
+.button:active,
+.wl-btn:active {
+  transform: translateY(0.5px);
+}
+
+.primary,
+.btn-primary,
+.button-primary,
+.wl-btn.primary,
+button.primary,
+a.primary,
+.help-action,
+.login-button {
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%) !important;
+  border: none !important;
+  color: #ffffff !important;
+  box-shadow: 0 6px 20px rgba(79, 70, 229, 0.2) !important;
+}
+
+.primary:hover,
+.btn-primary:hover,
+.button-primary:hover,
+.wl-btn.primary:hover,
+button.primary:hover,
+a.primary:hover,
+.help-action:hover,
+.login-button:hover {
+  background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%) !important;
+  box-shadow: 0 8px 24px rgba(79, 70, 229, 0.35) !important;
+}
+
+.secondary,
+.ghost,
+.btn-outline,
+.button-secondary,
+.wl-btn:not(.primary),
+button:not(.primary):not(.pin-button):not(.help-button):not(.nav-toggle):not(.qm-migrate-btn):not(.btn-delete):not(.approve-btn):not(.reject-btn),
+a.secondary {
+  background: var(--waitless-surface) !important;
+  border: 1px solid var(--waitless-line) !important;
+  color: var(--waitless-text) !important;
+  box-shadow: var(--waitless-shadow-sm) !important;
+}
+
+.secondary:hover,
+.ghost:hover,
+.btn-outline:hover,
+.button-secondary:hover,
+.wl-btn:not(.primary):hover,
+button:not(.primary):not(.pin-button):not(.help-button):not(.nav-toggle):not(.qm-migrate-btn):not(.btn-delete):not(.approve-btn):not(.reject-btn):hover,
+a.secondary:hover {
+  background: var(--waitless-surface-soft) !important;
+  border-color: rgba(79, 70, 229, 0.2) !important;
+}
+
+.message {
+  border-radius: var(--waitless-radius-sm) !important;
+  border: 1px solid var(--waitless-line);
+  padding: 12px;
+  font-size: 0.9rem;
+}
+
+.tabs,
+.qm-nav,
+.qm-sidebar-nav {
+  background: var(--waitless-surface-soft) !important;
+  border: 1px solid var(--waitless-line) !important;
+  border-radius: var(--waitless-radius) !important;
+  padding: 0.5rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+}
+
+.tab,
+.qm-tab {
+  border: 0 !important;
+  color: var(--waitless-muted) !important;
+  background: transparent !important;
+  border-radius: var(--waitless-radius-sm) !important;
+  padding: 12px 18px !important;
+  font-weight: 600 !important;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.tab:hover,
+.qm-tab:hover {
+  color: var(--waitless-text) !important;
+  background: rgba(79, 70, 229, 0.04) !important;
+}
+
+.tab.active,
+.qm-tab.active,
+.qm-tab[aria-current="page"] {
+  background: var(--waitless-surface) !important;
+  color: var(--waitless-primary) !important;
+  box-shadow: var(--waitless-shadow-sm) !important;
+  font-weight: 700 !important;
+}
+
+.qm-layout-card {
+  display: grid;
+  grid-template-columns: minmax(200px, 260px) minmax(0, 1fr);
+  gap: 2rem;
+  align-items: start;
+}
+
+.qm-sidebar,
+.qm-main {
+  min-width: 0;
+}
+
+.qm-sidebar-nav {
+  position: sticky;
+  top: 7rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.qm-content {
+  background: transparent !important;
+}
+
+.qm-form,
+.scan-actions,
+.form-actions,
+.action-buttons,
+.admin-hero-actions,
+.qm-actions-bar,
+.wl-actions {
+  gap: 1rem !important;
+}
+
+.qm-list,
+.request-list,
+.org-card-grid,
+.kiosk-list,
+#queue-status,
+#online-bookings-list {
+  gap: 1rem;
+}
+
+.request-column-head,
+.panel-heading,
+.card-header,
+.card-header-row,
+.org-manage-header {
+  border-bottom: 1px solid var(--waitless-line);
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.admin-summary-grid,
+.dashboard-grid,
+.stats-grid,
+.qm-chart-grid,
+.wl-dashboard-grid,
+.wl-card-grid {
+  gap: 1.25rem !important;
+}
+
+.stats-card {
+  padding: 1.5rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+}
+
+.stats-card h4 {
+  margin: 0 !important;
+  font-size: 0.85rem !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  color: var(--waitless-muted) !important;
+}
+
+.stats-card .stats-card-value,
+.stats-card .value {
+  font-size: 2.25rem !important;
+  font-weight: 900 !important;
+  color: var(--waitless-primary) !important;
+  margin: 0.5rem 0 0.25rem 0 !important;
+  line-height: 1.1 !important;
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+.stats-card p,
+.stats-card .small {
+  margin: 0 !important;
+  font-size: 0.85rem !important;
+  color: var(--waitless-muted) !important;
+}
+
+.app-hero,
+.admin-hero,
+.qm-org-qr-card {
+  background: linear-gradient(135deg, rgba(239, 246, 255, 0.6) 0%, rgba(255, 255, 255, 0.8) 100%) !important;
+  border: 1px solid var(--waitless-line) !important;
+  box-shadow: var(--waitless-shadow-sm) !important;
+  padding: 2rem !important;
+  position: relative;
+  overflow: hidden;
+}
+
+.app-hero::before,
+.admin-hero::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -20%;
+  width: 250px;
+  height: 250px;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%);
+  z-index: 0;
+}
+
+.token-overlay-backdrop,
+.modal-backdrop,
+.org-manage-backdrop {
+  background: rgba(15, 23, 42, 0.4) !important;
+  backdrop-filter: blur(12px);
+}
+
+.pin-button {
+  border-radius: 18px !important;
+}
+
+.help-widget {
+  font-family: inherit;
+}
+
+.help-button {
+  background: var(--waitless-primary) !important;
+  color: white !important;
+  box-shadow: var(--waitless-shadow) !important;
+}
+
+.help-panel {
+  border-radius: var(--waitless-radius) !important;
+  border: 1px solid var(--waitless-line) !important;
+  box-shadow: var(--waitless-shadow) !important;
+}
+
+@media (max-width: 860px) {
+  .qm-layout-card {
+    grid-template-columns: 1fr;
+  }
+
+  .container,
+  .app-shell,
+  .admin-shell {
+    width: calc(100% - 1.5rem) !important;
+  }
+
+  .qm-nav,
+  .qm-sidebar-nav {
+    display: flex !important;
+    flex-direction: row !important;
+    overflow-x: auto;
+    white-space: nowrap;
+    gap: 8px !important;
+  }
+  
+  .qm-tab {
+    width: auto !important;
+  }
+}
+
+/* Index-style unification layer */
+
+body.waitless-index-ui {
+  padding-top: 0 !important;
+}
+
+.waitless-global-topbar {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 1rem !important;
+  width: calc(100% - 3rem) !important;
+  max-width: 100% !important;
+  margin: 1.5rem auto 0 !important;
+  padding: 0.85rem 1.5rem !important;
+  position: sticky !important;
+  top: 1rem !important;
+  z-index: 1000 !important;
+  background: var(--waitless-surface) !important;
+  border: 1px solid var(--waitless-line) !important;
+  border-radius: 24px !important;
+  box-shadow: 0 10px 30px -10px rgba(15, 23, 42, 0.08) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+}
+
+.waitless-global-topbar .wl-brand,
+.wl-topbar .wl-brand {
+  color: var(--waitless-text) !important;
+}
+
+.waitless-global-topbar .wl-brand img,
+.wl-topbar .wl-brand img {
+  width: 38px !important;
+  height: 38px !important;
+  object-fit: contain !important;
+  border-radius: 10px !important;
+}
+
+.waitless-global-topbar .wl-topnav,
+.wl-topbar .wl-topnav {
+  display: flex !important;
+  align-items: center !important;
+  gap: 1.5rem !important;
+  color: var(--waitless-muted) !important;
+  font-weight: 600 !important;
+}
+
+.waitless-global-topbar .wl-topnav a,
+.wl-topbar .wl-topnav a {
+  color: var(--waitless-muted) !important;
+  text-decoration: none !important;
+  transition: color 0.2s ease;
+}
+
+.waitless-global-topbar .wl-topnav a:hover,
+.wl-topbar .wl-topnav a:hover {
+  color: var(--waitless-primary) !important;
+}
+
+body.waitless-index-ui > .container,
+body.waitless-index-ui > .app-shell,
+body.waitless-index-ui > .admin-shell,
+body.waitless-index-ui > .wl-shell,
+body.waitless-index-ui > main {
+  margin-top: 1.5rem !important;
+}
+
+body.waitless-index-ui .container > .brand:first-child,
+body.waitless-index-ui .app-shell > .app-hero:first-child,
+body.waitless-index-ui .admin-shell > .admin-hero:first-child {
+  background: var(--waitless-surface) !important;
+  border: 1px solid var(--waitless-line) !important;
+  border-radius: 28px !important;
+  box-shadow: var(--waitless-shadow) !important;
+  padding: clamp(1.5rem, 3vw, 2.5rem) !important;
+}
+
+body.waitless-index-ui .container > .brand:first-child {
+  justify-content: flex-start !important;
+}
+
+body.waitless-index-ui .brand h1,
+body.waitless-index-ui .app-hero h1,
+body.waitless-index-ui .admin-hero h1 {
+  font-size: clamp(2rem, 4vw, 3rem) !important;
+  line-height: 1.1 !important;
+  margin: 0 !important;
+}
+
+.auth-card,
+.dashboard-card,
+.panel,
+.admin-panel-card,
+.app-card,
+.qm-layout-card,
+.org-manage-panel,
+.token-overlay-panel {
+  border-radius: 28px !important;
+}
+
+.qm-layout-card {
+  padding: 1.5rem !important;
+}
+
+.qm-main > .qm-content {
+  padding: clamp(0.5rem, 1.5vw, 1rem) !important;
+}
+
+.qm-content > h2,
+.app-card h2,
+.panel h2,
+.admin-panel-card h2,
+.dashboard-card .card-title {
+  letter-spacing: -0.03em !important;
+  color: var(--waitless-text) !important;
+  font-weight: 800 !important;
+  margin-top: 0;
+}
+
+.qm-item,
+.token-card,
+.request-card,
+.org-card,
+.kiosk-item,
+.booking-card,
+.booking-org-card,
+.service-card,
+.counter-card {
+  background: var(--waitless-surface) !important;
+  border: 1px solid var(--waitless-line) !important;
+  border-radius: 18px !important;
+  box-shadow: var(--waitless-shadow-sm) !important;
+  padding: 16px !important;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s ease !important;
+}
+
+.qm-item:hover,
+.token-card:hover,
+.request-card:hover,
+.org-card:hover,
+.kiosk-item:hover,
+.booking-card:hover,
+.booking-org-card:hover,
+.service-card:hover,
+.counter-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(79, 70, 229, 0.2) !important;
+  box-shadow: var(--waitless-shadow) !important;
+}
+
+.admin-layout,
+.request-board,
+.dashboard-grid,
+.app-grid-card,
+.qm-org-qr-body {
+  align-items: stretch !important;
+}
+
+.wl-shell {
+  background: transparent !important;
+}
+
+.wl-sidebar {
+  background: #0f172a !important;
+  color: #e2e8f0 !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  border-radius: 28px !important;
+  box-shadow: var(--waitless-shadow-lg) !important;
+  margin: 1.25rem !important;
+  min-height: calc(100vh - 2.5rem) !important;
+  padding: 1.5rem !important;
+}
+
+.wl-sidebar .wl-brand {
+  color: #ffffff !important;
+}
+
+.wl-sidebar-nav a {
+  color: #94a3b8 !important;
+  transition: all 0.2s ease;
+}
+
+.wl-sidebar-nav a[aria-current="page"],
+.wl-sidebar-nav a:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #ffffff !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+.wl-main {
+  padding-top: 1.25rem !important;
+}
+
+.wl-page-head {
+  background: linear-gradient(135deg, rgba(239, 246, 255, 0.7) 0%, rgba(255, 255, 255, 0.9) 100%) !important;
+  border: 1px solid var(--waitless-line) !important;
+  border-radius: 28px !important;
+  box-shadow: var(--waitless-shadow) !important;
+  padding: 1.5rem 2rem !important;
+}
+
+table {
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  width: 100% !important;
+}
+
+th {
+  background: var(--waitless-surface-soft) !important;
+  color: var(--waitless-text) !important;
+  font-weight: 700 !important;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  border-bottom: 2px solid var(--waitless-line) !important;
+  padding: 14px 16px !important;
+}
+
+td {
+  border-bottom: 1px solid var(--waitless-line) !important;
+  padding: 14px 16px !important;
+  color: var(--waitless-muted) !important;
+}
+
+tr:hover td {
+  color: var(--waitless-text) !important;
+  background: rgba(79, 70, 229, 0.02);
+}
+
+th:first-child {
+  border-top-left-radius: 12px;
+}
+
+th:last-child {
+  border-top-right-radius: 12px;
+}
+
+tr:last-child td:first-child {
+  border-bottom-left-radius: 12px;
+}
+
+tr:last-child td:last-child {
+  border-bottom-right-radius: 12px;
+}
+
+@media (max-width: 760px) {
+  .waitless-global-topbar {
+    position: static !important;
+    flex-wrap: wrap !important;
+    padding: 1rem !important;
+  }
+
+  .waitless-global-topbar .wl-topnav,
+  .wl-topbar .wl-topnav {
+    width: 100% !important;
+    justify-content: space-around !important;
+    font-size: 0.95rem !important;
+    margin-top: 0.5rem;
+  }
+
+  .wl-shell {
+    display: block !important;
+  }
+
+  .wl-sidebar {
+    min-height: auto !important;
+    margin: 1rem 0 !important;
+  }
+}
+
+/* 15. Theme Toggle Button & Layout Controls */
+.waitless-theme-toggle {
+  background: transparent !important;
+  border: 1px solid var(--waitless-line) !important;
+  color: var(--waitless-text) !important;
+  width: 40px !important;
+  height: 40px !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 50% !important;
+  cursor: pointer !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: var(--waitless-shadow-sm) !important;
+}
+
+.waitless-theme-toggle svg {
+  stroke: var(--waitless-text) !important;
+  fill: none !important;
+}
+
+.waitless-theme-toggle:hover {
+  background: var(--waitless-surface-soft) !important;
+  transform: scale(1.05) !important;
+}
+
+/* Show/hide icons depending on active theme */
+[data-theme="dark"] .waitless-theme-toggle .theme-icon-moon {
+  display: none !important;
+}
+[data-theme="dark"] .waitless-theme-toggle .theme-icon-sun {
+  display: block !important;
+}
+[data-theme="light"] .waitless-theme-toggle .theme-icon-moon {
+  display: block !important;
+}
+[data-theme="light"] .waitless-theme-toggle .theme-icon-sun {
+  display: none !important;
+}
+
+/* Floating fallback theme switch if no topbar/header is present */
+body > .waitless-theme-toggle {
+  position: fixed !important;
+  bottom: 2rem !important;
+  right: 2rem !important;
+  z-index: 9999 !important;
+  background: var(--waitless-surface) !important;
+  box-shadow: var(--waitless-shadow-lg) !important;
+  border: 1px solid var(--waitless-line) !important;
+}
+
+/* 16. Landing Page Redesign Overrides */
+.wl-role-card.primary {
+  background: var(--waitless-surface) !important;
+}
+
+/* 17. Dark Mode Overrides for Hero & QR Cards */
+[data-theme="dark"] .app-hero,
+[data-theme="dark"] .admin-hero,
+[data-theme="dark"] .qm-org-qr-card {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.5) 0%, var(--waitless-surface) 100%) !important;
+}

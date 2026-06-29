@@ -890,6 +890,27 @@ function renderScheduledServices(services) {
     return;
   }
 
+  // Update Stats KPI widgets
+  const updateStats = () => {
+    let countTotal = entries.length;
+    let countActive = 0;
+    let countOnline = 0;
+    
+    document.querySelectorAll('.qm-schedule-card').forEach(card => {
+      const isRestricted = !!card.querySelector('.scheduled-service-enabled')?.checked;
+      const isOnline = !!card.querySelector('.online-booking-enabled')?.checked;
+      if (isRestricted) countActive++;
+      if (isOnline) countOnline++;
+    });
+
+    const totalEl = $('#schedule-stat-total');
+    const activeEl = $('#schedule-stat-active');
+    const onlineEl = $('#schedule-stat-online');
+    if (totalEl) totalEl.textContent = countTotal;
+    if (activeEl) activeEl.textContent = countActive;
+    if (onlineEl) onlineEl.textContent = countOnline;
+  };
+
   const dayKeys = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
   const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -901,43 +922,171 @@ function renderScheduledServices(services) {
     const open = schedule.open || '09:00';
     const close = schedule.close || '17:00';
     const slotMinutes = Number(service?.bookingSlotMinutes || schedule.slotMinutes || service?.slotDurationMinutes || service?.estimatedTime || 30) || 30;
-    const item = document.createElement('div');
-    item.className = 'qm-item qm-schedule-item';
-    item.dataset.id = serviceId;
-    item.innerHTML = `
-      <div class="qm-item-info qm-schedule-info">
-        <div class="qm-item-name">${escapeHtml(service.name)}</div>
-        <div class="qm-item-meta">${escapeHtml(service.description || '(no description)')}</div>
-        <div class="qm-item-meta schedule-summary">${escapeHtml(formatServiceScheduleSummary(service))}</div>
+
+    const card = document.createElement('div');
+    card.className = `qm-item qm-schedule-card qm-schedule-item ${enabled ? '' : 'disabled-service'}`;
+    card.dataset.id = serviceId;
+
+    const categoryTag = service.category
+      ? `<span class="qm-schedule-category-badge">${escapeHtml(service.category)}</span>`
+      : '';
+
+    card.innerHTML = `
+      <div class="qm-schedule-left">
+        <div class="qm-schedule-info">
+          <div class="qm-schedule-title">
+            <span>${escapeHtml(service.name)}</span>
+            ${categoryTag}
+          </div>
+          <div class="qm-schedule-meta">${escapeHtml(service.description || '(no description)')}</div>
+          <div class="qm-schedule-summary-badge">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <span class="schedule-summary-text">${enabled ? escapeHtml(formatServiceScheduleSummary(service)) : 'Schedule restrictions disabled'}</span>
+          </div>
+        </div>
+
+        <div class="qm-schedule-controls">
+          <label class="qm-toggle-row">
+            <span class="qm-toggle-copy">
+              <span class="qm-toggle-title">Online Booking</span>
+              <span class="qm-toggle-desc">Allow online booking for this service</span>
+            </span>
+            <span class="qm-toggle-switch">
+              <input type="checkbox" class="online-booking-enabled" ${service.onlineBookingEnabled === false ? '' : 'checked'} />
+              <span class="qm-toggle-track" aria-hidden="true"></span>
+            </span>
+          </label>
+
+          <label class="qm-toggle-row">
+            <span class="qm-toggle-copy">
+              <span class="qm-toggle-title">Schedule Restrictions</span>
+              <span class="qm-toggle-desc">Limit service availability to specific times</span>
+            </span>
+            <span class="qm-toggle-switch">
+              <input type="checkbox" class="scheduled-service-enabled" ${enabled ? 'checked' : ''} />
+              <span class="qm-toggle-track" aria-hidden="true"></span>
+            </span>
+          </label>
+        </div>
       </div>
-      <div class="qm-schedule-form">
-        <label class="qm-checkbox-row qm-schedule-enabled-row">
-          <input type="checkbox" class="online-booking-enabled" ${service.onlineBookingEnabled === false ? '' : 'checked'} />
-          <span>Allow online booking for this service</span>
-        </label>
-        <label class="qm-checkbox-row qm-schedule-enabled-row">
-          <input type="checkbox" class="scheduled-service-enabled" ${enabled ? 'checked' : ''} />
-          <span>Service is scheduled only</span>
-        </label>
-        <div class="qm-schedule-hours">
-          <label>Open <input type="time" class="scheduled-service-open" value="${escapeHtml(open)}" /></label>
-          <label>Close <input type="time" class="scheduled-service-close" value="${escapeHtml(close)}" /></label>
+
+      <div class="qm-schedule-right">
+        <div>
+          <div class="qm-schedule-section-title">Availability Settings</div>
+          <div class="qm-schedule-time-grid">
+            <div class="qm-schedule-field">
+              <label>Open Time</label>
+              <div class="qm-schedule-field-input-wrapper">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <input type="time" class="scheduled-service-open" value="${escapeHtml(open)}" />
+              </div>
+            </div>
+            <div class="qm-schedule-field">
+              <label>Close Time</label>
+              <div class="qm-schedule-field-input-wrapper">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <input type="time" class="scheduled-service-close" value="${escapeHtml(close)}" />
+              </div>
+            </div>
+            <div class="qm-schedule-field">
+              <label>Slot Duration (min)</label>
+              <div class="qm-schedule-field-input-wrapper">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <input type="number" min="1" step="1" class="scheduled-service-slot-minutes" value="${escapeHtml(slotMinutes)}" />
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="qm-schedule-hours">
-          <label>Slot duration (minutes) <input type="number" min="1" step="1" class="scheduled-service-slot-minutes" value="${escapeHtml(slotMinutes)}" /></label>
-        </div>
-        <div class="qm-schedule-days">
-          ${dayKeys.map((day, index) => `
-            <label class="qm-schedule-day-pill">
-              <input type="checkbox" class="scheduled-service-day" value="${day}" ${days.includes(day) ? 'checked' : ''} />
-              <span>${dayLabels[index]}</span>
-            </label>
-          `).join('')}
+
+        <div>
+          <div class="qm-schedule-section-title">Days of Availability</div>
+          <div class="day-selector-grid">
+            ${dayKeys.map((day, index) => `
+              <label class="day-pill-label" title="${dayLabels[index]}">
+                <input type="checkbox" class="scheduled-service-day" value="${day}" ${days.includes(day) ? 'checked' : ''} />
+                <span>${dayLabels[index].substring(0, 3)}</span>
+              </label>
+            `).join('')}
+          </div>
         </div>
       </div>
     `;
-    list.appendChild(item);
+
+    // Dynamic Live Preview Updates inside Card
+    const updateCardSummary = () => {
+      const isRestricted = !!card.querySelector('.scheduled-service-enabled')?.checked;
+      const cardOpen = card.querySelector('.scheduled-service-open')?.value || '';
+      const cardClose = card.querySelector('.scheduled-service-close')?.value || '';
+      const cardDays = Array.from(card.querySelectorAll('.scheduled-service-day:checked')).map(i => i.value);
+      
+      const summaryTextEl = card.querySelector('.schedule-summary-text');
+      if (summaryTextEl) {
+        if (!isRestricted) {
+          summaryTextEl.textContent = 'Schedule restrictions disabled';
+        } else {
+          const mockService = {
+            schedule: {
+              days: cardDays,
+              open: cardOpen,
+              close: cardClose
+            }
+          };
+          summaryTextEl.textContent = formatServiceScheduleSummary(mockService);
+        }
+      }
+    };
+
+    // Listeners for Live Previews and KPI Updates
+    const restrictionToggle = card.querySelector('.scheduled-service-enabled');
+    const onlineToggle = card.querySelector('.online-booking-enabled');
+    const inputsToWatch = card.querySelectorAll('.scheduled-service-open, .scheduled-service-close, .scheduled-service-day');
+
+    if (restrictionToggle) {
+      restrictionToggle.addEventListener('change', (e) => {
+        card.classList.toggle('disabled-service', !e.target.checked);
+        updateCardSummary();
+        updateStats();
+      });
+    }
+
+    if (onlineToggle) {
+      onlineToggle.addEventListener('change', () => {
+        updateStats();
+      });
+    }
+
+    inputsToWatch.forEach(input => {
+      input.addEventListener('change', () => {
+        updateCardSummary();
+      });
+    });
+
+    list.appendChild(card);
   });
+
+  // Calculate and update stats initially
+  updateStats();
+
+  // Setup real-time search filtering logic
+  const searchInput = $('#schedule-search-input');
+  if (searchInput && !searchInput.dataset.hasListener) {
+    searchInput.dataset.hasListener = 'true';
+    searchInput.value = ''; // Reset search input on rendering
+    searchInput.addEventListener('input', (e) => {
+      const query = e.target.value.toLowerCase().trim();
+      const cards = document.querySelectorAll('.qm-schedule-card');
+      cards.forEach(card => {
+        const name = card.querySelector('.qm-schedule-title')?.textContent.toLowerCase() || '';
+        const desc = card.querySelector('.qm-schedule-meta')?.textContent.toLowerCase() || '';
+        const cat = card.querySelector('.qm-schedule-category-badge')?.textContent.toLowerCase() || '';
+        if (name.includes(query) || desc.includes(query) || cat.includes(query)) {
+          card.style.display = '';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    });
+  }
 }
 
 // Select counter card and show service options
@@ -1747,15 +1896,34 @@ function renderOpenHours(openHours) {
     const row = document.createElement('div');
     row.className = 'open-hours-row';
     row.dataset.day = d;
+    
+    // Create the updated row layout matching premium UI styles
     row.innerHTML = `
-      <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-        <input type="checkbox" class="oh-enabled" ${data.enabled ? 'checked' : ''} />
-        <strong style="width:120px;display:inline-block">${labels[idx]}</strong>
-        <input type="time" class="oh-open" value="${data.open || ''}" />
-        <span style="margin:0 6px;">to</span>
-        <input type="time" class="oh-close" value="${data.close || ''}" />
-      </label>
+      <div style="display: grid; grid-template-columns: minmax(140px, 180px) 1fr; align-items: center; gap: 1rem; padding: 12px 20px; background: var(--waitless-surface); border: 1px solid var(--waitless-line); border-radius: 8px; transition: all 0.2s ease;" class="oh-row-container">
+        <label class="qm-toggle-row" style="padding: 0; border: none; box-shadow: none; background: transparent; display: flex; align-items: center; gap: 12px; cursor: pointer; margin: 0;">
+          <span class="qm-toggle-switch" style="transform: scale(0.9);">
+            <input type="checkbox" class="oh-enabled" ${data.enabled ? 'checked' : ''} />
+            <span class="qm-toggle-track" aria-hidden="true"></span>
+          </span>
+          <strong style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 750; color: var(--waitless-text); font-size: 0.95rem;">${labels[idx]}</strong>
+        </label>
+        
+        <div class="oh-inputs-wrapper" style="display: flex; align-items: center; gap: 12px; justify-content: flex-end; opacity: ${data.enabled ? '1' : '0.4'}; pointer-events: ${data.enabled ? 'auto' : 'none'}; transition: opacity 0.25s ease;">
+          <input type="time" class="oh-open" value="${data.open || ''}" style="background: var(--waitless-bg); border: 1px solid var(--waitless-line); border-radius: 8px; padding: 8px 12px; color: var(--waitless-text); font-family: inherit; font-weight: 600; font-size: 0.9rem; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--waitless-primary)'" onblur="this.style.borderColor='var(--waitless-line)'" />
+          <span style="color: var(--waitless-muted); font-size: 0.85rem; font-weight: 600; text-transform: uppercase;">to</span>
+          <input type="time" class="oh-close" value="${data.close || ''}" style="background: var(--waitless-bg); border: 1px solid var(--waitless-line); border-radius: 8px; padding: 8px 12px; color: var(--waitless-text); font-family: inherit; font-weight: 600; font-size: 0.9rem; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--waitless-primary)'" onblur="this.style.borderColor='var(--waitless-line)'" />
+        </div>
+      </div>
     `;
+    
+    // Wire up the toggle animation
+    const toggle = row.querySelector('.oh-enabled');
+    const wrapper = row.querySelector('.oh-inputs-wrapper');
+    toggle.addEventListener('change', (e) => {
+      wrapper.style.opacity = e.target.checked ? '1' : '0.4';
+      wrapper.style.pointerEvents = e.target.checked ? 'auto' : 'none';
+    });
+    
     container.appendChild(row);
   });
 }

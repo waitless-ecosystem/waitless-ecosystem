@@ -3,139 +3,278 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<<<<<<< Updated upstream:pages/kiosk/kiosk-management.html
   <title>KIOSK Management - Admin Panel</title>
   <link rel="stylesheet" href="../../css/kiosk.css">
+=======
+  <title>Waitless Command Center — KIOSK Management</title>
+  <link rel="stylesheet" href="../css/global.css" />
+  <link rel="stylesheet" href="../css/dashboard.css" />
+  <link rel="stylesheet" href="../css/kiosk.css" />
+  <link rel="stylesheet" href="../css/queue-manager.css" />
+  <link rel="stylesheet" href="../shared/css/unified-ui.css" />
+  <style>
+    /* Prevent double margin on sidebar */
+    body:has(.dash-shell) {
+      padding: 0 !important;
+      display: block !important;
+    }
+    /* Restyle the local sub-tabs inside kiosks panel to match global feel */
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid var(--waitless-line);
+      padding-bottom: 0.75rem;
+    }
+    .tabs button.tab {
+      background: transparent !important;
+      border: 1px solid transparent !important;
+      color: var(--waitless-muted) !important;
+      font-weight: 700 !important;
+      padding: 8px 16px !important;
+      border-radius: 8px !important;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: none !important;
+    }
+    .tabs button.tab:hover {
+      background: var(--waitless-surface-soft) !important;
+      color: var(--waitless-text) !important;
+    }
+    .tabs button.tab.active {
+      background: rgba(99, 102, 241, 0.08) !important;
+      color: var(--waitless-primary) !important;
+      border-color: rgba(99, 102, 241, 0.15) !important;
+    }
+  </style>
+>>>>>>> Stashed changes:business/kiosks.html
 </head>
 <body>
-  <div class="container">
-    <!-- Header -->
-    <div class="header">
-      <h1>⚙️ KIOSK Management</h1>
-      <div class="header-actions">
-        <button class="button button-primary" id="new-kiosk-btn">+ New KIOSK</button>
-        <button class="button button-secondary" id="back-btn">← Back to Dashboard</button>
+  <!-- Sentinel: prevents index-ui.js from inserting a conflicting global topbar -->
+  <div class="wl-topbar" style="display:none!important" aria-hidden="true"></div>
+  <button id="back-btn" style="display:none!important" aria-hidden="true"></button>
+
+  <div class="dash-shell">
+    <!-- ===== SIDEBAR ===== -->
+    <aside class="dash-sidebar" id="dash-sidebar">
+      <div class="dash-sidebar-brand">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect width="24" height="24" rx="6" fill="#4f46e5"/><path d="M6 12h12" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <span class="dash-sidebar-title">Waitless</span>
       </div>
-    </div>
 
-    <!-- Message -->
-    <div id="message" class="message hidden"></div>
+      <nav class="dash-sidebar-nav" aria-label="Workspace navigation">
+        <div class="dash-nav-section-label">Workspaces & Controls</div>
+        <a href="dashboard.html" class="dash-nav-link" data-page="dashboard">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+          Dashboard
+        </a>
+        <a href="queue.html" class="dash-nav-link" data-page="queue" data-tab="queue">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>
+          Live Queue
+        </a>
+        <a href="counters.html" class="dash-nav-link" data-page="counters" data-tab="counters">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>
+          Counters
+        </a>
+        <a href="services.html" class="dash-nav-link" data-page="services" data-tab="services">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+          Services
+        </a>
+        <a href="assignments.html" class="dash-nav-link" data-page="assignments" data-tab="assignments">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+          Assignments
+        </a>
+        <a href="scheduled-services.html" class="dash-nav-link" data-page="scheduled-services" data-tab="scheduled-services">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Schedules
+        </a>
+        <a href="bookings.html" class="dash-nav-link" data-page="bookings" data-tab="online-bookings">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+          Bookings
+        </a>
+        <a href="kiosks.html" class="dash-nav-link active" data-page="kiosks">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18"/></svg>
+          Kiosks
+        </a>
+        <a href="customize.html" class="dash-nav-link" data-page="customize" data-tab="customize">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r="2.5"/><path d="M17 2H7a5 5 0 00-5 5v10a5 5 0 005 5h10a5 5 0 005-5V7a5 5 0 00-5-5z"/></svg>
+          Customize
+        </a>
+        <a href="settings.html" class="dash-nav-link" data-page="settings" data-tab="open-hours">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Open Hours
+        </a>
+        <a href="reports.html" class="dash-nav-link" data-page="reports" data-tab="reports">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          Reports
+        </a>
+        <a href="../display/counter-display.html" class="dash-nav-link" target="_blank" data-page="display">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          Staff Display
+        </a>
+      </nav>
 
-    <!-- Tabs -->
-    <div class="tabs">
-      <button class="tab active" data-tab="kiosks">KIOSK Terminals</button>
-      <button class="tab" data-tab="credentials">PIN Management</button>
-      <button class="tab" data-tab="activity">Activity Logs</button>
-      <button class="tab" data-tab="reports">Reports</button>
-    </div>
-
-    <!-- Tabs Content -->
-
-    <!-- KIOSK Terminals Tab -->
-    <div id="kiosks-tab" class="tab-content">
-      <div class="stats-grid" id="kiosk-stats">
-        <div class="stat-card">
-          <div class="stat-label">Total KIOSKs</div>
-          <div class="stat-value" id="total-kiosks">0</div>
+      <!-- Organization Info (collapsed) -->
+      <div class="dash-sidebar-org">
+        <button class="dash-org-toggle" id="org-toggle" type="button" aria-expanded="false">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span id="org-name-short">Organization</span>
+          <svg class="dash-org-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="dash-org-details" id="org-details" style="display:none;">
+          <div id="status-info">
+            <div class="dash-org-loading">Loading…</div>
+          </div>
         </div>
-        <div class="stat-card">
-          <div class="stat-label">Active KIOSKs</div>
-          <div class="stat-value" id="active-kiosks">0</div>
+      </div>
+
+      <button id="signout" class="dash-signout-btn" type="button">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Sign Out
+      </button>
+    </aside>
+
+    <!-- Mobile sidebar toggle -->
+    <button class="dash-mobile-toggle" id="mobile-toggle" type="button" aria-label="Toggle menu">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <main class="dash-main">
+      <div class="dash-main-inner">
+        <!-- Header -->
+        <div class="dash-page-header">
+          <div>
+            <h1 class="dash-page-title">KIOSK Management</h1>
+            <p class="dash-page-sub">Create and manage kiosk terminals, active PINs, and logs.</p>
+          </div>
+          <div class="dash-header-meta" style="align-items: center; gap: 0.75rem;">
+            <button class="dash-badge" id="new-kiosk-btn" style="cursor:pointer; background: var(--waitless-primary); color: white; border: none; font-weight: 700; padding: 8px 16px;">+ New KIOSK</button>
+          </div>
         </div>
-        <div class="stat-card">
-          <div class="stat-label">Total Tokens Generated</div>
-          <div class="stat-value" id="total-tokens">0</div>
-        </div>
-      </div>
 
-      <div id="kiosks-container" class="kiosks-grid">
-        <div class="empty-state">
-          <div class="empty-state-icon">📱</div>
-          <p>No KIOSKs created yet</p>
-        </div>
-      </div>
-    </div>
+        <div id="message" class="message hidden" role="status" aria-live="polite" style="margin-bottom: 1.5rem;"></div>
 
-    <!-- PIN Management Tab -->
-    <div id="credentials-tab" class="tab-content hidden">
-      <h3 class="kiosk-section-title">PIN Management</h3>
-      
-      <div class="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>KIOSK Name</th>
-              <th>Status</th>
-              <th>Created</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="credentials-table">
-            <tr>
-              <td colspan="4" class="empty-state">No KIOSKs available</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+        <!-- Section for local sub-tabs inside Kiosk page -->
+        <section class="dash-section">
+          <!-- Tabs Navigation -->
+          <div class="tabs">
+            <button class="tab active" data-tab="kiosks">KIOSK Terminals</button>
+            <button class="tab" data-tab="credentials">PIN Management</button>
+            <button class="tab" data-tab="activity">Activity Logs</button>
+            <button class="tab" data-tab="reports">Reports</button>
+          </div>
 
-    <!-- Activity Logs Tab -->
-    <div id="activity-tab" class="tab-content hidden">
-      <h3 class="kiosk-section-title">KIOSK Activity Logs</h3>
-      
-      <div class="form-row kiosk-filter-row">
-        <input type="date" id="activity-start-date" placeholder="Start Date">
-        <input type="date" id="activity-end-date" placeholder="End Date">
-        <button class="button button-primary button-full" id="filter-activity-btn">Filter</button>
-      </div>
+          <!-- KIOSK Terminals Tab -->
+          <div id="kiosks-tab" class="tab-content">
+            <div class="stats-grid" id="kiosk-stats" style="margin-bottom: 1.5rem;">
+              <div class="stat-card">
+                <div class="stat-label">Total KIOSKs</div>
+                <div class="stat-value" id="total-kiosks">0</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-label">Active KIOSKs</div>
+                <div class="stat-value" id="active-kiosks">0</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-label">Total Tokens Generated</div>
+                <div class="stat-value" id="total-tokens">0</div>
+              </div>
+            </div>
 
-      <div id="activity-container" class="table-container">
-        <p class="empty-state">No activity logs to display</p>
-      </div>
-    </div>
+            <div id="kiosks-container" class="kiosks-grid">
+              <div class="empty-state">
+                <div class="empty-state-icon">📱</div>
+                <p>No KIOSKs created yet</p>
+              </div>
+            </div>
+          </div>
 
-    <!-- Reports Tab -->
-    <div id="reports-tab" class="tab-content hidden">
-      <h3 class="kiosk-section-title">KIOSK Reports</h3>
-      
-      <div class="form-row kiosk-filter-row">
-        <select id="report-kiosk">
-          <option value="">All KIOSKs</option>
-        </select>
-        <input type="date" id="report-date" />
-        <button class="button button-primary button-full" id="generate-report-btn">Generate Report</button>
-      </div>
+          <!-- PIN Management Tab -->
+          <div id="credentials-tab" class="tab-content hidden">
+            <h3 class="kiosk-section-title" style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.1rem; font-weight: 800; margin-bottom: 1rem;">PIN Management</h3>
+            
+            <div class="table-container">
+              <table class="dash-table" style="width: 100%;">
+                <thead>
+                  <tr>
+                    <th>KIOSK Name</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="credentials-table">
+                  <tr>
+                    <td colspan="4" class="empty-state">No KIOSKs available</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
 
-      <div id="report-container">
-        <p class="empty-state">Generate a report to view data</p>
+          <!-- Activity Logs Tab -->
+          <div id="activity-tab" class="tab-content hidden">
+            <h3 class="kiosk-section-title" style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.1rem; font-weight: 800; margin-bottom: 1rem;">KIOSK Activity Logs</h3>
+            
+            <div class="form-row kiosk-filter-row" style="display: flex; gap: 10px; margin-bottom: 1.5rem;">
+              <input type="date" id="activity-start-date" class="dash-date-input" style="padding: 8px 12px; border-radius: 8px; border: 1px solid var(--waitless-line);">
+              <input type="date" id="activity-end-date" class="dash-date-input" style="padding: 8px 12px; border-radius: 8px; border: 1px solid var(--waitless-line);">
+              <button class="dash-badge" id="filter-activity-btn" style="cursor: pointer; padding: 8px 16px; border: none; font-weight: 700;">Filter</button>
+            </div>
+
+            <div id="activity-container" class="table-container">
+              <p class="empty-state">No activity logs to display</p>
+            </div>
+          </div>
+
+          <!-- Reports Tab -->
+          <div id="reports-tab" class="tab-content hidden">
+            <h3 class="kiosk-section-title" style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.1rem; font-weight: 800; margin-bottom: 1rem;">KIOSK Reports</h3>
+            
+            <div class="form-row kiosk-filter-row" style="display: flex; gap: 10px; margin-bottom: 1.5rem;">
+              <select id="report-kiosk" class="dash-date-input" style="padding: 8px 12px; border-radius: 8px; border: 1px solid var(--waitless-line);">
+                <option value="">All KIOSKs</option>
+              </select>
+              <input type="date" id="report-date" class="dash-date-input" style="padding: 8px 12px; border-radius: 8px; border: 1px solid var(--waitless-line);" />
+              <button class="dash-badge" id="generate-report-btn" style="cursor: pointer; padding: 8px 16px; border: none; font-weight: 700;">Generate Report</button>
+            </div>
+
+            <div id="report-container">
+              <p class="empty-state">Generate a report to view data</p>
+            </div>
+          </div>
+        </section>
       </div>
-    </div>
+    </main>
   </div>
 
   <!-- New KIOSK Modal -->
   <div id="new-kiosk-modal" class="modal">
-    <div class="modal-content">
+    <div class="modal-content" style="background: var(--waitless-surface); border-radius: 20px; border: 1px solid var(--waitless-line); box-shadow: var(--waitless-shadow-lg);">
       <button class="modal-close" id="close-modal">&times;</button>
-      <div class="modal-header">Create New KIOSK</div>
+      <div class="modal-header" style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 1.25rem; color: var(--waitless-text); border-bottom: 1px solid var(--waitless-line); padding-bottom: 0.75rem;">Create New KIOSK</div>
 
-      <form id="new-kiosk-form">
-        <div class="form-group">
-          <label for="kiosk-name">KIOSK Name *</label>
-          <input type="text" id="kiosk-name" required placeholder="e.g., Front Desk Kiosk 1">
+      <form id="new-kiosk-form" style="margin-top: 1rem;">
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label for="kiosk-name" style="font-weight: 800; color: var(--waitless-primary); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 6px;">KIOSK Name *</label>
+          <input type="text" id="kiosk-name" required placeholder="e.g., Front Desk Kiosk 1" style="width: 100%; min-height: 44px; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--waitless-line);">
         </div>
 
-        <div class="form-group">
-          <label for="kiosk-description">Description</label>
-          <textarea id="kiosk-description" placeholder="Optional description" rows="3"></textarea>
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label for="kiosk-description" style="font-weight: 800; color: var(--waitless-primary); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 6px;">Description</label>
+          <textarea id="kiosk-description" placeholder="Optional description" rows="3" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--waitless-line); font-family: inherit;"></textarea>
         </div>
 
-        <div class="form-group">
-          <label for="kiosk-pin">PIN Code (4-6 digits) *</label>
-          <input type="password" id="kiosk-pin" pattern="\\d{4,6}" required placeholder="1234">
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+          <label for="kiosk-pin" style="font-weight: 800; color: var(--waitless-primary); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 6px;">PIN Code (4-6 digits) *</label>
+          <input type="password" id="kiosk-pin" pattern="\d{4,6}" required placeholder="1234" style="width: 100%; min-height: 44px; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--waitless-line);">
         </div>
 
-        <div class="form-actions">
-          <button type="submit" class="button button-primary">Create KIOSK</button>
-          <button type="button" class="button button-secondary" id="cancel-modal">Cancel</button>
+        <div class="form-actions" style="display: flex; gap: 10px;">
+          <button type="submit" class="button button-primary" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 800; cursor: pointer;">Create KIOSK</button>
+          <button type="button" class="button button-secondary" id="cancel-modal" style="background: var(--waitless-surface-soft); color: var(--waitless-text); border: 1px solid var(--waitless-line); padding: 10px 20px; border-radius: 8px; font-weight: 800; cursor: pointer;">Cancel</button>
         </div>
       </form>
     </div>
@@ -143,34 +282,34 @@
 
   <!-- Edit KIOSK Modal -->
   <div id="edit-kiosk-modal" class="modal">
-    <div class="modal-content">
+    <div class="modal-content" style="background: var(--waitless-surface); border-radius: 20px; border: 1px solid var(--waitless-line); box-shadow: var(--waitless-shadow-lg);">
       <button class="modal-close" id="close-edit-modal">&times;</button>
-      <div class="modal-header">Edit KIOSK</div>
+      <div class="modal-header" style="font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 1.25rem; color: var(--waitless-text); border-bottom: 1px solid var(--waitless-line); padding-bottom: 0.75rem;">Edit KIOSK</div>
 
-      <form id="edit-kiosk-form">
+      <form id="edit-kiosk-form" style="margin-top: 1rem;">
         <input type="hidden" id="edit-kiosk-id">
 
-        <div class="form-group">
-          <label for="edit-kiosk-name">KIOSK Name *</label>
-          <input type="text" id="edit-kiosk-name" required>
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label for="edit-kiosk-name" style="font-weight: 800; color: var(--waitless-primary); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 6px;">KIOSK Name *</label>
+          <input type="text" id="edit-kiosk-name" required style="width: 100%; min-height: 44px; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--waitless-line);">
         </div>
 
-        <div class="form-group">
-          <label for="edit-kiosk-description">Description</label>
-          <textarea id="edit-kiosk-description" rows="3"></textarea>
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label for="edit-kiosk-description" style="font-weight: 800; color: var(--waitless-primary); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 6px;">Description</label>
+          <textarea id="edit-kiosk-description" rows="3" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--waitless-line); font-family: inherit;"></textarea>
         </div>
 
-        <div class="form-group">
-          <label for="edit-kiosk-status">Status</label>
-          <select id="edit-kiosk-status">
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+          <label for="edit-kiosk-status" style="font-weight: 800; color: var(--waitless-primary); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 6px;">Status</label>
+          <select id="edit-kiosk-status" style="width: 100%; min-height: 44px; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--waitless-line);">
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
           </select>
         </div>
 
-        <div class="form-actions">
-          <button type="submit" class="button button-primary">Save Changes</button>
-          <button type="button" class="button button-secondary" id="cancel-edit-modal">Cancel</button>
+        <div class="form-actions" style="display: flex; gap: 10px;">
+          <button type="submit" class="button button-primary" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 800; cursor: pointer;">Save Changes</button>
+          <button type="button" class="button button-secondary" id="cancel-edit-modal" style="background: var(--waitless-surface-soft); color: var(--waitless-text); border: 1px solid var(--waitless-line); padding: 10px 20px; border-radius: 8px; font-weight: 800; cursor: pointer;">Cancel</button>
         </div>
       </form>
     </div>
@@ -180,13 +319,21 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<<<<<<< Updated upstream:pages/kiosk/kiosk-management.html
 
   <script src="../../js/config/firebase-config.js"></script>
   <script src="../../js/utils/constants.js"></script>
   <script src="../../js/utils/helpers.js"></script>
   <script src="../../js/utils/token-factory.js"></script>
+=======
+  <script src="../js/config/firebase-config.js"></script>
+  <script src="../shared/js/role-guard.js"></script>
+  <script>WaitlessRoleGuard.requireRole({ allowed: ['business', 'admin'] });</script>
+  <script src="../js/utils/constants.js"></script>
+  <script src="../js/utils/helpers.js"></script>
+  <script src="../js/utils/token-factory.js"></script>
+>>>>>>> Stashed changes:business/kiosks.html
   <script>
-    // Initialize Firebase
     if(!firebase.apps.length) {
       firebase.initializeApp(firebaseConfig);
     }

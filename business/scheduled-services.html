@@ -3,71 +3,518 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Waitless Command Center — Live Queue</title>
+  <title>Waitless Command Center — Schedules</title>
   <link rel="stylesheet" href="../css/global.css" />
   <link rel="stylesheet" href="../css/dashboard.css" />
   <link rel="stylesheet" href="../css/queue-manager.css" />
-<<<<<<< Updated upstream:pages/queue-manager.html
-</head>
-<body>
-  <div class="container">
-    <div class="brand">
-      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect width="24" height="24" rx="4" fill="#0366d6"/><path d="M6 12h12" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>
-      <h1>Queue Manager</h1>
-    </div>
-
-    <div id="message" class="message" role="status" aria-live="polite"></div>
-
-    <div class="qm-org-qr-card">
-      <div class="qm-org-qr-copy">
-        <p class="eyebrow">Mobile access</p>
-        <h2>Organization QR</h2>
-        <p class="lead">Scan this QR with the new mobile app to open this organization's kiosk menu.</p>
-      </div>
-      <div class="qm-org-qr-body">
-        <div id="org-qr-code" class="qm-org-qr-code" aria-label="Organization QR code"></div>
-        <div class="qm-org-qr-meta">
-          <div id="org-qr-url" class="qm-org-qr-url"></div>
-          <button id="copy-org-qr-link" class="qm-org-qr-copy-btn" type="button">Copy mobile link</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="qm-actions-bar">
-      <button id="back-to-dashboard" class="primary ghost">← Back to Dashboard</button>
-      <button id="signout" class="primary qm-signout">Sign Out</button>
-    </div>
-
-    <div class="auth-card qm-layout-card">
-      <div class="qm-sidebar">
-        <div class="qm-nav qm-sidebar-nav" role="tablist">
-
-          <button class="qm-tab active" data-tab="counters" role="tab">Counters</button>
-          <button class="qm-tab" data-tab="services" role="tab">Services</button>
-          <button class="qm-tab" data-tab="scheduled-services" role="tab" style="display:none;">Scheduled Services</button>
-          <button class="qm-tab" data-tab="assignments" role="tab">Assignments</button>
-          <button class="qm-tab" data-tab="queue" role="tab">Queue</button>
-          <button class="qm-tab" data-tab="online-bookings" role="tab">Online Bookings</button>
-          <button class="qm-tab" data-tab="open-hours" role="tab">Open Hours</button>
-          <button class="qm-tab" data-tab="reports" role="tab">Reports</button>
-          <button class="qm-tab" data-tab="customize" role="tab">Customize</button>
-          <a class="qm-tab" data-tab="staff" href="../counter/counter-display.html" role="tab" aria-label="Staff">Staff</a>
-
-
-        </div>
-=======
   <link rel="stylesheet" href="../shared/css/unified-ui.css" />
   <style>
     .qm-content > h2:first-of-type {
       display: none !important;
     }
+
+    /* Redesigned Schedules Layout */
+    .schedule-tab-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .schedule-tab-header h2 {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 800;
+      font-size: 1.8rem;
+      margin: 0 0 0.5rem 0;
+      letter-spacing: -0.02em;
+      color: var(--waitless-text);
+    }
+
+    .schedule-tab-header .lead {
+      color: var(--waitless-muted);
+      margin: 0;
+      font-size: 0.95rem;
+      max-width: 600px;
+      line-height: 1.5;
+    }
+
+    .schedule-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .schedule-actions button {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: var(--waitless-radius-sm);
+      font-weight: 700;
+      font-size: 0.88rem;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      min-height: 42px;
+    }
+
+    .schedule-actions .btn-secondary {
+      background: var(--waitless-surface-soft);
+      border: 1px solid var(--waitless-line);
+      color: var(--waitless-text);
+    }
+
+    .schedule-actions .btn-secondary:hover {
+      background: var(--waitless-line);
+      transform: translateY(-1px);
+    }
+
+    .schedule-actions .btn-save {
+      background: linear-gradient(135deg, var(--waitless-primary) 0%, var(--waitless-primary-hover) 100%);
+      border: none;
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(79, 70, 229, 0.25);
+    }
+
+    .schedule-actions .btn-save:hover {
+      box-shadow: 0 6px 20px rgba(79, 70, 229, 0.35);
+      transform: translateY(-1px);
+    }
+
+    /* KPI Summary Row */
+    .schedule-stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 2rem;
+    }
+
+    .schedule-stat-card {
+      background: var(--waitless-surface);
+      border: 1px solid var(--waitless-line);
+      border-radius: var(--waitless-radius-sm);
+      padding: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      box-shadow: var(--waitless-shadow-sm);
+      transition: all 0.25s ease;
+    }
+
+    .schedule-stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--waitless-shadow);
+      border-color: rgba(99, 102, 241, 0.2);
+    }
+
+    .schedule-stat-card .stat-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(15, 23, 42, 0.05);
+      color: var(--waitless-muted);
+    }
+
+    [data-theme="dark"] .schedule-stat-card .stat-icon {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .schedule-stat-card .stat-icon.active-icon {
+      background: rgba(79, 70, 229, 0.08);
+      color: var(--waitless-primary);
+    }
+
+    .schedule-stat-card .stat-icon.online-icon {
+      background: rgba(16, 185, 129, 0.08);
+      color: var(--waitless-success);
+    }
+
+    .schedule-stat-card .stat-content {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .schedule-stat-card .stat-label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--waitless-muted);
+    }
+
+    .schedule-stat-card .stat-value {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--waitless-text);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    /* Search & Filter Row */
+    .schedule-search-row {
+      margin-bottom: 1.5rem;
+    }
+
+    .search-input-wrapper {
+      position: relative;
+      width: 100%;
+    }
+
+    .search-input-wrapper svg {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--waitless-muted);
+      pointer-events: none;
+    }
+
+    .search-input-wrapper input {
+      width: 100%;
+      padding: 12px 14px 12px 42px;
+      border-radius: var(--waitless-radius-sm);
+      border: 1px solid var(--waitless-line);
+      background: var(--waitless-input-bg);
+      color: var(--waitless-text);
+      font-size: 0.92rem;
+      font-family: inherit;
+      outline: none;
+      transition: all 0.2s ease;
+      box-shadow: var(--waitless-shadow-sm);
+    }
+
+    .search-input-wrapper input:focus {
+      border-color: var(--waitless-primary);
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12), var(--waitless-shadow-sm);
+    }
+
+    /* Cards Styling */
+    .qm-schedule-card {
+      background: var(--waitless-surface);
+      border: 1px solid var(--waitless-line);
+      border-radius: var(--waitless-radius);
+      padding: 1.75rem;
+      margin-bottom: 1.5rem;
+      box-shadow: var(--waitless-shadow-sm);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.75rem;
+    }
+
+    @media (min-width: 992px) {
+      .qm-schedule-card {
+        grid-template-columns: 1fr 1.25fr;
+      }
+    }
+
+    .qm-schedule-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--waitless-shadow);
+      border-color: rgba(99, 102, 241, 0.25);
+    }
+
+    .qm-schedule-card.disabled-service {
+      opacity: 0.85;
+      border-color: var(--waitless-line);
+    }
+
+    .qm-schedule-card.disabled-service:hover {
+      box-shadow: var(--waitless-shadow-sm);
+      transform: none;
+    }
+
+    /* Left Side: Info & Controls */
+    .qm-schedule-left {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 1.5rem;
+    }
+
+    .qm-schedule-info {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .qm-schedule-title {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-weight: 800;
+      font-size: 1.2rem;
+      color: var(--waitless-text);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .qm-schedule-category-badge {
+      font-size: 0.7rem;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background: var(--waitless-surface-soft);
+      color: var(--waitless-muted);
+      border: 1px solid var(--waitless-line);
+    }
+
+    .qm-schedule-meta {
+      font-size: 0.88rem;
+      color: var(--waitless-muted);
+      line-height: 1.4;
+    }
+
+    .qm-schedule-summary-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--waitless-primary);
+      background: rgba(79, 70, 229, 0.06);
+      padding: 4px 10px;
+      border-radius: 8px;
+      margin-top: 6px;
+      width: fit-content;
+    }
+
+    .qm-schedule-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background: var(--waitless-surface-soft);
+      padding: 1rem;
+      border-radius: var(--waitless-radius-sm);
+      border: 1px solid var(--waitless-line);
+    }
+
+    /* Toggle switches */
+    .qm-toggle-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      gap: 1rem;
+      user-select: none;
+    }
+
+    .qm-toggle-copy {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .qm-toggle-title {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--waitless-text);
+    }
+
+    .qm-toggle-desc {
+      font-size: 0.75rem;
+      color: var(--waitless-muted);
+    }
+
+    .qm-toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+      flex-shrink: 0;
+    }
+
+    .qm-toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .qm-toggle-track {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: var(--waitless-line);
+      transition: .25s cubic-bezier(0.4, 0, 0.2, 1);
+      border-radius: 34px;
+    }
+
+    .qm-toggle-track:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .25s cubic-bezier(0.4, 0, 0.2, 1);
+      border-radius: 50%;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .qm-toggle-switch input:checked + .qm-toggle-track {
+      background-color: var(--waitless-primary);
+    }
+
+    .qm-toggle-switch input:checked + .qm-toggle-track:before {
+      transform: translateX(20px);
+    }
+
+    /* Right Side: Hours & Days selection */
+    .qm-schedule-right {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+      border-left: 1px solid var(--waitless-line);
+      padding-left: 1.75rem;
+    }
+
+    @media (max-width: 991px) {
+      .qm-schedule-right {
+        border-left: none;
+        padding-left: 0;
+        border-top: 1px solid var(--waitless-line);
+        padding-top: 1.5rem;
+      }
+    }
+
+    .qm-schedule-section-title {
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--waitless-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    .qm-schedule-time-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 1rem;
+    }
+
+    .qm-schedule-field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .qm-schedule-field label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--waitless-text);
+    }
+
+    .qm-schedule-field-input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .qm-schedule-field-input-wrapper svg {
+      position: absolute;
+      left: 12px;
+      color: var(--waitless-muted);
+      pointer-events: none;
+    }
+
+    .qm-schedule-field-input-wrapper input {
+      width: 100%;
+      padding: 10px 12px 10px 34px;
+      border: 1px solid var(--waitless-line);
+      border-radius: var(--waitless-radius-sm);
+      background: var(--waitless-input-bg);
+      color: var(--waitless-text);
+      font-family: inherit;
+      font-size: 0.9rem;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .qm-schedule-field-input-wrapper input:focus {
+      border-color: var(--waitless-primary);
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    }
+
+    /* Day pills grid */
+    .day-selector-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .day-pill-label {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 1.5px solid var(--waitless-line);
+      background: var(--waitless-input-bg);
+      color: var(--waitless-text);
+      font-weight: 700;
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      user-select: none;
+      box-shadow: var(--waitless-shadow-sm);
+    }
+
+    .day-pill-label input {
+      position: absolute;
+      opacity: 0;
+      cursor: pointer;
+      height: 0;
+      width: 0;
+    }
+
+    .day-pill-label:has(input:checked) {
+      background: linear-gradient(135deg, var(--waitless-primary) 0%, var(--waitless-primary-hover) 100%);
+      color: #ffffff;
+      border-color: transparent;
+      box-shadow: 0 4px 10px rgba(79, 70, 229, 0.25);
+      transform: scale(1.05);
+    }
+
+    .day-pill-label:hover:not(:has(input:checked)) {
+      border-color: var(--waitless-primary);
+      color: var(--waitless-primary);
+      background: rgba(79, 70, 229, 0.04);
+    }
+
+    /* Warnings / Alerts inside card */
+    .qm-schedule-card-alert {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.78rem;
+      color: var(--waitless-warning);
+      background: rgba(245, 158, 11, 0.06);
+      border: 1px dashed rgba(245, 158, 11, 0.3);
+      padding: 8px 12px;
+      border-radius: 8px;
+      margin-top: 4px;
+      grid-column: span 2;
+    }
+
+    .qm-schedule-card-alert svg {
+      flex-shrink: 0;
+    }
   </style>
 </head>
-<body data-business-page="queue" data-initial-tab="queue">
+<body data-business-page="scheduled-services" data-initial-tab="scheduled-services">
   <!-- Sentinel: prevents index-ui.js from inserting a conflicting global topbar -->
   <div class="wl-topbar" style="display:none!important" aria-hidden="true"></div>
   <button id="back-to-dashboard" style="display:none!important" aria-hidden="true"></button>
->>>>>>> Stashed changes:business/queue.html
 
   <div class="dash-shell">
     <!-- ===== SIDEBAR ===== -->
@@ -160,8 +607,8 @@
         <!-- Header -->
         <div class="dash-page-header brand">
           <div>
-            <h1 class="dash-page-title">Live Queue</h1>
-            <p class="dash-page-sub">Real-time operational overview of your queue system</p>
+            <h1 class="dash-page-title">Schedules</h1>
+            <p class="dash-page-sub">Define service slots and schedules</p>
           </div>
           <div class="dash-header-meta">
             <span class="dash-live-indicator" id="live-indicator">
@@ -211,12 +658,62 @@
 
           <!-- Scheduled Services Tab -->
           <div id="scheduled-services" class="qm-content">
-            <h2>Scheduled Services</h2>
-            <p class="lead">Define when each service is available for booking, and tune the slot duration and capacity used by online booking.</p>
-            <div class="qm-migrate-row">
-              <button id="save-scheduled-services" class="primary" type="button">Save Scheduled Services</button>
-              <button id="reload-scheduled-services" type="button">Reload</button>
+            <div class="schedule-tab-header">
+              <div>
+                <h2>Scheduled Services</h2>
+                <p class="lead">Define when each service is available for booking, and tune the slot duration and capacity used by online booking.</p>
+              </div>
+              <div class="schedule-actions">
+                <button id="reload-scheduled-services" class="btn-secondary" type="button">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                  Reload
+                </button>
+                <button id="save-scheduled-services" class="btn-save" type="button">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                  Save Schedules
+                </button>
+              </div>
             </div>
+
+            <!-- KPI summary dashboard grid -->
+            <div class="schedule-stats-row">
+              <div class="schedule-stat-card">
+                <div class="stat-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+                </div>
+                <div class="stat-content">
+                  <div class="stat-label">Total Services</div>
+                  <div class="stat-value" id="schedule-stat-total">0</div>
+                </div>
+              </div>
+              <div class="schedule-stat-card">
+                <div class="stat-icon active-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                </div>
+                <div class="stat-content">
+                  <div class="stat-label">Scheduled Only</div>
+                  <div class="stat-value" id="schedule-stat-active">0</div>
+                </div>
+              </div>
+              <div class="schedule-stat-card">
+                <div class="stat-icon online-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                </div>
+                <div class="stat-content">
+                  <div class="stat-label">Online Booking On</div>
+                  <div class="stat-value" id="schedule-stat-online">0</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Search and Filter bar -->
+            <div class="schedule-search-row">
+              <div class="search-input-wrapper">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" id="schedule-search-input" placeholder="Search services by name, description or category..." aria-label="Search services" />
+              </div>
+            </div>
+
             <div id="scheduled-services-list" class="qm-list"></div>
           </div>
 
@@ -361,16 +858,9 @@
               <div class="qm-toggle-ribbon-note">When enabled, a Scheduled Services tab appears beside Services.</div>
             </div>
 
-<<<<<<< Updated upstream:pages/queue-manager.html
-            
-        <div id="customer-details-customize-card" class="qm-customize-card">
-          <h3>Customer Details Collection</h3>
-          <p class="muted small">These settings apply to your organization only.</p>
-=======
             <div id="customer-details-customize-card" class="qm-customize-card">
               <h3>Customer Details Collection</h3>
               <p class="muted small">These settings apply to your organization only.</p>
->>>>>>> Stashed changes:business/queue.html
 
               <div class="qm-form qm-customize-form">
                 <div class="qm-toggle-ribbon">
@@ -387,91 +877,6 @@
                   <div class="qm-toggle-ribbon-note">Choose which details become required when this is enabled.</div>
                 </div>
 
-<<<<<<< Updated upstream:pages/queue-manager.html
- 
-
-            <label id="customer-name-required-row" class="qm-checkbox-row" for="collect-customer-name-required" style="display:none;">
-              <input id="collect-customer-name-required" type="checkbox" />
-              <span>Require customer name</span>
-            </label>
-
-            <label id="customer-phone-required-row" class="qm-checkbox-row" for="collect-customer-phone-required" style="display:none;">
-              <input id="collect-customer-phone-required" type="checkbox" />
-              <span>Require customer phone number</span>
-            </label>
-
-            <label id="recall-enabled-row" class="qm-checkbox-row" for="collect-recall-enabled" style="display:block;margin-top:12px;"> 
-              <input id="collect-recall-enabled" type="checkbox" />
-              <span>Enable recall on counter (allow operators to recall recent tokens)</span>
-            </label>
-
-            <label id="service-categories-enabled-row" class="qm-checkbox-row" for="service-categories-enabled" style="display:block;margin-top:12px;">
-              <input id="service-categories-enabled" type="checkbox" />
-              <span>Group services by category in kiosk and mobile app</span>
-            </label>
-
-            <label id="block-mobile-app-row" class="qm-checkbox-row" for="block-mobile-app-enabled" style="display:block;margin-top:12px;">
-              <input id="block-mobile-app-enabled" type="checkbox" />
-              <span>Block active mobile app access for this organization</span>
-            </label>
-
-            <label id="allow-online-booking-row" class="qm-checkbox-row" for="allow-online-booking-enabled" style="display:block;margin-top:12px;">
-              <input id="allow-online-booking-enabled" type="checkbox" />
-              <span>Allow online booking via app</span>
-            </label>
-
-            <div class="qm-customize-card qm-booking-slot-card">
-              <h3>Online booking time slots</h3>
-              <p class="muted small">Set the default slot length and how many bookings can fit into one slot. Per-service availability still lives in Scheduled Services.</p>
-              <label class="qm-checkbox-row" for="online-booking-slots-enabled" style="display:block;margin-top:12px;">
-                <input id="online-booking-slots-enabled" type="checkbox" />
-                <span>Enable time-slot booking in online booking</span>
-              </label>
-              <label class="qm-field-row" for="online-booking-slot-duration-minutes" style="display:block;margin-top:12px;">
-                <span style="display:block;margin-bottom:6px;font-weight:700">Slot duration (minutes)</span>
-                <input id="online-booking-slot-duration-minutes" type="number" min="5" step="1" placeholder="Example: 30" />
-              </label>
-            </div>
-
-            <div class="qm-customize-card qm-booking-slot-card">
-              <h3>Booking reminder emails</h3>
-              <p class="muted small">Queue Manager can send reminder emails before each scheduled booking time while this page is open.</p>
-              <label class="qm-checkbox-row" for="booking-reminder-enabled" style="display:block;margin-top:12px;">
-                <input id="booking-reminder-enabled" type="checkbox" />
-                <span>Enable automatic reminder emails for scheduled bookings</span>
-              </label>
-              <label class="qm-field-row" for="booking-reminder-lead-minutes" style="display:block;margin-top:12px;">
-                <span style="display:block;margin-bottom:6px;font-weight:700">Send reminder before scheduled time (minutes)</span>
-                <input id="booking-reminder-lead-minutes" type="number" min="1" step="1" placeholder="Example: 30" />
-              </label>
-              <label class="qm-field-row" for="booking-reminder-emailjs-public-key" style="display:block;margin-top:12px;">
-                <span style="display:block;margin-bottom:6px;font-weight:700">EmailJS public key</span>
-                <input id="booking-reminder-emailjs-public-key" type="text" placeholder="Example: xxxxx_PUBLIC_KEY" />
-              </label>
-              <label class="qm-field-row" for="booking-reminder-emailjs-service-id" style="display:block;margin-top:12px;">
-                <span style="display:block;margin-bottom:6px;font-weight:700">EmailJS service ID</span>
-                <input id="booking-reminder-emailjs-service-id" type="text" placeholder="Example: service_waitless" />
-              </label>
-              <label class="qm-field-row" for="booking-reminder-emailjs-template-id" style="display:block;margin-top:12px;">
-                <span style="display:block;margin-bottom:6px;font-weight:700">EmailJS template ID</span>
-                <input id="booking-reminder-emailjs-template-id" type="text" placeholder="Example: template_booking_reminder" />
-              </label>
-            </div>
-
-            <label class="qm-field-row" for="kiosk-auto-return-seconds" style="display:block;margin-top:12px;">
-              <span style="display:block;margin-bottom:6px;font-weight:700">Kiosk auto-return (seconds)</span>
-              <input id="kiosk-auto-return-seconds" type="number" min="0" step="1" placeholder="Seconds to return to services (0 = disabled)" />
-            </label>
-
-            <label class="qm-field-row" for="token-sequence-reset-minutes" style="display:block;margin-top:12px;">
-              <span style="display:block;margin-bottom:6px;font-weight:700">Token reset interval (minutes)</span>
-              <input id="token-sequence-reset-minutes" type="number" min="0" step="1" placeholder="Minutes before token numbering starts again (0 = off)" />
-            </label>
-
-         
-
-            <button id="save-customer-detail-settings" type="button">Save Customize Settings</button>
-=======
                 <label id="customer-name-required-row" class="qm-checkbox-row" for="collect-customer-name-required" style="display:none;">
                   <input id="collect-customer-name-required" type="checkbox" />
                   <span>Require customer name</span>
@@ -557,7 +962,6 @@
 
               <div id="customize-settings-status" class="qm-customize-status muted small"></div>
             </div>
->>>>>>> Stashed changes:business/queue.html
           </div>
         </div>
 
@@ -569,6 +973,8 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
   <script src="../js/config/firebase-config.js"></script>
+  <script src="../shared/js/role-guard.js"></script>
+  <script>WaitlessRoleGuard.requireRole({ allowed: ['business', 'admin'] });</script>
   <script src="../js/utils/constants.js"></script>
   <script src="../js/utils/helpers.js"></script>
   <script src="../js/utils/token-factory.js"></script>
@@ -578,7 +984,9 @@
     }
   </script>
   <script src="../js/kiosk/kiosk-db.js"></script>
+  <script src="../js/business/business-module.js"></script>
   <script src="../js/queue/queue-manager.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+  <script src="../shared/js/index-ui.js"></script>
 </body>
 </html>

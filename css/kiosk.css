@@ -1,10 +1,34 @@
+<<<<<<< Updated upstream
 /* Extracted from pages/kiosk/kiosk-login.html */
+=======
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+  --kiosk-bg: var(--waitless-bg, #f8fafc);
+  --kiosk-surface: var(--waitless-surface, rgba(255, 255, 255, 0.85));
+  --kiosk-surface-soft: var(--waitless-surface-soft, #f1f5f9);
+  --kiosk-text: var(--waitless-text, #0f172a);
+  --kiosk-muted: var(--waitless-muted, #64748b);
+  --kiosk-line: var(--waitless-line, rgba(226, 232, 240, 0.8));
+  --kiosk-primary: var(--waitless-primary, #4f46e5);
+  --kiosk-primary-dark: var(--waitless-primary-hover, #3730a3);
+  --kiosk-success: var(--waitless-success, #10b981);
+  --kiosk-danger: var(--waitless-danger, #ef4444);
+  --kiosk-warning: var(--waitless-warning, #f59e0b);
+  --kiosk-radius: var(--waitless-radius, 24px);
+  --kiosk-radius-sm: var(--waitless-radius-sm, 14px);
+  --kiosk-shadow: var(--waitless-shadow, 0 20px 40px -15px rgba(15, 23, 42, 0.06));
+  --kiosk-shadow-lg: var(--waitless-shadow-lg, 0 30px 60px -15px rgba(15, 23, 42, 0.15));
+}
+
+>>>>>>> Stashed changes
 * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
     }
 
+<<<<<<< Updated upstream
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -14,6 +38,27 @@
       justify-content: center;
       padding: 20px;
     }
+=======
+.hidden {
+  display: none !important;
+}
+
+body {
+  font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  background:
+    radial-gradient(circle at 10% 15%, rgba(99, 102, 241, 0.08) 0%, transparent 45rem),
+    radial-gradient(circle at 90% 85%, rgba(16, 185, 129, 0.05) 0%, transparent 45rem),
+    var(--kiosk-bg) !important;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: var(--kiosk-text);
+  padding: 24px;
+  -webkit-font-smoothing: antialiased;
+}
+>>>>>>> Stashed changes
 
     .kiosk-login-container {
       background: white;
@@ -24,6 +69,7 @@
       padding: 40px;
     }
 
+<<<<<<< Updated upstream
     .kiosk-header {
       text-align: center;
       margin-bottom: 30px;
@@ -51,11 +97,96 @@
       flex-direction: column;
       gap: 20px;
     }
+=======
+/* Kiosk Login Container */
+.kiosk-login-container {
+  background: var(--kiosk-surface);
+  border-radius: var(--kiosk-radius);
+  border: 1px solid var(--kiosk-line);
+  box-shadow: var(--kiosk-shadow-lg);
+  width: 100%;
+  max-width: 520px;
+  padding: 48px 40px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.kiosk-login-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, var(--kiosk-primary) 0%, var(--kiosk-success) 100%);
+}
+
+.kiosk-header {
+  margin-bottom: 32px;
+}
+
+.kiosk-header h1 {
+  font-size: 2.25rem;
+  font-weight: 900;
+  color: var(--kiosk-text);
+  letter-spacing: -0.04em;
+  margin-bottom: 8px;
+  background: linear-gradient(135deg, var(--kiosk-text) 30%, var(--kiosk-primary) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.kiosk-header p {
+  color: var(--kiosk-muted);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  font-weight: 500;
+}
+
+/* Step Indicator */
+.step-indicator {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.step-indicator .step {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--kiosk-surface-soft);
+  border: 1px solid var(--kiosk-line);
+  color: var(--kiosk-muted);
+  font-size: 0.85rem;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+  transition: all 0.25s ease;
+}
+
+.step-indicator .step.active {
+  background: var(--kiosk-primary);
+  border-color: var(--kiosk-primary);
+  color: #ffffff;
+  box-shadow: 0 0 12px rgba(79, 70, 229, 0.3);
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+>>>>>>> Stashed changes
 
     .view.hidden {
       display: none;
     }
 
+<<<<<<< Updated upstream
     .step-indicator {
       text-align: center;
       margin-bottom: 20px;
@@ -285,6 +416,440 @@
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
+=======
+.form-group label {
+  font-weight: 800;
+  color: var(--kiosk-primary);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.form-group input,
+.form-group select {
+  min-height: 52px;
+  padding: 12px 18px;
+  border: 1px solid var(--kiosk-line);
+  border-radius: var(--kiosk-radius-sm);
+  background: var(--waitless-input-bg, #ffffff);
+  color: var(--kiosk-text);
+  font-size: 1rem;
+  outline: none;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  width: 100%;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.01);
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  border-color: var(--kiosk-primary);
+  box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.15);
+  background: var(--waitless-input-bg, #ffffff);
+}
+
+.form-group input::placeholder {
+  color: var(--kiosk-muted);
+  opacity: 0.7;
+}
+
+/* PIN Input & Pad */
+.pin-input {
+  font-size: 32px !important;
+  letter-spacing: 16px;
+  text-align: center;
+  font-weight: 900;
+  color: var(--kiosk-primary) !important;
+  caret-color: transparent;
+  background: var(--kiosk-surface-soft) !important;
+  border-color: var(--kiosk-line) !important;
+}
+
+.pin-pad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin: 16px 0;
+}
+
+.pin-button {
+  height: 64px;
+  font-size: 22px;
+  font-weight: 800;
+  border: 1px solid var(--kiosk-line);
+  background: var(--waitless-input-bg, #ffffff);
+  color: var(--kiosk-text);
+  border-radius: var(--kiosk-radius-sm);
+  cursor: pointer;
+  box-shadow: var(--kiosk-shadow-sm);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  touch-action: manipulation;
+  display: grid;
+  place-items: center;
+}
+
+.pin-button:hover {
+  background: var(--kiosk-surface-soft);
+  border-color: rgba(79, 70, 229, 0.3);
+}
+
+.pin-button:active {
+  transform: scale(0.95);
+}
+
+.pin-button.delete {
+  grid-column: span 2;
+  background: rgba(239, 68, 68, 0.05);
+  border-color: rgba(239, 68, 68, 0.15);
+  color: var(--kiosk-danger);
+}
+
+.pin-button.delete:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.pin-button.submit {
+  grid-column: span 1;
+  background: var(--kiosk-success);
+  border-color: var(--kiosk-success);
+  color: white;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.25);
+}
+
+.pin-button.submit:hover {
+  background: #059669;
+  box-shadow: 0 6px 18px rgba(16, 185, 129, 0.4);
+}
+
+.login-button {
+  padding: 15px 24px;
+  background: linear-gradient(135deg, var(--kiosk-primary) 0%, var(--kiosk-primary-dark) 100%);
+  color: white;
+  border: none;
+  border-radius: var(--kiosk-radius-sm);
+  font-size: 1.05rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(79, 70, 229, 0.25);
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.login-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(79, 70, 229, 0.35);
+}
+
+.login-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.login-button-muted {
+  background: var(--kiosk-surface-soft);
+  color: var(--kiosk-text);
+  border: 1px solid var(--kiosk-line);
+  box-shadow: none;
+}
+
+.login-button-muted:hover:not(:disabled) {
+  background: var(--kiosk-line);
+  box-shadow: none;
+}
+
+.login-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.device-info {
+  margin-top: 32px;
+  font-size: 0.85rem;
+  color: var(--kiosk-muted);
+  font-weight: 600;
+}
+
+.device-info span {
+  color: var(--kiosk-primary);
+}
+
+/* Kiosk Content Panel */
+.kiosk-content {
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+#services-view,
+#token-view {
+  background: var(--kiosk-surface);
+  border: 1px solid var(--kiosk-line);
+  border-radius: var(--kiosk-radius);
+  padding: 48px;
+  box-shadow: var(--kiosk-shadow-lg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  position: relative;
+  overflow: hidden;
+}
+
+#services-view::before,
+#token-view::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 6px;
+  background: linear-gradient(90deg, var(--kiosk-primary) 0%, var(--kiosk-success) 100%);
+}
+
+.kiosk-hero-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 32px 36px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(239, 246, 255, 0.4) 0%, rgba(255, 255, 255, 0.7) 100%);
+  border: 1px solid var(--kiosk-line);
+  margin-bottom: 36px;
+  box-shadow: var(--kiosk-shadow-sm);
+}
+
+[data-theme="dark"] .kiosk-hero-card {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.4) 0%, rgba(15, 23, 42, 0.6) 100%);
+}
+
+.kiosk-hero-badge {
+  flex: 0 0 auto;
+  padding: 8px 20px;
+  border-radius: 999px;
+  background: rgba(79, 70, 229, 0.08);
+  color: var(--kiosk-primary);
+  border: 1px solid rgba(79, 70, 229, 0.18);
+  font-weight: 800;
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.kiosk-step-title {
+  font-size: 1.85rem;
+  font-weight: 900;
+  color: var(--kiosk-text);
+  letter-spacing: -0.03em;
+}
+
+.kiosk-subtitle {
+  margin-top: 6px;
+  color: var(--kiosk-muted);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+/* Service selection layout */
+.services-step {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.services-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+  margin: 16px 0 32px;
+}
+
+.service-card {
+  background: var(--waitless-input-bg, #ffffff);
+  border: 1px solid var(--kiosk-line);
+  border-radius: 20px;
+  padding: 28px;
+  cursor: pointer;
+  box-shadow: var(--kiosk-shadow-sm);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  gap: 12px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+}
+
+.service-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(79, 70, 229, 0.35);
+  box-shadow: var(--kiosk-shadow);
+}
+
+.service-card.selected {
+  border-color: var(--kiosk-primary);
+  background: rgba(79, 70, 229, 0.04);
+  box-shadow: 0 10px 30px rgba(79, 70, 229, 0.12);
+}
+
+.service-card.selected::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--kiosk-primary);
+}
+
+.service-card .service-name {
+  font-size: 1.3rem;
+  font-weight: 900;
+  color: var(--kiosk-text);
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+}
+
+.service-card .service-description {
+  color: var(--kiosk-muted);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.service-card .service-time {
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--kiosk-primary);
+  letter-spacing: 0.06em;
+  background: rgba(79, 70, 229, 0.08);
+  padding: 6px 12px;
+  border-radius: 8px;
+  margin-top: auto;
+}
+
+.service-selected-indicator {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--kiosk-success);
+  background: rgba(16, 185, 129, 0.1);
+  padding: 4px 10px;
+  border-radius: 6px;
+  letter-spacing: 0.05em;
+  display: none;
+}
+
+.service-card.selected .service-selected-indicator {
+  display: block;
+}
+
+/* Category Selection Layout & Cards */
+.service-category-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+  width: 100%;
+}
+
+.category-card {
+  padding: 24px 28px;
+  min-height: 110px;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--waitless-input-bg, #ffffff) 0%, var(--kiosk-surface-soft) 100%);
+}
+
+.category-card strong {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--kiosk-text);
+  letter-spacing: -0.02em;
+}
+
+.category-card span {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--kiosk-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 4px;
+}
+
+.category-selection-intro {
+  grid-column: 1 / -1;
+  margin-bottom: 12px;
+}
+
+.service-category-header h3 {
+  font-size: 1.5rem;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+
+.service-category-header p {
+  color: var(--kiosk-muted);
+  font-size: 0.95rem;
+  margin-top: 4px;
+}
+
+.category-filter-header {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--kiosk-surface-soft);
+  border: 1px solid var(--kiosk-line);
+  padding: 16px 24px;
+  border-radius: 16px;
+  margin-bottom: 16px;
+  width: 100%;
+}
+
+.category-filter-label {
+  font-size: 1.05rem;
+  color: var(--kiosk-text);
+  font-weight: 600;
+}
+
+.category-filter-label strong {
+  color: var(--kiosk-primary);
+}
+
+/* Service selection actions row */
+.service-selection-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  border-top: 1px solid var(--kiosk-line);
+  padding-top: 32px;
+}
+
+.selected-count {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--kiosk-text);
+}
+
+.button-large {
+  padding: 16px 36px;
+  font-size: 1.05rem;
+  font-weight: 800;
+  border-radius: var(--kiosk-radius-sm);
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  border: none;
+}
+>>>>>>> Stashed changes
 
 /* Extracted from pages/kiosk/kiosk-interface.html */
 * {
@@ -296,6 +861,7 @@
       user-select: none;
     }
 
+<<<<<<< Updated upstream
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background:
@@ -306,6 +872,12 @@
       display: flex;
       flex-direction: column;
     }
+=======
+.button-primary:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 28px rgba(79, 70, 229, 0.4);
+}
+>>>>>>> Stashed changes
 
     .kiosk-header {
       background:
@@ -318,6 +890,7 @@
       border-bottom: 1px solid rgba(255, 255, 255, 0.12);
     }
 
+<<<<<<< Updated upstream
     .kiosk-header h1 {
       font-size: 30px;
       letter-spacing: 0.04em;
@@ -417,6 +990,146 @@
       font-size: 13px;
       white-space: nowrap;
     }
+=======
+/* Token Generation View styling */
+.token-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 24px 0;
+}
+
+.token-step-title {
+  font-size: 2rem;
+  font-weight: 900;
+  margin-bottom: 8px;
+  letter-spacing: -0.03em;
+  background: linear-gradient(135deg, var(--kiosk-text) 30%, var(--kiosk-primary) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.token-summary-intro {
+  color: var(--kiosk-muted);
+  font-size: 1.05rem;
+  margin-bottom: 36px;
+  font-weight: 500;
+}
+
+.token-summary-list {
+  display: grid;
+  gap: 20px;
+  width: 100%;
+  max-width: 520px;
+  margin-bottom: 40px;
+}
+
+.token-summary-item {
+  background: var(--waitless-input-bg, #ffffff);
+  border: 1px solid var(--kiosk-line);
+  border-radius: var(--kiosk-radius);
+  padding: 32px;
+  box-shadow: var(--kiosk-shadow);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+}
+
+.token-number {
+  font-size: 4.5rem;
+  font-weight: 900;
+  color: var(--kiosk-primary);
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.token-service-name {
+  font-size: 1.35rem;
+  font-weight: 900;
+  color: var(--kiosk-text);
+}
+
+.token-counter-assignment {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--kiosk-success);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  background: rgba(16, 185, 129, 0.1);
+  padding: 8px 16px;
+  border-radius: 10px;
+  display: inline-block;
+  margin-top: 4px;
+}
+
+.button-group {
+  display: flex;
+  justify-content: center;
+  margin-top: 24px;
+}
+
+/* Customer details check view */
+.customer-details-section h4 {
+  font-size: 1.3rem;
+  font-weight: 900;
+  margin-bottom: 8px;
+  color: var(--kiosk-text);
+  letter-spacing: -0.02em;
+}
+
+.customer-details-note {
+  color: var(--kiosk-muted);
+  font-size: 0.95rem;
+  margin-bottom: 24px;
+  font-weight: 500;
+}
+
+.customer-lookup-result {
+  margin: 12px 0;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.customer-lookup-result.success {
+  color: var(--kiosk-success);
+}
+
+.customer-lookup-result.error {
+  color: var(--kiosk-danger);
+}
+
+/* Messages styling */
+.message {
+  padding: 14px 20px;
+  border-radius: 14px;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 24px;
+  box-shadow: var(--kiosk-shadow-sm);
+}
+
+.message.error {
+  background: rgba(239, 68, 68, 0.08);
+  color: var(--kiosk-danger);
+  border: 1px solid rgba(239, 68, 68, 0.18);
+}
+
+.message.success {
+  background: rgba(16, 185, 129, 0.08);
+  color: var(--kiosk-success);
+  border: 1px solid rgba(16, 185, 129, 0.18);
+}
+
+.message.info {
+  background: rgba(79, 70, 229, 0.08);
+  color: var(--kiosk-primary);
+  border: 1px solid rgba(79, 70, 229, 0.18);
+}
+>>>>>>> Stashed changes
 
     .customer-details-section {
       background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
@@ -427,6 +1140,7 @@
       box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
     }
 
+<<<<<<< Updated upstream
     .customer-details-section h4 {
       font-size: 18px;
       color: #1f2937;
@@ -1807,3 +2521,189 @@
         padding: 8px;
       }
     }
+=======
+/* Responsive adjustments */
+@media (max-width: 720px) {
+  body {
+    padding: 16px;
+  }
+  .kiosk-login-container,
+  #services-view,
+  #token-view {
+    padding: 28px;
+    border-radius: 20px;
+  }
+  .kiosk-hero-card {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 24px;
+  }
+  .kiosk-hero-badge {
+    align-self: flex-start;
+  }
+  .services-container {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+  .service-selection-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 20px;
+    text-align: center;
+  }
+  .button-large {
+    justify-content: center;
+    width: 100%;
+  }
+}
+
+/* Premium Ticket Pass Design for .token-result-card */
+.token-result-card {
+  background: var(--waitless-input-bg, #ffffff) !important;
+  border: 1px solid var(--kiosk-line) !important;
+  border-radius: 24px !important;
+  padding: 32px !important;
+  box-shadow: var(--kiosk-shadow) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  position: relative;
+  overflow: visible !important; /* Allow circular cut punches to overlay and clip borders */
+  display: grid;
+  gap: 20px;
+  width: 100%;
+  max-width: 520px;
+  text-align: left;
+}
+
+.token-result-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--kiosk-primary);
+}
+
+.token-item-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.token-item-number {
+  font-size: 3.2rem;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background: linear-gradient(135deg, var(--kiosk-primary) 0%, var(--kiosk-primary-dark) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 1;
+}
+
+.token-item-service {
+  font-size: 1.15rem;
+  color: var(--kiosk-text);
+  font-weight: 800;
+  margin-top: 8px;
+  letter-spacing: -0.02em;
+}
+
+.token-item-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.token-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 99px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  background: rgba(16, 185, 129, 0.15) !important;
+  color: var(--kiosk-success) !important;
+}
+
+.token-status-pill::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--kiosk-success);
+  display: inline-block;
+  animation: pulseGreen 1.5s infinite;
+}
+
+@keyframes pulseGreen {
+  0% { transform: scale(0.9); opacity: 0.6; }
+  50% { transform: scale(1.3); opacity: 1; }
+  100% { transform: scale(0.9); opacity: 0.6; }
+}
+
+.token-item-meta {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px 20px;
+  border-top: 1px dashed var(--kiosk-line);
+  padding-top: 16px;
+}
+
+.token-item-meta div {
+  font-size: 0.95rem;
+  color: var(--kiosk-text);
+  line-height: 1.4;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.token-item-meta strong {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--kiosk-muted);
+}
+
+.token-item-meta span {
+  font-weight: 700;
+  color: var(--kiosk-text);
+}
+
+/* Perforation Divider with circle punches */
+.ticket-divider {
+  position: relative;
+  height: 1px;
+  border-top: 2px dashed var(--kiosk-line);
+  margin: 8px -33px !important; /* Pull negative margin to align with card boundaries */
+  z-index: 10;
+}
+
+.ticket-divider::before,
+.ticket-divider::after {
+  content: '';
+  position: absolute;
+  top: -11px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--kiosk-bg) !important;
+  border: 1px solid var(--kiosk-line);
+  box-sizing: border-box;
+}
+
+.ticket-divider::before {
+  left: -11px;
+}
+
+.ticket-divider::after {
+  right: -11px;
+}
+>>>>>>> Stashed changes

@@ -361,7 +361,7 @@ const kioskTokenDB = {
         }
       }
 
-      return { tokenId, tokenNumber, serviceId, serviceName, organizationId, kioskId, kioskName };
+      return { tokenId, tokenNumber, serviceId, serviceName, organizationId, kioskId, kioskName, assignedCounterId, assignedCounterName };
     } catch (err) {
       console.error('Token generation failed:', err);
       await this.logKioskActivity(organizationId, kioskId, 'token_generation_failed', {
@@ -493,7 +493,9 @@ const kioskTokenDB = {
       kioskId: kioskId,
       kioskName: kioskName,
       selectedServices: cleanedServices,
-      serviceCount: cleanedServices.length
+      serviceCount: cleanedServices.length,
+      assignedCounterId: assignedCounterId,
+      assignedCounterName: assignedCounterName
     };
   },
 

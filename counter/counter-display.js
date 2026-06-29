@@ -58,12 +58,20 @@ function escapeHtml(text){
 }
 
 function setAuthUserLabel(user, profile){
+  const badge = document.getElementById('user-profile-badge');
+  const avatarChar = document.getElementById('user-avatar-char');
   if(!authUserEl) return;
   if(!user){
     authUserEl.textContent = 'Not signed in';
+    if(badge) badge.style.display = 'none';
     return;
   }
-  authUserEl.textContent = profile?.organizationName || profile?.name || user.email || user.uid;
+  const name = profile?.organizationName || profile?.name || user.email || user.uid;
+  authUserEl.textContent = name;
+  if(badge) badge.style.display = 'flex';
+  if(avatarChar) {
+    avatarChar.textContent = String(name || 'U').trim().charAt(0).toUpperCase();
+  }
 }
 
 function setSelectionVisibility(visible){
@@ -258,23 +266,23 @@ async function renderTokens(orgId, counterId){
 
       const servicePill = document.createElement('span');
       servicePill.className = 'meta-pill';
-      servicePill.innerHTML = `<strong>${escapeHtml(activeToken.serviceName || activeToken.serviceId)}</strong>`;
+      servicePill.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg><strong>${escapeHtml(activeToken.serviceName || activeToken.serviceId)}</strong>`;
       metaEl.appendChild(servicePill);
 
       const kioskPill = document.createElement('span');
       kioskPill.className = 'meta-pill';
-      kioskPill.textContent = activeToken.kioskName || 'Live queue';
+      kioskPill.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg><span>${escapeHtml(activeToken.kioskName || 'Live queue')}</span>`;
       metaEl.appendChild(kioskPill);
 
       const statusPill = document.createElement('span');
       statusPill.className = 'meta-pill';
-      statusPill.textContent = statusText;
+      statusPill.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg><span>${statusText}</span>`;
       metaEl.appendChild(statusPill);
 
       if((kioskCustomerSettings && kioskCustomerSettings.enabled && kioskCustomerSettings.requireName) || activeToken.customerName){
         const customerPill = document.createElement('span');
         customerPill.className = 'customer-name';
-        customerPill.innerHTML = `<small>Customer</small><span>${escapeHtml(activeToken.customerName || 'Not provided')}</span>`;
+        customerPill.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg><small>Customer</small><span>${escapeHtml(activeToken.customerName || 'Not provided')}</span>`;
         metaEl.appendChild(customerPill);
       }
 
@@ -437,11 +445,11 @@ function createTokenStatePanel({ title, subtitle, emptyText, tokens, counterId, 
     const info = document.createElement('div');
     const displayNumber = String(token.tokenNumber || token.id || '—');
     info.innerHTML = `
-      <div class="token-list-title">${displayNumber} <span style="font-weight:700;color:#5d6e82">${escapeHtml(token.serviceName || token.serviceId)}</span></div>
+      <div class="token-list-title">${displayNumber} <span style="font-weight:700;color:var(--accent);font-size:0.95rem;margin-left:8px;">${escapeHtml(token.serviceName || token.serviceId)}</span></div>
       <div class="token-list-meta">
-        <span>${escapeHtml(token.kioskName || 'Live queue')}</span>
-        <span>Status: ${escapeHtml(token.status || 'waiting')}</span>
-        ${token.customerName ? `<span>Customer: ${escapeHtml(token.customerName)}</span>` : ''}
+        <span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:3px;"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>${escapeHtml(token.kioskName || 'Live queue')}</span>
+        <span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:3px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>${escapeHtml(token.status || 'waiting')}</span>
+        ${token.customerName ? `<span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:3px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>${escapeHtml(token.customerName)}</span>` : ''}
       </div>
     `;
 
@@ -620,6 +628,19 @@ if(signInForm){
   });
 }
 
+async function isCustomerUser(user) {
+  if (!user) return false;
+  const appuserSnap = await db.ref(`appuser/${user.uid}`).once('value');
+  if (appuserSnap.exists()) return true;
+  
+  const orgSnap = await db.ref(`users/${user.uid}`).once('value');
+  const org = orgSnap.val();
+  if (!org || !org.role) {
+    return true; // No business profile or role means it is not an org account
+  }
+  return false;
+}
+
 auth.onAuthStateChanged(async user=>{
   if(!user){
     setStatus('Not signed in');
@@ -633,6 +654,19 @@ auth.onAuthStateChanged(async user=>{
     refreshOrgsBtn.disabled = true;
     hideSignInModal();
     return;
+  }
+
+  try {
+    const isCust = await isCustomerUser(user);
+    if (isCust) {
+      await auth.signOut();
+      setStatus('Access denied');
+      showSignInModal();
+      signInMsg.textContent = 'Access denied. Customer accounts are not allowed here.';
+      return;
+    }
+  } catch (err) {
+    console.error('Error during customer validation', err);
   }
 
   orgLogoutBtn.style.display='inline-block';
