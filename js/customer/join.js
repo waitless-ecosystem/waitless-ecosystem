@@ -1856,6 +1856,7 @@ async function bootstrapApp() {
       window.location.replace(getLoginUrl());
       return;
     }
+<<<<<<< Updated upstream
     // Require email-verified accounts for app access
     if (user.email && !user.emailVerified) {
       try {
@@ -1869,6 +1870,9 @@ async function bootstrapApp() {
         return;
       }
     }
+=======
+
+>>>>>>> Stashed changes
     try {
       const appUser = await loadAppUserProfile(user);
       if (!appUser) {

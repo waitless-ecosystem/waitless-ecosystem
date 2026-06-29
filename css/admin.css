@@ -1,28 +1,30 @@
 /* Professional superadmin dashboard styles */
 
 :root {
-  --admin-bg: #eef4fb;
-  --admin-card: #ffffff;
-  --admin-card-2: #f8fbff;
-  --admin-border: #d9e6f4;
-  --admin-border-strong: #bfd4ec;
-  --admin-accent: #0f62fe;
-  --admin-accent-2: #1d4ed8;
-  --admin-accent-soft: rgba(15, 98, 254, 0.10);
+  --admin-bg: #f8fafc;
+  --admin-card: rgba(255, 255, 255, 0.85);
+  --admin-card-2: #f1f5f9;
+  --admin-border: rgba(226, 232, 240, 0.8);
+  --admin-border-strong: rgba(79, 70, 229, 0.2);
+  --admin-accent: #4f46e5;
+  --admin-accent-2: #3730a3;
+  --admin-accent-soft: rgba(79, 70, 229, 0.08);
   --admin-text: #0f172a;
-  --admin-muted: #607085;
-  --admin-success: #0f8a4f;
-  --admin-warning: #b36b00;
-  --admin-danger: #c53030;
-  --admin-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+  --admin-muted: #64748b;
+  --admin-success: #10b981;
+  --admin-warning: #f59e0b;
+  --admin-danger: #ef4444;
+  --admin-shadow: 0 20px 40px -15px rgba(15, 23, 42, 0.06), 0 0 0 1px rgba(15, 23, 42, 0.02);
 }
 
 body {
   background:
-    radial-gradient(circle at top left, rgba(15, 98, 254, 0.10), transparent 28%),
-    radial-gradient(circle at top right, rgba(14, 165, 233, 0.10), transparent 26%),
-    linear-gradient(180deg, #f6faff 0%, #eef4fb 100%);
+    radial-gradient(circle at top left, rgba(99, 102, 241, 0.06), transparent 30rem),
+    radial-gradient(circle at top right, rgba(16, 185, 129, 0.04), transparent 30rem),
+    #f8fafc;
   color: var(--admin-text);
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
 /* Ensure admin panels are visible even if global .panel defaults to display:none */
@@ -41,10 +43,10 @@ body {
   justify-content: space-between;
   gap: 24px;
   padding: 26px 28px;
-  background: linear-gradient(135deg, rgba(15, 98, 254, 0.94), rgba(29, 78, 216, 0.88));
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
   color: #fff;
   border-radius: 26px;
-  box-shadow: 0 24px 50px rgba(15, 98, 254, 0.18);
+  box-shadow: 0 24px 50px rgba(79, 70, 229, 0.18);
   margin-bottom: 18px;
 }
 
