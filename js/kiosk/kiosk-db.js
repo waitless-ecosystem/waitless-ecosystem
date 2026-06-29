@@ -32,21 +32,21 @@ function getLeastQueueCounter(serviceId, assignments, counters, queueData) {
   };
 
   candidateMatches.forEach((match) => {
-    let queueSize = 0;
+    let workload = 0;
     if (queueData) {
       Object.entries(queueData).forEach(([sId, sQueue]) => {
         if (!sQueue) return;
         Object.values(sQueue).forEach((token) => {
           if (token && !isPast(token.status) && isWaiting(token.status)) {
             if (token.assignedCounterId === match.counterId) {
-              queueSize += 1;
+              workload += Number(token.serviceEstimatedTime || token.estimatedTime || 15) || 15;
             }
           }
         });
       });
     }
-    if (queueSize < minQueue) {
-      minQueue = queueSize;
+    if (workload < minQueue) {
+      minQueue = workload;
       bestMatch = match;
     }
   });

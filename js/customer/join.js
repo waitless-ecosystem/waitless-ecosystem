@@ -508,9 +508,9 @@ async function loadTokenHistory() {
       try {
         const orgContext = await getOrgContext(token.orgId);
         // Read the full service queue so we can compute positions and estimates
-        const queueSnap = await db.ref(`users/${token.orgId}/queue/${token.serviceId}`).once('value');
+        const queueSnap = await db.ref(`users/${token.orgId}/queue`).once('value');
         const queueData = queueSnap.val() || {};
-        const liveToken = queueData[token.id] || {};
+        const liveToken = queueData[token.serviceId]?.[token.id] || {};
         const queueState = window.userAppTracker?.computeQueueState?.(queueData, token.tokenNumber) || null;
         const assignment = Object.values(orgContext.assignments || {}).find((entry) => Array.isArray(entry?.services) && entry.services.includes(token.serviceId));
         const assignedCounterId = liveToken.assignedCounterId || liveToken.counterId || token.assignedCounterId || token.counterId || assignment?.counterId || null;
@@ -796,7 +796,7 @@ function syncTokenQueueListeners(tokens = []) {
 
   (tokens || []).forEach((token) => {
     if (!token?.orgId || !token?.serviceId) return;
-    const path = `users/${token.orgId}/queue/${token.serviceId}`;
+    const path = `users/${token.orgId}/queue`;
     desiredPaths.set(path, true);
   });
 
@@ -1310,7 +1310,7 @@ function resolveCounterForService(serviceId, queueData = null) {
     };
   }
 
-  // Multiple candidates: find the one with the least queue size
+  // Multiple candidates: find the one with the least ETA workload
   let bestMatch = candidateMatches[0];
   let minWorkload = Infinity;
 
@@ -1331,7 +1331,7 @@ function resolveCounterForService(serviceId, queueData = null) {
         Object.values(sQueue).forEach((token) => {
           if (token && !isPast(token.status) && isWaiting(token.status)) {
             if (token.assignedCounterId === match.counterId) {
-              workload += 1;
+              workload += Number(token.serviceEstimatedTime || token.estimatedTime || 15) || 15;
             }
           }
         });
@@ -1525,10 +1525,43 @@ async function issueToken(serviceId, service, buttonEl = null) {
 
     // Compute served-at estimate by summing estimated minutes of tokens ahead in queue
     try {
-      const queueSnap = await db.ref(`users/${state.orgId}/queue/${serviceId}`).once('value');
+      const queueSnap = await db.ref(`users/${state.orgId}/queue`).once('value');
       const queueData = queueSnap.val() || {};
-      const entries = Object.entries(queueData).map(([id, t]) => ({ id, ...(t || {}) }));
-      const waitingEntries = entries
+      
+      let entries = [];
+      if (queueData) {
+        const values = Object.values(queueData);
+        const firstVal = values[0];
+        if (firstVal && typeof firstVal === 'object' && !firstVal.hasOwnProperty('tokenNumber') && !firstVal.hasOwnProperty('status')) {
+          values.forEach((serviceQueue) => {
+            if (serviceQueue && typeof serviceQueue === 'object') {
+              Object.entries(serviceQueue).forEach(([id, token]) => {
+                if (token) {
+                  entries.push({ id, ...token });
+                }
+              });
+            }
+          });
+        } else {
+          Object.entries(queueData).forEach(([id, token]) => {
+            if (token) {
+              entries.push({ id, ...token });
+            }
+          });
+        }
+      }
+
+      const target = entries.find((e) => String(e.tokenNumber || '').trim().toUpperCase() === String(tokenNumber || '').trim().toUpperCase());
+      const targetCounterId = target?.assignedCounterId || counterInfo.counterId || null;
+
+      const counterEntries = entries.filter((entry) => {
+        if (targetCounterId) {
+          return entry.assignedCounterId === targetCounterId;
+        }
+        return entry.serviceId === serviceId;
+      });
+
+      const waitingEntries = counterEntries
         .filter((entry) => !isPastTokenStatus(entry.status) && isWaitingToken(entry.status))
         .sort((a, b) => Number(a.timestamp || 0) - Number(b.timestamp || 0));
 

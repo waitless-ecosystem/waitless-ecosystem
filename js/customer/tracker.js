@@ -43,18 +43,51 @@
 
   function computeQueueState(queueData, tokenNumber) {
     const normalizedToken = normalizeTokenNumber(tokenNumber);
-    const entries = Object.entries(queueData || {}).map(([id, token]) => ({ id, ...(token || {}) }));
+    
+    // Flatten nested or flat queueData
+    let entries = [];
+    if (queueData) {
+      const values = Object.values(queueData);
+      const firstVal = values[0];
+      if (firstVal && typeof firstVal === 'object' && !firstVal.hasOwnProperty('tokenNumber') && !firstVal.hasOwnProperty('status')) {
+        values.forEach((serviceQueue) => {
+          if (serviceQueue && typeof serviceQueue === 'object') {
+            Object.entries(serviceQueue).forEach(([id, token]) => {
+              if (token) {
+                entries.push({ id, ...token });
+              }
+            });
+          }
+        });
+      } else {
+        Object.entries(queueData).forEach(([id, token]) => {
+          if (token) {
+            entries.push({ id, ...token });
+          }
+        });
+      }
+    }
+
     const target = entries.find((entry) => normalizeTokenNumber(entry.tokenNumber) === normalizedToken);
 
     if (!target) {
       return null;
     }
 
-    const waitingEntries = entries
+    // Filter entries by assigned counter
+    const targetCounterId = target.assignedCounterId || null;
+    const counterEntries = entries.filter((entry) => {
+      if (targetCounterId) {
+        return entry.assignedCounterId === targetCounterId;
+      }
+      return entry.serviceId === target.serviceId;
+    });
+
+    const waitingEntries = counterEntries
       .filter((entry) => isActiveToken(entry.status) && isWaitingToken(entry.status))
       .sort((a, b) => Number(a.timestamp || 0) - Number(b.timestamp || 0));
 
-    const projectedEntries = entries
+    const projectedEntries = counterEntries
       .filter((entry) => isActiveToken(entry.status) && (isWaitingToken(entry.status) || String(entry.status || '').trim().toLowerCase() === 'scheduled'))
       .sort((a, b) => Number(a.timestamp || 0) - Number(b.timestamp || 0))
       .reduce((state, entry) => {
@@ -167,7 +200,7 @@
       return null;
     }
 
-    const queueRef = dbInstance.ref(`users/${match.orgId}/queue/${match.serviceId}`);
+    const queueRef = dbInstance.ref(`users/${match.orgId}/queue`);
     activeListenerRef = queueRef;
 
     queueRef.on('value', (snap) => {

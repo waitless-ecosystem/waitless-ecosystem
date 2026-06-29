@@ -225,7 +225,31 @@ function resolveCounterName(counterValue) {
 
 function computeLivePositionForToken(queueData, tokenNumber) {
   const normalizedToken = String(tokenNumber || '').trim().toUpperCase();
-  const entries = Object.entries(queueData || {}).map(([id, t]) => ({ id, ...(t || {}) }));
+  
+  // Flatten nested or flat queueData
+  let entries = [];
+  if (queueData) {
+    const values = Object.values(queueData);
+    const firstVal = values[0];
+    if (firstVal && typeof firstVal === 'object' && !firstVal.hasOwnProperty('tokenNumber') && !firstVal.hasOwnProperty('status')) {
+      values.forEach((serviceQueue) => {
+        if (serviceQueue && typeof serviceQueue === 'object') {
+          Object.entries(serviceQueue).forEach(([id, token]) => {
+            if (token) {
+              entries.push({ id, ...token });
+            }
+          });
+        }
+      });
+    } else {
+      Object.entries(queueData).forEach(([id, token]) => {
+        if (token) {
+          entries.push({ id, ...token });
+        }
+      });
+    }
+  }
+
   const target = entries.find((e) => String(e.tokenNumber || '').trim().toUpperCase() === normalizedToken);
   if (!target) return 'Unknown';
 
@@ -238,7 +262,16 @@ function computeLivePositionForToken(queueData, tokenNumber) {
     return ['waiting', 'new', 'queued', 'pending'].includes(v) || !v;
   };
 
-  const waitingEntries = entries
+  // Filter entries by assigned counter
+  const targetCounterId = target.assignedCounterId || null;
+  const counterEntries = entries.filter((entry) => {
+    if (targetCounterId) {
+      return entry.assignedCounterId === targetCounterId;
+    }
+    return entry.serviceId === target.serviceId;
+  });
+
+  const waitingEntries = counterEntries
     .filter((e) => !isPast(e.status) && isWaiting(e.status))
     .sort((a, b) => Number(a.timestamp || 0) - Number(b.timestamp || 0));
 
@@ -261,7 +294,7 @@ function computeLivePositionForToken(queueData, tokenNumber) {
   const scheduledStartMs = parseTimestampMs(target.scheduledFor || target.deferredUntil);
   if (scheduledStartMs === null) return 1;
 
-  const projectedEntries = entries
+  const projectedEntries = counterEntries
     .filter((e) => !isPast(e.status) && (isWaiting(e.status) || String(e.status || '').trim().toLowerCase() === 'scheduled'))
     .sort((a, b) => Number(a.timestamp || 0) - Number(b.timestamp || 0))
     .reduce((state, entry) => {
@@ -386,7 +419,7 @@ function resolveCounterForService(serviceId, queueData = null) {
     };
   }
 
-  // Multiple candidates: find the one with the least queue size
+  // Multiple candidates: find the one with the least ETA workload
   let bestMatch = candidateMatches[0];
   let minWorkload = Infinity;
 
@@ -407,7 +440,7 @@ function resolveCounterForService(serviceId, queueData = null) {
         Object.values(sQueue).forEach((token) => {
           if (token && !isPast(token.status) && isWaiting(token.status)) {
             if (token.assignedCounterId === match.counterId) {
-              workload += 1;
+              workload += Number(token.serviceEstimatedTime || token.estimatedTime || 15) || 15;
             }
           }
         });
@@ -894,7 +927,7 @@ async function issueToken(service, buttonEl, selectedSlot = null) {
 
     await db.ref().update(updates);
 
-    const queueSnap = await db.ref(`users/${orgId}/queue/${service.id}`).once('value');
+    const queueSnap = await db.ref(`users/${orgId}/queue`).once('value');
     const queueData = queueSnap.val() || {};
     const livePosition = computeLivePositionForToken(queueData, tokenNumber);
 
