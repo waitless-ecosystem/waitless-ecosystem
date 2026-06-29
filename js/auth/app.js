@@ -4,6 +4,11 @@ if (!firebase.apps.length) {
 }
 const auth = firebase.auth();
 const db = firebase.database();
+const waitlessRoutes = window.WAITLESS_ROUTES || {
+  admin: 'admin/dashboard.html',
+  business: 'business/dashboard.html',
+  pending: 'auth/pending-approval.html'
+};
 
 // Helpers
 function $(sel){ return document.querySelector(sel); }
@@ -180,11 +185,11 @@ $('#login-form').addEventListener('submit', async e=>{
     const profile = snap.val() || {};
     const superAdmin = await isSuperAdmin(userCred.user, profile);
     if(superAdmin){
-      window.location.href = 'pages/admin.html';
+      window.location.href = waitlessRoutes.admin || 'admin/dashboard.html';
       return;
     }
     if(profile.role === 'approved'){
-      window.location.href = 'pages/dashboard.html';
+      window.location.href = waitlessRoutes.business || 'business/dashboard.html';
       return;
     }
     showMessage('Logged in', 'success');
@@ -247,11 +252,11 @@ auth.onAuthStateChanged(async user=>{
     const profile = snap.val() || {};
     const superAdmin = await isSuperAdmin(user, profile);
     if(superAdmin){
-      window.location.href = 'pages/admin.html';
+      window.location.href = waitlessRoutes.admin || 'admin/dashboard.html';
       return;
     }
     if(profile.role === 'approved'){
-      window.location.href = 'pages/dashboard.html';
+      window.location.href = waitlessRoutes.business || 'business/dashboard.html';
       return;
     }
     await renderProfile(user);

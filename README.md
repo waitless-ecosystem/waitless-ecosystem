@@ -1,76 +1,83 @@
-# Waitless / EcoSystem
+# Waitless
 
-Waitless is a plain HTML, CSS, and JavaScript Firebase queue-management project. It uses Firebase Authentication and Firebase Realtime Database through CDN scripts. There is no build framework and no frontend compilation step.
+Waitless is a plain HTML, CSS, and JavaScript Firebase queue-management system. It uses Firebase Authentication and Firebase Realtime Database through CDN scripts, with no build framework and no frontend compilation step.
 
-## Folder Structure
+## What the system does
+
+Waitless lets an organization run a digital queue:
+
+- businesses create services, counters, kiosks, bookings, and settings
+- customers join queues, book appointments, and track tokens
+- kiosk devices issue self-service tokens
+- staff serve customers from a counter screen
+- superadmins approve and manage organizations
+
+## Final route structure
 
 ```text
-waitless-ecosystem/
-├── index.html
-├── firebase-rules.json
-├── package.json
-├── README.md
-├── scripts/
-│   └── set-superadmin.js
-├── assets/
-│   ├── images/
-│   ├── icons/
-│   └── logo/
-├── css/
-│   ├── global.css
-│   ├── auth.css
-│   ├── dashboard.css
-│   ├── admin.css
-│   ├── queue-manager.css
-│   └── kiosk.css
-├── js/
-│   ├── config/
-│   │   └── firebase-config.js
-│   ├── auth/
-│   │   ├── app.js
-│   │   └── auth-guard.js
-│   ├── admin/
-│   │   └── admin.js
-│   ├── dashboard/
-│   │   └── dashboard.js
-│   ├── queue/
-│   │   └── queue-manager.js
-│   ├── kiosk/
-│   │   ├── kiosk-db.js
-│   │   ├── kiosk-management.js
-│   │   ├── kiosk-login.js
-│   │   └── kiosk-interface.js
-│   └── utils/
-│       ├── constants.js
-│       └── helpers.js
-├── pages/
-│   ├── admin.html
-│   ├── dashboard.html
-│   ├── queue-manager.html
-│   └── kiosk/
-│       ├── kiosk-management.html
-│       ├── kiosk-login.html
-│       └── kiosk-interface.html
-└── legacy/
-    └── main-application/
+index.html                  Public role-based landing page
+
+auth/
+  login.html                Business/admin sign-in and business registration
+  pending-approval.html     Waiting-for-approval page
+
+business/
+  dashboard.html            Business account status / overview
+  queue.html                Live queue operations
+  services.html             Services module
+  counters.html             Counters and assignments module
+  kiosks.html               Kiosk management
+  bookings.html             Online bookings module
+  reports.html              Reports module
+  settings.html             Open hours and customization settings
+
+customer/
+  index.html                Customer join-queue portal
+  book.html                 Online booking
+  track.html                Token tracking
+
+kiosk/
+  login.html                Kiosk device login
+  interface.html            Customer-facing kiosk interface
+
+staff/
+  login.html                Staff entry
+  counter.html              Staff/counter serving screen
+
+display/
+  counter-display.html      Queue/counter display screen
+
+admin/
+  login.html                Superadmin entry
+  dashboard.html            Admin overview
+  approvals.html            Organization approvals
+  organizations.html        Organization management
 ```
 
-## Main Entry Points
+## Important source folders
 
-- `index.html` - login, registration, and password reset.
-- `pages/admin.html` - superadmin approval and account management.
-- `pages/dashboard.html` - account status and approved-user entry point.
-- `pages/queue-manager.html` - counters, services, assignments, queue status, and reports.
-- `pages/kiosk/kiosk-management.html` - kiosk CRUD, PIN reset, activity, and reports.
-- `pages/kiosk/kiosk-login.html` - three-step kiosk login.
-- `pages/kiosk/kiosk-interface.html` - customer service selection and token generation.
+```text
+css/                        Page-specific legacy-compatible styles still used by working modules
+shared/css/                 Unified app-wide UI system
+shared/js/                  Shared UI/role helpers
+js/auth/                    Authentication flow
+js/business/                Business route adapter
+js/queue/                   Queue manager logic
+js/kiosk/                   Kiosk logic and database helpers
+js/customer/                Customer portal logic
+js/staff/                   Counter/staff display logic
+js/admin/                   Admin panel logic
+js/utils/                   Shared constants, helpers, and token factory
+docs/                       Redesign, data model, backend/security, and testing notes
+scripts/                    Admin utility scripts
+```
 
-## How To Run
+## How to run
 
-You can open `index.html` directly in a browser. For fewer browser restrictions, run a simple static server from the project root:
+From the project root:
 
 ```bash
-python3 -m http.server 8000
+python -m http.server 8000
 ```
 
 Then open:
@@ -79,35 +86,37 @@ Then open:
 http://localhost:8000/
 ```
 
-## Firebase Setup
+If `python` is not available on Windows, try:
 
-The shared Firebase config lives at:
+```bash
+py -m http.server 8000
+```
+
+## Firebase setup
+
+The Firebase web config is in:
 
 ```text
 js/config/firebase-config.js
 ```
 
-Publish the rules from:
+Publish database rules from:
 
 ```text
 firebase-rules.json
 ```
 
-The optional custom-claim helper is still available:
+To set a superadmin custom claim:
 
 ```bash
 npm install
 npm run set-superadmin -- <firebase-user-uid>
 ```
 
-Set `GOOGLE_APPLICATION_CREDENTIALS` to a Firebase service-account JSON file before running the script.
+Set `GOOGLE_APPLICATION_CREDENTIALS` to a Firebase service-account JSON path before running the script.
 
-## Legacy QR Flow
+## Notes
 
-The older customer-facing QR/token flow was preserved under:
-
-```text
-legacy/main-application/
-```
-
-Its internal relative links are kept intact, and its Firebase config now loads from the shared config file.
+- Old compatibility pages and old duplicated customer/counter folders have been removed.
+- The UI is unified through `shared/css/unified-ui.css` and `shared/js/index-ui.js`.
+- Backend hardening work is documented in `docs/BACKEND_SECURITY_PLAN.md`.

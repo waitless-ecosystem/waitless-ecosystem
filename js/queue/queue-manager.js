@@ -40,7 +40,7 @@ function formatDate(ts) {
 }
 
 function getMobileAppUrl(orgId) {
-  const url = new URL('../user-app/index.html', window.location.href);
+  const url = new URL('../customer/index.html', window.location.href);
   if (orgId) {
     url.searchParams.set('orgId', orgId);
   }

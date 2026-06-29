@@ -1,4 +1,3 @@
-/* Extracted from pages/dashboard.html */
 .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 24px; }
     .dashboard-card { padding: 24px; background: #fff; border-radius: 12px; box-shadow: 0 2px 12px rgba(10,20,40,0.08); border: 1px solid #e8eef8; transition: all 0.2s ease; }
     .dashboard-card:hover { box-shadow: 0 8px 24px rgba(10,20,40,0.12); transform: translateY(-2px); }

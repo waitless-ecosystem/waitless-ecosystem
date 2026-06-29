@@ -5,6 +5,8 @@ service-account.json
 serviceAccountKey.json
 *.service-account.json
 firebase-adminsdk*.json
+*rtdb-export*.json
+*default-rtdb-export*.json
 *.log
 .DS_Store
 .vscode/

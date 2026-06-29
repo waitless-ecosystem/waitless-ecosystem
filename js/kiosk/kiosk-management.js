@@ -78,7 +78,7 @@ auth.onAuthStateChanged(async (user) => {
     if (!canAccess) {
       showMessage('You do not have permission to access this page', 'error');
       setTimeout(() => {
-        window.location.href = '../dashboard.html';
+        window.location.href = (window.WAITLESS_KIOSK_MANAGEMENT_ROUTES && window.WAITLESS_KIOSK_MANAGEMENT_ROUTES.dashboard) || 'dashboard.html';
       }, 2000);
       return;
     }
@@ -124,7 +124,7 @@ function initializeUI() {
   document.getElementById('cancel-edit-modal').addEventListener('click', () => closeModal(editKioskModal));
 
   backBtn.addEventListener('click', () => {
-    window.location.href = '../dashboard.html';
+    window.location.href = (window.WAITLESS_KIOSK_MANAGEMENT_ROUTES && window.WAITLESS_KIOSK_MANAGEMENT_ROUTES.dashboard) || 'dashboard.html';
   });
 
   if (orgSelectSuper) {

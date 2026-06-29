@@ -89,7 +89,7 @@ async function checkApprovalStatus(user) {
     if (canAccess && queueBtn) {
       queueBtn.style.display = 'block';
       queueBtn.addEventListener('click', () => {
-        window.location.href = 'queue-manager.html';
+        window.location.href = (window.WAITLESS_DASHBOARD_ROUTES && window.WAITLESS_DASHBOARD_ROUTES.queue) || 'queue.html';
       });
     }
 

@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>EcoSystem Mobile App</title>
+  <link rel="stylesheet" href="../shared/css/customer.css" />
+  <link rel="stylesheet" href="../shared/css/unified-ui.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="app-hero">
+      <div>
+        <p class="eyebrow">Mobile view</p>
+        <h1>EcoSystem Pocket App</h1>
+        <p class="lead">Sign in with your app account, then scan an organization QR to load services, generate tokens, and track queue status.</p>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
+        <div class="user-panel" id="user-panel" aria-live="polite">
+          <!-- Filled by app with signed-in user name/email -->
+        </div>
+        <a class="secondary booking-link" href="book.html">Online booking</a>
+        <a class="secondary booking-link" href="index.html">Home</a>
+        
+      </div>
+    </header>
+
+    <div id="message" class="message" role="status" aria-live="polite"></div>
+
+    <section id="profile-manager-panel" class="app-card profile-manager-modal hidden" role="dialog" aria-modal="true" aria-labelledby="profile-manager-title">
+      <div class="card-header-row profile-manager-header">
+        <div>
+          <p class="eyebrow">Profile manager</p>
+          <h2 id="profile-manager-title">Your account profile</h2>
+        </div>
+        <button id="close-profile-manager-btn" class="ghost-btn profile-close-btn" type="button" aria-label="Close profile manager">Close</button>
+      </div>
+      <div class="card-copy">
+        <p class="lead">Update the name and phone number stored for this app account.</p>
+      </div>
+      <form id="profile-form" class="profile-form">
+        <div class="stack-form">
+          <label for="profile-name-input">Name</label>
+          <input id="profile-name-input" type="text" placeholder="Your name" autocomplete="name" />
+        </div>
+        <div class="stack-form">
+          <label for="profile-phone-input">Phone number</label>
+          <input id="profile-phone-input" type="tel" placeholder="Phone number" autocomplete="tel" />
+        </div>
+        <div class="stack-form">
+          <label for="profile-email-input">Email</label>
+          <input id="profile-email-input" type="email" placeholder="Email address" autocomplete="email" disabled />
+        </div>
+        <div class="scan-actions">
+          <button id="save-profile-btn" class="primary" type="submit">Save profile</button>
+          <span id="profile-status" class="profile-status"></span>
+        </div>
+      </form>
+    </section>
+
+    <section id="scan-section" class="app-card app-grid-card">
+      <div class="card-copy">
+        <p class="eyebrow">Scan in</p>
+        <h2>Scan Organization QR</h2>
+        <p class="lead">Point your camera at the QR from Queue Manager to load the correct organization.</p>
+      </div>
+      <div class="scanner-wrap">
+        <div id="qr-reader" class="qr-reader"></div>
+        <div class="scan-actions">
+          <button id="start-scan-btn" class="secondary" type="button">Start scanner</button>
+          <button id="stop-scan-btn" class="secondary" type="button">Stop scanner</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="app-card">
+      <div class="card-copy">
+        <p class="eyebrow">Next step</p>
+        <h2>Go to appointment page</h2>
+        <p class="lead">After scanning a QR code, you will be taken to the booking page. You can also open it directly if you already know the organization ID.</p>
+      </div>
+      <div class="scan-actions">
+        <a class="primary" href="track.html">Open appointment page</a>
+      </div>
+    </section>
+  </div>
+
+  <div id="token-overlay" class="token-overlay hidden" aria-hidden="true">
+    <div class="token-overlay-backdrop"></div>
+    <div class="token-overlay-panel" role="dialog" aria-modal="true" aria-labelledby="token-overlay-title">
+      <p class="eyebrow token-overlay-eyebrow">Token created</p>
+      <h2 id="token-overlay-title">Your queue token is ready</h2>
+      <div id="token-overlay-number" class="token-overlay-number">---</div>
+      <div id="token-overlay-meta" class="token-overlay-meta"></div>
+      <div class="token-overlay-stats">
+        <div class="token-overlay-stat">
+          <span class="summary-label">Live Position</span>
+          <span id="token-overlay-position" class="token-overlay-stat-value">Waiting</span>
+        </div>
+        <div class="token-overlay-stat">
+          <span class="summary-label">Counter</span>
+          <span id="token-overlay-counter" class="token-overlay-stat-value">Waiting</span>
+        </div>
+        <div class="token-overlay-stat">
+          <span class="summary-label">Estimate Time</span>
+          <span id="token-overlay-estimate" class="token-overlay-stat-value">N/A</span>
+        </div>
+        <div class="token-overlay-stat">
+          <span class="summary-label">Status</span>
+          <span id="token-overlay-status" class="token-overlay-stat-value">waiting</span>
+        </div>
+      </div>
+      <button id="close-token-overlay-btn" class="primary token-overlay-close" type="button">Close</button>
+    </div>
+  </div>
+
+  <div id="tracker-overlay" class="token-overlay hidden" aria-hidden="true">
+    <div class="token-overlay-backdrop"></div>
+    <div class="token-overlay-panel tracker-overlay-panel" role="dialog" aria-modal="true" aria-labelledby="tracker-overlay-title">
+      <p class="eyebrow token-overlay-eyebrow">Live tracking</p>
+      <h2 id="tracker-overlay-title">Token status</h2>
+      <div id="tracker-overlay-number" class="token-overlay-number">---</div>
+      <div id="tracker-overlay-meta" class="token-overlay-meta"></div>
+      <div id="tracker-overlay-content" class="tracker-overlay-content"></div>
+      <button id="close-tracker-overlay-btn" class="primary token-overlay-close" type="button">Close</button>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <script src="../js/config/firebase-config.js"></script>
+  <script src="../js/customer/token-factory.js"></script>
+  <script src="../js/customer/tracker.js"></script>
+  <script src="../js/customer/join.js"></script>
+  <script src="../shared/js/index-ui.js"></script>
+</body>
+</html>

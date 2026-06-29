@@ -165,14 +165,14 @@ async function loadKiosksForSelection() {
 
     if (!userProfile || userProfile.role !== 'approved') {
       showMessage('Your account is not approved for KIOSK access', 'error');
-      setTimeout(() => { window.location.href = 'kiosk-login.html'; }, 2000);
+      setTimeout(() => { window.location.href = (window.WAITLESS_KIOSK_ROUTES && window.WAITLESS_KIOSK_ROUTES.login) || 'kiosk-login.html'; }, 2000);
       return;
     }
 
     if (userProfile?.settings?.disabled) {
       showMessage('This organization is temporarily disabled.', 'error');
       await auth.signOut();
-      setTimeout(() => { window.location.href = 'kiosk-login.html'; }, 2000);
+      setTimeout(() => { window.location.href = (window.WAITLESS_KIOSK_ROUTES && window.WAITLESS_KIOSK_ROUTES.login) || 'kiosk-login.html'; }, 2000);
       return;
     }
 
@@ -361,7 +361,7 @@ async function submitPin() {
 
       // Redirect to KIOSK interface
       setTimeout(() => {
-        window.location.href = 'kiosk-interface.html';
+        window.location.href = (window.WAITLESS_KIOSK_ROUTES && window.WAITLESS_KIOSK_ROUTES.interface) || 'kiosk-interface.html';
       }, 500);
     } catch (err) {
       console.error('KIOSK user verification error:', err);
@@ -466,7 +466,7 @@ document.addEventListener('DOMContentLoaded', () => {
   auth.onAuthStateChanged((user) => {
     if (user && sessionStorage.getItem('kioskId')) {
       // User is already in a KIOSK session, redirect to interface
-      window.location.href = 'kiosk-interface.html';
+      window.location.href = (window.WAITLESS_KIOSK_ROUTES && window.WAITLESS_KIOSK_ROUTES.interface) || 'kiosk-interface.html';
     } else if (user) {
       // User is authenticated in Firebase but no KIOSK session
       // Take them to step 2 (KIOSK selection)

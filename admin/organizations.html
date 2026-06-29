@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>EcoSystem Admin</title>
+  <link rel="stylesheet" href="../css/global.css" />
+  <link rel="stylesheet" href="../css/admin.css" />
+  <link rel="stylesheet" href="../shared/css/unified-ui.css" />
+</head>
+<body data-admin-page="organizations">
+  <div class="container admin-shell">
+    <header class="admin-hero">
+      <div class="brand admin-brand">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect width="24" height="24" rx="6" fill="#0366d6"/><path d="M6 12h12" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><path d="M12 6v12" stroke="#fff" stroke-width="1.5" stroke-linecap="round" opacity="0.9"/></svg>
+        <div>
+          <p class="eyebrow">Superadmin Control Center</p>
+          <h1>EcoSystem Admin Panel</h1>
+          <p class="lead admin-hero-lead">Review requests, manage approved organizations, and customize kiosk behavior from one workspace.</p>
+        </div>
+      </div>
+
+      <div class="admin-hero-actions">
+        <button id="signout" class="primary" type="button">Sign out</button>
+      </div>
+    </header>
+
+    <div id="message" class="message" role="status" aria-live="polite"></div>
+
+    <div class="admin-summary-grid">
+      <div class="summary-card">
+        <span class="summary-label">Pending requests</span>
+        <strong id="pending-count">0</strong>
+      </div>
+      <div class="summary-card">
+        <span class="summary-label">Approved organizations</span>
+        <strong id="approved-count">0</strong>
+      </div>
+      <div class="summary-card">
+        <span class="summary-label">Total kiosks</span>
+        <strong id="total-kiosk-count">0</strong>
+      </div>
+      <div class="summary-card">
+        <span class="summary-label">Custom prefix orgs</span>
+        <strong id="custom-prefix-count">0</strong>
+      </div>
+    </div>
+
+    <div class="admin-layout">
+      <section class="admin-main-column">
+        <div class="panel admin-panel-card admin-requests-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">Request management</p>
+              <h2>Manage Requests</h2>
+            </div>
+            <div class="request-filter">
+              <label for="request-filter-select">Show</label>
+              <select id="request-filter-select" aria-label="Filter requests">
+                <option value="all">All requests</option>
+                <option value="pending">Pending only</option>
+                <option value="approved">Approved only</option>
+                <option value="rejected">Rejected only</option>
+              </select>
+            </div>
+          </div>
+          <p class="lead">Approve, reject, or restore organizations directly from the lists below.</p>
+          <div class="request-board">
+            <div class="request-column">
+              <div class="request-column-head">
+                <span>Pending</span>
+                <span class="request-column-count" id="pending-count-inline">0</span>
+              </div>
+              <div id="pending-list" class="request-list"></div>
+            </div>
+            <div class="request-column">
+              <div class="request-column-head">
+                <span>Approved</span>
+                <span class="request-column-count" id="approved-count-inline">0</span>
+              </div>
+              <div id="approved-list" class="request-list"></div>
+            </div>
+            <div class="request-column">
+              <div class="request-column-head">
+                <span>Rejected</span>
+                <span class="request-column-count" id="rejected-count-inline">0</span>
+              </div>
+              <div id="rejected-list" class="request-list"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel admin-panel-card admin-orgs-panel">
+          <div class="panel-heading orgs-heading">
+            <div>
+              <p class="eyebrow">Active organizations</p>
+              <h2>Approved Organizations</h2>
+            </div>
+            <div class="orgs-toolbar">
+              <div class="search-wrap">
+  <input
+    id="org-search"
+    name="x7f9_search_box"
+    type="search"
+    placeholder="Search organizations..."
+    autocomplete="new-password"
+    autocorrect="off"
+    autocapitalize="off"
+    spellcheck="false"
+    readonly
+    onfocus="this.removeAttribute('readonly');"
+  >
+</div>
+              <select id="org-sort" aria-label="Sort approved organizations">
+                <option value="active">Sort: Active first</option>
+                <option value="newest">Sort: Newest</option>
+                <option value="name">Sort: Name</option>
+                <option value="kiosks">Sort: Most kiosks</option>
+              </select>
+            </div>
+          </div>
+          <p class="lead">Click a card to open customization, kiosk setup, or token prefix settings for that organization.</p>
+          <div id="approved-orgs-grid" class="org-card-grid"></div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <div id="org-manage-modal" class="org-manage-modal hidden" aria-hidden="true">
+    <div id="org-manage-backdrop" class="org-manage-backdrop" aria-hidden="true"></div>
+    <section id="org-manage-panel" class="org-manage-panel" role="dialog" aria-modal="true" aria-labelledby="org-manage-title" tabindex="-1">
+      <div class="org-manage-header">
+        <div>
+          <p class="eyebrow">Organization manager</p>
+          <h2 id="org-manage-title">Organization</h2>
+          <p id="org-manage-meta" class="org-manage-meta"></p>
+        </div>
+        <button id="org-manage-close" class="ghost" type="button" aria-label="Close manager">Close</button>
+      </div>
+
+      <div class="org-manage-summary-grid">
+        <div class="summary-card">
+          <span class="summary-label">Counters</span>
+          <strong id="org-summary-counters">0</strong>
+        </div>
+        <div class="summary-card">
+          <span class="summary-label">Services</span>
+          <strong id="org-summary-services">0</strong>
+        </div>
+      </div>
+
+      <div class="org-manage-section">
+        <div class="panel-heading compact-heading">
+          <div>
+            <p class="eyebrow">Organization status</p>
+            <h3>Access control</h3>
+          </div>
+          <button id="org-toggle-disable" class="primary" type="button">Temporarily Disable</button>
+        </div>
+      </div>
+
+      <div class="org-manage-grid">
+        <section class="org-manage-section">
+          <div class="panel-heading compact-heading">
+            <div>
+              <p class="eyebrow">Profile</p>
+              <h3>Organization details</h3>
+            </div>
+          </div>
+          <label class="form-field">
+            <span>Name</span>
+            <input id="org-name-input" type="text" autocomplete="off" />
+          </label>
+          <label class="form-field">
+            <span>Contact number</span>
+            <input id="org-contact-input" type="text" autocomplete="off" />
+          </label>
+          <label class="form-field">
+            <span>Address</span>
+            <textarea id="org-address-input" rows="3"></textarea>
+          </label>
+          <button id="org-profile-save" class="primary" type="button">Save profile</button>
+        </section>
+
+        <section class="org-manage-section org-manage-section--compact">
+          <div class="panel-heading compact-heading">
+            <div>
+              <p class="eyebrow">Prefix</p>
+              <h3>Token prefix</h3>
+            </div>
+          </div>
+          <label class="form-field">
+            <span>Prefix</span>
+            <input id="org-prefix-input" type="text" autocomplete="off" inputmode="text" />
+          </label>
+          <button id="org-prefix-save" class="primary" type="button">Save prefix</button>
+        </section>
+      </div>
+
+      <div class="org-manage-section">
+        <div class="panel-heading compact-heading">
+          <div>
+            <p class="eyebrow">Kiosks</p>
+            <h3>Manage kiosk access</h3>
+          </div>
+        </div>
+        <div class="kiosk-add-grid">
+          <label class="form-field">
+            <span>Kiosk name</span>
+            <input id="kiosk-name-input" type="text" autocomplete="off" />
+          </label>
+          <label class="form-field">
+            <span>PIN</span>
+            <input id="kiosk-pin-input" type="password" autocomplete="new-password" inputmode="numeric" />
+          </label>
+        </div>
+        <button id="kiosk-add-btn" class="primary" type="button">Add kiosk</button>
+        <div id="kiosk-list" class="kiosk-list"></div>
+      </div>
+    </section>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="../js/config/firebase-config.js"></script>
+  <script src="../shared/js/role-guard.js"></script>
+  <script>WaitlessRoleGuard.requireRole({ allowed: ['admin'] });</script>
+  <script src="../js/utils/constants.js"></script>
+  <script src="../js/utils/helpers.js"></script>
+  <script src="../js/utils/token-factory.js"></script>
+  <script src="../js/admin/admin.js"></script>
+  <script src="../js/admin/admin-module.js"></script>
+  <script src="../shared/js/index-ui.js"></script>
+</body>
+</html>
