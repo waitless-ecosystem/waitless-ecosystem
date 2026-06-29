@@ -261,7 +261,7 @@
             </div>
 
             
-        <div id="customer-details-customize-card" class="qm-customize-card">
+                <div id="customer-details-customize-card" class="qm-customize-card">
           <h3>Customer Details Collection</h3>
           <p class="muted small">These settings apply to your organization only.</p>
 
@@ -279,8 +279,6 @@
               </label>
               <div class="qm-toggle-ribbon-note">Choose which details become required when this is enabled.</div>
             </div>
-
- 
 
             <label id="customer-name-required-row" class="qm-checkbox-row" for="collect-customer-name-required" style="display:none;">
               <input id="collect-customer-name-required" type="checkbox" />
@@ -312,42 +310,44 @@
               <span>Allow online booking via app</span>
             </label>
 
-            <div class="qm-customize-card qm-booking-slot-card">
-              <h3>Online booking time slots</h3>
-              <p class="muted small">Set the default slot length and how many bookings can fit into one slot. Per-service availability still lives in Scheduled Services.</p>
-              <label class="qm-checkbox-row" for="online-booking-slots-enabled" style="display:block;margin-top:12px;">
-                <input id="online-booking-slots-enabled" type="checkbox" />
-                <span>Enable time-slot booking in online booking</span>
-              </label>
-              <label class="qm-field-row" for="online-booking-slot-duration-minutes" style="display:block;margin-top:12px;">
-                <span style="display:block;margin-bottom:6px;font-weight:700">Slot duration (minutes)</span>
-                <input id="online-booking-slot-duration-minutes" type="number" min="5" step="1" placeholder="Example: 30" />
-              </label>
-            </div>
+            <div class="qm-booking-slots-grid">
+              <div class="qm-customize-card qm-booking-slot-card">
+                <h3>Online booking time slots</h3>
+                <p class="muted small">Set the default slot length and how many bookings can fit into one slot. Per-service availability still lives in Scheduled Services.</p>
+                <label class="qm-checkbox-row" for="online-booking-slots-enabled" style="display:block;margin-top:12px;">
+                  <input id="online-booking-slots-enabled" type="checkbox" />
+                  <span>Enable time-slot booking in online booking</span>
+                </label>
+                <label class="qm-field-row" for="online-booking-slot-duration-minutes" style="display:block;margin-top:12px;">
+                  <span style="display:block;margin-bottom:6px;font-weight:700">Slot duration (minutes)</span>
+                  <input id="online-booking-slot-duration-minutes" type="number" min="5" step="1" placeholder="Example: 30" />
+                </label>
+              </div>
 
-            <div class="qm-customize-card qm-booking-slot-card">
-              <h3>Booking reminder emails</h3>
-              <p class="muted small">Queue Manager can send reminder emails before each scheduled booking time while this page is open.</p>
-              <label class="qm-checkbox-row" for="booking-reminder-enabled" style="display:block;margin-top:12px;">
-                <input id="booking-reminder-enabled" type="checkbox" />
-                <span>Enable automatic reminder emails for scheduled bookings</span>
-              </label>
-              <label class="qm-field-row" for="booking-reminder-lead-minutes" style="display:block;margin-top:12px;">
-                <span style="display:block;margin-bottom:6px;font-weight:700">Send reminder before scheduled time (minutes)</span>
-                <input id="booking-reminder-lead-minutes" type="number" min="1" step="1" placeholder="Example: 30" />
-              </label>
-              <label class="qm-field-row" for="booking-reminder-emailjs-public-key" style="display:block;margin-top:12px;">
-                <span style="display:block;margin-bottom:6px;font-weight:700">EmailJS public key</span>
-                <input id="booking-reminder-emailjs-public-key" type="text" placeholder="Example: xxxxx_PUBLIC_KEY" />
-              </label>
-              <label class="qm-field-row" for="booking-reminder-emailjs-service-id" style="display:block;margin-top:12px;">
-                <span style="display:block;margin-bottom:6px;font-weight:700">EmailJS service ID</span>
-                <input id="booking-reminder-emailjs-service-id" type="text" placeholder="Example: service_waitless" />
-              </label>
-              <label class="qm-field-row" for="booking-reminder-emailjs-template-id" style="display:block;margin-top:12px;">
-                <span style="display:block;margin-bottom:6px;font-weight:700">EmailJS template ID</span>
-                <input id="booking-reminder-emailjs-template-id" type="text" placeholder="Example: template_booking_reminder" />
-              </label>
+              <div class="qm-customize-card qm-booking-slot-card">
+                <h3>Booking reminder emails</h3>
+                <p class="muted small">Queue Manager can send reminder emails before each scheduled booking time while this page is open.</p>
+                <label class="qm-checkbox-row" for="booking-reminder-enabled" style="display:block;margin-top:12px;">
+                  <input id="booking-reminder-enabled" type="checkbox" />
+                  <span>Enable automatic reminder emails for scheduled bookings</span>
+                </label>
+                <label class="qm-field-row" for="booking-reminder-lead-minutes" style="display:block;margin-top:12px;">
+                  <span style="display:block;margin-bottom:6px;font-weight:700">Send reminder before scheduled time (minutes)</span>
+                  <input id="booking-reminder-lead-minutes" type="number" min="1" step="1" placeholder="Example: 30" />
+                </label>
+                <label class="qm-field-row" for="booking-reminder-emailjs-public-key" style="display:block;margin-top:12px;">
+                  <span style="display:block;margin-bottom:6px;font-weight:700">EmailJS public key</span>
+                  <input id="booking-reminder-emailjs-public-key" type="text" placeholder="Example: xxxxx_PUBLIC_KEY" />
+                </label>
+                <label class="qm-field-row" for="booking-reminder-emailjs-service-id" style="display:block;margin-top:12px;">
+                  <span style="display:block;margin-bottom:6px;font-weight:700">EmailJS service ID</span>
+                  <input id="booking-reminder-emailjs-service-id" type="text" placeholder="Example: service_waitless" />
+                </label>
+                <label class="qm-field-row" for="booking-reminder-emailjs-template-id" style="display:block;margin-top:12px;">
+                  <span style="display:block;margin-bottom:6px;font-weight:700">EmailJS template ID</span>
+                  <input id="booking-reminder-emailjs-template-id" type="text" placeholder="Example: template_booking_reminder" />
+                </label>
+              </div>
             </div>
 
             <label class="qm-field-row" for="kiosk-auto-return-seconds" style="display:block;margin-top:12px;">
@@ -360,9 +360,7 @@
               <input id="token-sequence-reset-minutes" type="number" min="0" step="1" placeholder="Minutes before token numbering starts again (0 = off)" />
             </label>
 
-         
-
-            <button id="save-customer-detail-settings" type="button">Save Customize Settings</button>
+            <button id="save-customer-detail-settings" type="button" class="primary">Save Customize Settings</button>
           </div>
 
           <div id="customize-settings-status" class="qm-customize-status muted small"></div>

@@ -58,6 +58,49 @@ async function syncPublicService(orgId, serviceId, serviceData) {
   });
 }
 
+function getLeastQueueCounter(serviceId, assignments, counters, queueData) {
+  const candidateMatches = Object.values(assignments || {}).filter(
+    (assignment) => Array.isArray(assignment?.services) && assignment.services.includes(serviceId)
+  );
+
+  if (candidateMatches.length === 0) return null;
+  if (candidateMatches.length === 1) return candidateMatches[0];
+
+  let bestMatch = candidateMatches[0];
+  let minQueue = Infinity;
+
+  const isWaiting = (s) => {
+    const v = String(s || '').trim().toLowerCase();
+    return ['waiting', 'new', 'queued', 'pending'].includes(v) || !v;
+  };
+  const isPast = (s) => {
+    const v = String(s || '').trim().toLowerCase();
+    return ['completed', 'cancelled', 'canceled', 'done', 'removed', 'rejected', 'served', 'expired', 'missed', 'no-show', 'noshow'].includes(v);
+  };
+
+  candidateMatches.forEach((match) => {
+    let queueSize = 0;
+    if (queueData) {
+      Object.entries(queueData).forEach(([sId, sQueue]) => {
+        if (!sQueue) return;
+        Object.values(sQueue).forEach((token) => {
+          if (token && !isPast(token.status) && isWaiting(token.status)) {
+            if (token.assignedCounterId === match.counterId) {
+              queueSize += 1;
+            }
+          }
+        });
+      });
+    }
+    if (queueSize < minQueue) {
+      minQueue = queueSize;
+      bestMatch = match;
+    }
+  });
+
+  return bestMatch;
+}
+
 async function syncPublicOrganizationMeta(profile = currentOrganizationProfile) {
   if (!currentUserUID) return;
 
@@ -418,6 +461,8 @@ const servicesDB = {
 const assignmentsDB = {
   async save(counterId, serviceIds = []) {
     if(!counterId) throw new Error('Counter required');
+    const counter = currentCounters[counterId] || {};
+    const counterName = String(counter.name || counter.counterName || counterId || 'Counter').trim();
     const normalizedServiceIds = Array.from(new Set((serviceIds || []).map((serviceId) => String(serviceId || '').trim()).filter(Boolean)));
     const assignmentRef = db.ref(`users/${currentUserUID}/assignments/${counterId}`);
     const previousSnap = await assignmentRef.once('value');
@@ -435,8 +480,6 @@ const assignmentsDB = {
       });
     }
 
-    const counter = currentCounters[counterId] || {};
-    const counterName = String(counter.name || counter.counterName || counterId || 'Counter').trim();
     const affectedServiceIds = Array.from(new Set([...previousServiceIds, ...normalizedServiceIds]));
     if (affectedServiceIds.length === 0) {
       return;
@@ -519,6 +562,25 @@ const queueDB = {
     const id = tokenFactory.generateTokenId('QUEUE');
     const prefix = await tokenFactory.resolveOrganizationTokenPrefix(db, currentUserUID);
     const tokenNumber = await tokenFactory.generateSequentialTokenNumber(db, { organizationId: currentUserUID, prefix, serviceId });
+
+    const [assignmentsSnap, countersSnap, queueSnap] = await Promise.all([
+      db.ref(`users/${currentUserUID}/assignments`).once('value'),
+      db.ref(`users/${currentUserUID}/counters`).once('value'),
+      db.ref(`users/${currentUserUID}/queue`).once('value')
+    ]);
+    const assignments = assignmentsSnap.val() || {};
+    const counters = countersSnap.val() || {};
+    const queueData = queueSnap.val() || {};
+
+    const match = getLeastQueueCounter(serviceId, assignments, counters, queueData);
+    let assignedCounterId = null;
+    let assignedCounterName = null;
+    if (match) {
+      assignedCounterId = match.counterId;
+      const counter = counters[match.counterId] || {};
+      assignedCounterName = counter.name || counter.counterName || match.counterId || 'Counter';
+    }
+
     await db.ref(`users/${currentUserUID}/queue/${serviceId}/${id}`).set({
       ...tokenFactory.createBaseTokenData({
         tokenId: id,
@@ -529,7 +591,9 @@ const queueDB = {
         serviceId,
         serviceName: null,
         customerUid: currentUserUID,
-        source: 'admin'
+        source: 'admin',
+        assignedCounterId: assignedCounterId,
+        assignedCounterName: assignedCounterName
       }),
       serviceId,
       description: description.trim()

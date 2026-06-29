@@ -3,12 +3,12 @@
     queue: { label: 'Live Queue', href: 'queue.html' },
     services: { label: 'Services', href: 'services.html' },
     counters: { label: 'Counters', href: 'counters.html' },
-    assignments: { label: 'Counters', href: 'counters.html' },
+    assignments: { label: 'Assignments', href: 'assignments.html' },
     'online-bookings': { label: 'Online Bookings', href: 'bookings.html' },
-    'open-hours': { label: 'Settings', href: 'settings.html' },
-    customize: { label: 'Settings', href: 'settings.html' },
+    'open-hours': { label: 'Open Hours', href: 'settings.html' },
+    customize: { label: 'Customization', href: 'customize.html' },
     reports: { label: 'Reports', href: 'reports.html' },
-    'scheduled-services': { label: 'Services', href: 'services.html' }
+    'scheduled-services': { label: 'Scheduled Services', href: 'scheduled-services.html' }
   };
 
   const PAGE_TITLES = {
@@ -17,7 +17,10 @@
     counters: 'Counters',
     bookings: 'Online Bookings',
     reports: 'Reports',
-    settings: 'Settings'
+    settings: 'Settings',
+    assignments: 'Assignments',
+    customize: 'Customization',
+    'scheduled-services': 'Scheduled Services'
   };
 
   function activateTab(tabName) {

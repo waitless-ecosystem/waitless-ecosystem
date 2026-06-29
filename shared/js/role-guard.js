@@ -43,6 +43,11 @@
     if (await hasSuperadminClaim(user)) {
       return { user, profile, role: 'admin' };
     }
+    if (typeof global.waitlessIsSuperadmin === 'function') {
+      if (await global.waitlessIsSuperadmin(user, profile)) {
+        return { user, profile, role: 'admin' };
+      }
+    }
     return { user, profile, role: normalizeRole(profile) };
   }
 

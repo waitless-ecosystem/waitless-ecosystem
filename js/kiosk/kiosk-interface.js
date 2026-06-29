@@ -697,7 +697,7 @@ async function initializeSession() {
   if (!kioskId || !organizationId) {
     showMessage('Session expired. Redirecting to login...', 'error');
     setTimeout(() => {
-      window.location.href = (window.WAITLESS_KIOSK_ROUTES && window.WAITLESS_KIOSK_ROUTES.login) || 'kiosk-login.html';
+      window.location.href = (window.WAITLESS_KIOSK_ROUTES && window.WAITLESS_KIOSK_ROUTES.login) || 'login.html';
     }, 2000);
     return false;
   }
@@ -708,7 +708,7 @@ async function initializeSession() {
       showMessage('This organization is temporarily disabled.', 'error');
       sessionStorage.clear();
       setTimeout(() => {
-        window.location.href = (window.WAITLESS_KIOSK_ROUTES && window.WAITLESS_KIOSK_ROUTES.login) || 'kiosk-login.html';
+        window.location.href = (window.WAITLESS_KIOSK_ROUTES && window.WAITLESS_KIOSK_ROUTES.login) || 'login.html';
       }, 2000);
       return false;
     }
@@ -777,7 +777,7 @@ function checkSessionTimeout() {
 
     showMessage('Session timeout. Returning to login...', 'error');
     setTimeout(() => {
-      window.location.href = (window.WAITLESS_KIOSK_ROUTES && window.WAITLESS_KIOSK_ROUTES.login) || 'kiosk-login.html';
+      window.location.href = (window.WAITLESS_KIOSK_ROUTES && window.WAITLESS_KIOSK_ROUTES.login) || 'login.html';
     }, 2000);
   }
 }

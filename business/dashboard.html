@@ -3,34 +3,298 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>EcoSystem Dashboard</title>
+  <title>Waitless Workspace Hub</title>
   <link rel="stylesheet" href="../css/global.css" />
   <link rel="stylesheet" href="../css/dashboard.css" />
   <link rel="stylesheet" href="../shared/css/unified-ui.css" />
+  <style>
+    .dashboard-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    
+    .status-badge {
+      display: inline-flex;
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 1.5rem;
+    }
+    
+    .badge-approved {
+      background: rgba(16, 185, 129, 0.08);
+      border: 1px solid rgba(16, 185, 129, 0.15);
+      color: #10b981;
+    }
+    
+    .badge-pending {
+      background: rgba(245, 158, 11, 0.08);
+      border: 1px solid rgba(245, 158, 11, 0.15);
+      color: #f59e0b;
+    }
+    
+    .badge-rejected {
+      background: rgba(239, 68, 68, 0.08);
+      border: 1px solid rgba(239, 68, 68, 0.15);
+      color: #ef4444;
+    }
+    
+    .portal-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+    }
+    
+    .portal-card {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      height: 100%;
+    }
+    
+    .portal-card h3 {
+      font-size: 1.2rem;
+      font-weight: 800;
+      margin-top: 0;
+      margin-bottom: 0.5rem;
+      color: var(--waitless-text);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    
+    .portal-card p {
+      font-size: 0.9rem;
+      color: var(--waitless-muted);
+      margin-bottom: 1.5rem;
+      line-height: 1.5;
+    }
+    
+    .portal-card .wl-btn {
+      align-self: flex-start;
+      margin-top: auto;
+    }
+    
+    .profile-card {
+      grid-column: span 1;
+    }
+    
+    .status-content {
+      display: grid;
+      gap: 12px;
+    }
+    
+    .status-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--waitless-line);
+      padding-bottom: 8px;
+    }
+    
+    .status-row:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+    
+    .status-label {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--waitless-muted);
+    }
+    
+    .status-value {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--waitless-text);
+    }
+    
+    @media (min-width: 900px) {
+      .dashboard-layout {
+        display: grid;
+        grid-template-columns: 1.25fr 0.75fr;
+        gap: 2rem;
+        align-items: start;
+      }
+      .profile-card {
+        grid-column: 2;
+        grid-row: 1;
+        position: sticky;
+        top: 7rem;
+      }
+    }
+  </style>
 </head>
 <body>
   <div class="container">
-    <div class="brand">
-      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect width="24" height="24" rx="4" fill="#0366d6"/><path d="M6 12h12" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>
-      <h1>Dashboard</h1>
+    <div class="dashboard-header">
+      <div class="brand">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect width="24" height="24" rx="4" fill="#4f46e5"/><path d="M6 12h12" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <h1 style="margin:0;">Workspace Hub</h1>
+      </div>
+      <div>
+        <button id="signout" class="secondary">Sign Out</button>
+      </div>
     </div>
 
-    <div id="message" class="message" role="status" aria-live="polite"></div>
+    <div id="message" class="message" role="status" aria-live="polite" style="display:none; margin-bottom: 1.5rem;"></div>
 
-    <div id="dashboard-content">
-      <div class="dashboard-grid">
-        <div class="dashboard-card status-section">
-          <div class="card-header">
-            <div class="card-icon account-icon">👤</div>
-            <div>
-              <div class="card-title">Account Status</div>
+    <div class="dashboard-layout">
+      <!-- Left Column: Metrics and Quick links -->
+      <div style="display:grid; gap:2rem;">
+        
+        <!-- Live System Summary -->
+        <div>
+          <h2 style="margin: 0 0 0.5rem 0;">Live System Summary</h2>
+          <p class="lead" style="margin-bottom: 1.25rem;">Real-time overview of active queue status and configuration nodes.</p>
+          <div class="stats-grid">
+            <div class="stats-card">
+              <h4>Live Queue</h4>
+              <div class="stats-card-value" id="stat-live-queue-count">0</div>
+              <p class="small muted" style="margin-top:6px;">Tokens waiting or serving</p>
+            </div>
+            <div class="stats-card">
+              <h4>Counters</h4>
+              <div class="stats-card-value" id="stat-counters-count">0</div>
+              <p class="small muted" style="margin-top:6px;">Total operator desks</p>
+            </div>
+            <div class="stats-card">
+              <h4>Services</h4>
+              <div class="stats-card-value" id="stat-services-count">0</div>
+              <p class="small muted" style="margin-top:6px;">Active ticket categories</p>
+            </div>
+            <div class="stats-card">
+              <h4>Active KIOSKs</h4>
+              <div class="stats-card-value" id="stat-kiosks-count">0</div>
+              <p class="small muted" style="margin-top:6px;">Self-service terminals</p>
             </div>
           </div>
-          <div id="status-info"></div>
-          <div class="action-buttons">
-            <button id="back-queue" class="primary hidden-by-default">Go to Queue Manager</button>
-            <button id="signout" class="secondary">Sign Out</button>
+        </div>
+
+        <!-- Workspaces & Controls -->
+        <div>
+          <h2>Workspaces & Controls</h2>
+          <p class="lead">Open specific queue operator screens to run counter assignments, configure ticket printers, and review reports.</p>
+          
+          <div class="portal-grid">
+            <!-- Card: Live Queue -->
+            <div class="app-card portal-card">
+              <div>
+                <h3>Live Queue Dashboard</h3>
+                <p>Call next customer numbers, manage queue states, and recall skipped tokens.</p>
+              </div>
+              <a href="queue.html" class="primary">Open Live Queue</a>
+            </div>
+
+            <!-- Card: Counters -->
+            <div class="app-card portal-card">
+              <div>
+                <h3>Counter Desks</h3>
+                <p>Register operator counter desks, set active states, and name terminals.</p>
+              </div>
+              <a href="counters.html" class="primary">Open Counters</a>
+            </div>
+
+            <!-- Card: Services -->
+            <div class="app-card portal-card">
+              <div>
+                <h3>Services Directory</h3>
+                <p>Define available service ticket types, categories, and duration estimations.</p>
+              </div>
+              <a href="services.html" class="primary">Open Services</a>
+            </div>
+
+            <!-- Card: Assignments -->
+            <div class="app-card portal-card">
+              <div>
+                <h3>Service Assignments</h3>
+                <p>Assign active services to specific counter terminals dynamically.</p>
+              </div>
+              <a href="assignments.html" class="primary">Open Assignments</a>
+            </div>
+
+            <!-- Card: Scheduled Services -->
+            <div class="app-card portal-card">
+              <div>
+                <h3>Scheduled Services</h3>
+                <p>Tune calendar slots, slot duration capacities, and booking schedules.</p>
+              </div>
+              <a href="scheduled-services.html" class="primary">Open Schedules</a>
+            </div>
+
+            <!-- Card: Bookings -->
+            <div class="app-card portal-card">
+              <div>
+                <h3>Online Bookings</h3>
+                <p>Manage customer mobile appointments and monitor automated reminder emails.</p>
+              </div>
+              <a href="bookings.html" class="primary">Open Bookings</a>
+            </div>
+
+            <!-- Card: Kiosks -->
+            <div class="app-card portal-card">
+              <div>
+                <h3>Kiosk Devices Hub</h3>
+                <p>Register physical kiosk hardware terminals and track battery/activity health.</p>
+              </div>
+              <a href="kiosks.html" class="primary">Manage Kiosks</a>
+            </div>
+
+            <!-- Card: Kiosk Customization -->
+            <div class="app-card portal-card">
+              <div>
+                <h3>Kiosk Customization</h3>
+                <p>Select kiosk information collection forms and toggle basic service guides.</p>
+              </div>
+              <a href="customize.html" class="primary">Customize Kiosk</a>
+            </div>
+
+            <!-- Card: Settings -->
+            <div class="app-card portal-card">
+              <div>
+                <h3>Open Hours Timing</h3>
+                <p>Configure weekly operating schedules and exception holidays.</p>
+              </div>
+              <a href="settings.html" class="primary">Open Hours</a>
+            </div>
+
+            <!-- Card: Reports -->
+            <div class="app-card portal-card">
+              <div>
+                <h3>Reports & Analytics</h3>
+                <p>Analyze peak hours, operator efficiency trends, and download charts.</p>
+              </div>
+              <a href="reports.html" class="primary">Open Reports</a>
+            </div>
+
+            <!-- Card: Staff Screen -->
+            <div class="app-card portal-card">
+              <div>
+                <h3>Staff Counter Screen</h3>
+                <p>Launch the customer-facing counter paging board displays.</p>
+              </div>
+              <a href="../display/counter-display.html" class="primary" target="_blank">Launch Display</a>
+            </div>
           </div>
+        </div>
+
+      </div>
+
+      <!-- Right Column: Profile details -->
+      <div class="app-card profile-card">
+        <div class="card-header" style="border-bottom: 1px solid var(--waitless-line); padding-bottom: 1rem; margin-bottom: 1.5rem;">
+          <h2 style="margin:0 0 6px 0;">Organization Info</h2>
+          <p class="muted small" style="margin:0;">Your account details and verification status.</p>
+        </div>
+        <div id="status-info">
+          <!-- Populated by JS -->
+          <div style="text-align:center; padding: 2rem 0; color:var(--waitless-muted);">Loading details...</div>
         </div>
       </div>
     </div>

@@ -1,53 +1,28 @@
 /**
  * =========================================================================
- * CORE HELPERS & UTILITIES (Fixed Missing Definitions)
+ * CORE HELPERS & UTILITIES
  * =========================================================================
  */
 
-// Fixes: ReferenceError: hasOnlineBooking is not defined
-function hasOnlineBooking(profile) {
-  if (!profile) return false;
-  // Safely check if explicit online booking flags are present or true
-  return profile.allowOnlineBooking === true || 
-         (profile.meta && profile.meta.allowOnlineBooking === true) ||
-         profile.onlineBookingEnabled === true;
-}
-
-// Fixes: ReferenceError: getOrganizationTitle is not defined
 function getOrganizationTitle(uid, profile) {
   if (!profile) return 'Organization';
   return profile.organizationName || profile.displayName || (profile.meta && profile.meta.name) || profile.name || 'Organization';
 }
 
-// Fixes: ReferenceError: getOrganizationEmail is not defined
 function getOrganizationEmail(profile) {
   if (!profile) return '';
   return (profile.meta && profile.meta.email) || profile.email || '';
 }
 
-// Fixes: ReferenceError: normalizeCategory is not defined
 function normalizeCategory(category) {
   return String(category || '').trim().toLowerCase();
 }
 
-// Fixes: ReferenceError: getCategoryLabel is not defined
 function getCategoryLabel(categoryVal) {
   if (!categoryVal || categoryVal === 'all') return 'All Services';
   return categoryVal.charAt(0).toUpperCase() + categoryVal.slice(1);
 }
 
-function getOnlineBookingSlotSettings(service = null) {
-  const meta = state.selectedOrg?.meta || {};
-  const serviceScheduled = !!(service && service.scheduledServiceEnabled);
-  const globalSlots = !!meta.onlineBookingSlotsEnabled;
-  return {
-    enabled: serviceScheduled || globalSlots,
-    durationMinutes: Number(serviceScheduled ? (service.bookingSlotMinutes || service.schedule?.slotMinutes) : meta.onlineBookingSlotDurationMinutes) || 30,
-    slotsPerInterval: Number(serviceScheduled ? (service.bookingSlotCapacity || service.schedule?.capacity) : meta.onlineBookingSlotCapacity) || 1
-  };
-}
-
-// Fixes: ReferenceError: getCategories is not defined
 function getCategories(services) {
   if (!Array.isArray(services)) return [];
   const map = {};
@@ -62,48 +37,6 @@ function getCategories(services) {
   return Object.values(map);
 }
 
-// Fixes: ReferenceError: getTodayDateInputValue is not defined
-function getTodayDateInputValue() {
-  const local = new Date();
-  const offset = local.getTimezoneOffset();
-  const safeDate = new Date(local.getTime() - (offset * 60 * 1000));
-  return safeDate.toISOString().split('T')[0];
-}
-
-// Fixes: ReferenceError: getSelectedBookingDateTime is not defined
-function getSelectedBookingDateTime() {
-  return state.selectedBookingDate ? new Date(state.selectedBookingDate).getTime() : null;
-}
-
-// Fixes: ReferenceError: renderBookingDatePanel is not defined
-function renderBookingDatePanel() {
-  const panel = $('#booking-date-panel') || document.querySelector('.date-panel');
-  if (!panel) return;
-
-  const meta = state.selectedOrg?.meta || {};
-  const hasScheduledServices = Array.isArray(state.selectedServices) && state.selectedServices.some(s => s.scheduledServiceEnabled);
-  const showDate = !!(meta.onlineBookingSlotsEnabled || hasScheduledServices);
-
-  if (!showDate) {
-    panel.innerHTML = '';
-    panel.classList.add('hidden');
-    return;
-  }
-
-  panel.classList.remove('hidden');
-  panel.innerHTML = `<label>Booking Date: </label><input type="date" id="booking-date-field" value="${state.selectedBookingDate}">`;
-  panel.querySelector('#booking-date-field')?.addEventListener('change', (e) => {
-    state.selectedBookingDate = e.target.value;
-    state.selectedSlot = null;
-    if (state.selectedService) {
-      openBookingSlotPicker(state.selectedService);
-    } else {
-      renderSelectedOrganization();
-    }
-  });
-}
-
-// Fixes: ReferenceError: withTimeout is not defined
 function withTimeout(promise, ms, timeoutErrorMsg = 'Operation timed out.') {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => {
@@ -122,12 +55,10 @@ function withTimeout(promise, ms, timeoutErrorMsg = 'Operation timed out.') {
   });
 }
 
-// Fixes: ReferenceError: normalizeText is not defined
 function normalizeText(text) {
   return String(text || '').trim().toLowerCase();
 }
 
-// Fixes: ReferenceError: updateStatus is not defined
 function updateStatus(message) {
   const statusEl = $('#booking-status') || document.querySelector('.status-message');
   if (statusEl) {
@@ -137,7 +68,6 @@ function updateStatus(message) {
   }
 }
 
-// Fixes: ReferenceError: updateResult is not defined
 function updateResult(message, isError = false) {
   const resultEl = $('#booking-result') || document.querySelector('.result-message');
   if (resultEl) {
@@ -288,7 +218,6 @@ function computeLivePositionForToken(queueData, tokenNumber) {
     : Math.max(1, Math.ceil(delayedByMs / Math.max(targetServiceMinutes * 60000, 1)));
 }
 
-// Escape HTML utility helper
 function escapeHtml(str) {
   if (!str) return '';
   return String(str)
@@ -297,6 +226,10 @@ function escapeHtml(str) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
+}
+
+function $(selector) {
+  return document.querySelector(selector);
 }
 
 
@@ -316,23 +249,22 @@ let authBootstrapTimer = null;
 let authBootstrapResolved = false;
 
 const state = {
-  search: '',
   loading: false,
   organizations: [],
+  search: '',
   selectedOrg: null,
   selectedOrgLoading: false,
   selectedServices: [],
-  selectedService: null,
-  selectedSlot: null,
-  selectedBookingDate: '',
   selectedServiceCategory: '',
+  selectedService: null,
   assignments: {},
-  counters: {}
+  counters: {},
+  fromQr: false
 };
 
 function getLoginUrl() {
   const url = new URL('login.html', window.location.href);
-  url.searchParams.set('booking', 'online');
+  url.searchParams.set('booking', 'qr');
   return url.toString();
 }
 
@@ -426,190 +358,152 @@ function resolveCounterForService(serviceId, queueData = null) {
   };
 }
 
-function $(selector) {
-  return document.querySelector(selector);
-}
-
 
 /**
  * =========================================================================
- * RENDERING ENGINE
+ * UI RENDERING ENGINES
  * =========================================================================
  */
 
 function renderOrgCards() {
-  const grid = $('#booking-org-grid');
-  const searchValue = normalizeText(state.search);
-
-  if (!grid) return;
-
-  const filtered = state.organizations.filter((org) => {
-    if (!searchValue) return true;
-    const haystack = [org.uid, org.name, org.organizationName, org.userName, org.email, org.tokenPrefix].join(' ').toLowerCase();
-    return haystack.includes(searchValue);
-  });
-
-  updateStatus(state.loading
-    ? 'Loading organizations...'
-    : `${filtered.length} organization${filtered.length === 1 ? '' : 's'} available`);
+  const container = $('#booking-org-grid');
+  if (!container) return;
 
   if (state.loading) {
-    grid.innerHTML = '<p class="booking-empty">Loading organizations...</p>';
+    container.innerHTML = '<p class="booking-empty">Loading approved organizations...</p>';
     return;
   }
+
+  const query = normalizeText(state.search);
+  const filtered = state.organizations.filter(org => {
+    if (!query) return true;
+    const haystack = [org.uid, org.name, org.organizationName, org.userName, org.email, org.tokenPrefix].join(' ').toLowerCase();
+    return haystack.indexOf(query) !== -1;
+  });
 
   if (filtered.length === 0) {
-    grid.innerHTML = '<p class="booking-empty">No organizations match your search.</p>';
+    container.innerHTML = '<p class="booking-empty">No matching organizations found.</p>';
     return;
   }
 
-  grid.innerHTML = '';
-  filtered.forEach((org) => {
-    const card = document.createElement('article');
+  container.innerHTML = '';
+  filtered.forEach(org => {
+    const card = document.createElement('div');
     card.className = 'booking-org-card';
     card.innerHTML = `
-      
-      <div>
-        <h3>${escapeHtml(org.organizationName || org.name)}</h3>
-      </div>
-      <div class="booking-card-actions">
-        <button type="button" class="primary" data-action="select">Book now</button>
-      </div>
+      <h3>${escapeHtml(org.name)}</h3>
+      <p class="meta">Email: ${escapeHtml(org.email || 'N/A')}</p>
+      <p class="meta">Prefix: <strong>${escapeHtml(org.tokenPrefix || 'ORG')}</strong></p>
     `;
-
-    card.querySelector('[data-action="select"]').addEventListener('click', () => {
-      if (!auth.currentUser) {
-        redirectToLogin();
-        return;
-      }
+    card.addEventListener('click', () => {
       selectOrganization(org.uid);
     });
-
-    grid.appendChild(card);
+    container.appendChild(card);
   });
 }
 
 function renderSelectedOrganization() {
   const directoryContainer = $('#booking-directory-container');
-  const section = $('#booking-token-section');
-  const titleEl = $('#booking-selected-org-title');
-  const subtitleEl = $('#booking-selected-org-subtitle');
-  const categoriesPanel = $('#booking-categories-panel');
-  const servicesGrid = $('#booking-services-grid');
-  const slotPanel = $('#booking-slot-panel');
-
-  if (!section || !titleEl || !subtitleEl || !categoriesPanel || !servicesGrid) return;
+  const tokenSection = $('#booking-token-section');
 
   if (!state.selectedOrg) {
     directoryContainer?.classList.remove('hidden');
-    section.classList.add('hidden');
-    categoriesPanel.innerHTML = '';
-    servicesGrid.innerHTML = '';
-    if (slotPanel) {
-      slotPanel.innerHTML = '';
-      slotPanel.classList.add('hidden');
-    }
+    tokenSection?.classList.add('hidden');
     return;
   }
 
   directoryContainer?.classList.add('hidden');
+  tokenSection?.classList.remove('hidden');
 
-  renderBookingDatePanel();
+  const titleEl = $('#booking-selected-org-title');
+  const subtitleEl = $('#booking-selected-org-subtitle');
+  const categoriesPanel = $('#booking-categories-panel');
+  const servicesGrid = $('#booking-services-grid');
+  const backBtn = $('#booking-back-btn');
 
   const org = state.selectedOrg;
-  const services = state.selectedServices;
-  const bookableServices = services.filter((service) => service.onlineBookingEnabled !== false);
+
+  // Change back button text if redirected via QR
+  if (backBtn) {
+    backBtn.textContent = state.fromQr ? 'Scan another QR' : 'Change organization';
+  }
+
+  const bookableServices = state.selectedServices;
   const categories = getCategories(bookableServices);
   const categoryMode = !!org.meta?.serviceCategoriesEnabled && categories.length > 0;
-  const slotSettings = getOnlineBookingSlotSettings();
 
-  section.classList.remove('hidden');
   titleEl.textContent = org.organizationName || org.name || 'Generate a token';
   subtitleEl.textContent = state.selectedOrgLoading
     ? 'Loading organization details...'
-    : `${org.userName || org.email || org.organizationName || org.name} · Prefix ${org.tokenPrefix || 'ORG'}OB`;
+    : `${org.userName || org.email || org.organizationName || org.name} · Prefix ${org.tokenPrefix || 'ORG'}`;
 
   if (state.selectedOrgLoading) {
     categoriesPanel.classList.add('hidden');
     servicesGrid.innerHTML = '<p class="booking-empty">Loading booking options...</p>';
-    if (slotPanel) {
-      slotPanel.innerHTML = '';
-      slotPanel.classList.add('hidden');
-    }
     return;
   }
 
-  categoriesPanel.innerHTML = '';
+  if (bookableServices.length === 0) {
+    categoriesPanel.classList.add('hidden');
+    servicesGrid.innerHTML = '<p class="booking-empty" style="color: var(--waitless-danger);">No services available for this organization at the moment.</p>';
+    return;
+  }
+
   if (categoryMode) {
-    const intro = document.createElement('div');
-    intro.className = 'category-selection-intro';
-    intro.innerHTML = `
-      <div class="service-category-header">
-        <h3>Select a service category</h3>
-        <p>Pick a category first, then choose the service you need.</p>
-      </div>
-    `;
-    categoriesPanel.appendChild(intro);
-
-    const grid = document.createElement('div');
-    grid.className = 'service-category-grid';
-
-    const allOption = document.createElement('button');
-    allOption.type = 'button';
-    allOption.className = 'service-card category-card';
-    allOption.textContent = 'All services';
-    allOption.addEventListener('click', () => {
-      state.selectedServiceCategory = 'all';
-      state.selectedService = null;
-      state.selectedSlot = null;
-      renderSelectedOrganization();
-    });
-    grid.appendChild(allOption);
-
-    categories.forEach((category) => {
-      const categoryCard = document.createElement('button');
-      categoryCard.type = 'button';
-      categoryCard.className = 'service-card category-card';
-      categoryCard.innerHTML = `<strong>${escapeHtml(category.label)}</strong><span>${category.count} service${category.count === 1 ? '' : 's'}</span>`;
-      categoryCard.addEventListener('click', () => {
-        state.selectedServiceCategory = category.value;
-        state.selectedService = null;
-        state.selectedSlot = null;
-        renderSelectedOrganization();
-      });
-      grid.appendChild(categoryCard);
-    });
-
-    categoriesPanel.appendChild(grid);
     categoriesPanel.classList.remove('hidden');
+    renderCategoryFilters(categories);
   } else {
     categoriesPanel.classList.add('hidden');
-    state.selectedServiceCategory = 'all';
   }
 
-  const filteredServices = categoryMode && state.selectedServiceCategory && state.selectedServiceCategory !== 'all'
-    ? bookableServices.filter((service) => normalizeCategory(service.category) === state.selectedServiceCategory)
-    : bookableServices;
+  renderServiceGrid(bookableServices, categoryMode);
+}
 
-  if (!state.selectedBookingDate || !getSelectedBookingDateTime()) {
-    categoriesPanel.classList.add('hidden');
-    servicesGrid.innerHTML = '<p class="booking-empty">Select booking date first to view available services.</p>';
-    if (slotPanel) {
-      slotPanel.innerHTML = '';
-      slotPanel.classList.add('hidden');
-    }
-    return;
-  }
+function renderCategoryFilters(categories) {
+  const panel = $('#booking-categories-panel');
+  if (!panel) return;
+
+  panel.innerHTML = '';
+
+  const allBtn = document.createElement('button');
+  allBtn.type = 'button';
+  allBtn.className = 'category-pill' + (!state.selectedServiceCategory ? ' active' : '');
+  allBtn.textContent = `All (${state.selectedServices.length})`;
+  allBtn.addEventListener('click', () => {
+    state.selectedServiceCategory = '';
+    state.selectedService = null;
+    renderSelectedOrganization();
+  });
+  panel.appendChild(allBtn);
+
+  categories.forEach(cat => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'category-pill' + (state.selectedServiceCategory === cat.value ? ' active' : '');
+    btn.textContent = `${cat.label} (${cat.count})`;
+    btn.addEventListener('click', () => {
+      state.selectedServiceCategory = cat.value;
+      state.selectedService = null;
+      renderSelectedOrganization();
+    });
+    panel.appendChild(btn);
+  });
+}
+
+function renderServiceGrid(services, categoryMode) {
+  const servicesGrid = $('#booking-services-grid');
+  if (!servicesGrid) return;
 
   servicesGrid.innerHTML = '';
-  if (filteredServices.length === 0) {
-    servicesGrid.innerHTML = '<p class="booking-empty">No services available for this category.</p>';
-    return;
-  }
 
-  if (categoryMode && state.selectedServiceCategory && state.selectedServiceCategory !== 'all') {
-    const categoryLabel = categories.find((category) => category.value === state.selectedServiceCategory)?.label || getCategoryLabel(state.selectedServiceCategory);
+  const activeCategory = state.selectedServiceCategory;
+  const filteredServices = activeCategory
+    ? services.filter(s => normalizeCategory(s.category) === activeCategory)
+    : services;
+
+  if (categoryMode && activeCategory) {
     const header = document.createElement('div');
+    const categoryLabel = getCategoryLabel(activeCategory);
     header.className = 'category-filter-header';
     header.innerHTML = `
       <div class="category-filter-label">Category: <strong>${escapeHtml(categoryLabel)}</strong></div>
@@ -619,37 +513,25 @@ function renderSelectedOrganization() {
     header.querySelector('#booking-change-category-btn')?.addEventListener('click', () => {
       state.selectedServiceCategory = '';
       state.selectedService = null;
-      state.selectedSlot = null;
       renderSelectedOrganization();
     });
   }
 
   filteredServices.forEach((service, index) => {
-    const serviceSlotSettings = getOnlineBookingSlotSettings(service);
     const card = document.createElement('div');
     card.className = 'service-card';
     card.innerHTML = `
       <h4>${escapeHtml(service.name || `Service ${index + 1}`)}</h4>
       <p>${escapeHtml(service.description || 'Please select this service to continue.')}</p>
       <p class="meta">Estimated time: ${escapeHtml(service.estimatedTime ? `${service.estimatedTime} min` : 'N/A')}</p>
-      ${serviceSlotSettings.enabled ? `<p class="meta">Time-slot booking available</p>` : ''}
     `;
 
     const button = document.createElement('button');
     button.className = 'primary';
     button.type = 'button';
-    button.textContent = serviceSlotSettings.enabled ? 'Choose slot' : 'Get Token';
+    button.textContent = 'Get Token';
     button.addEventListener('click', async () => {
-      if (serviceSlotSettings.enabled) {
-        // Must be supplemented by your date/slot module configurations
-        if (typeof openBookingSlotPicker === 'function') {
-          await openBookingSlotPicker(service);
-        } else {
-          console.warn('openBookingSlotPicker implementation missing');
-        }
-        return;
-      }
-      await issueToken(service, button, null);
+      await issueToken(service, button);
     });
     card.appendChild(button);
 
@@ -684,8 +566,6 @@ async function selectOrganization(orgId) {
     state.selectedServices = [];
     state.selectedServiceCategory = '';
     state.selectedService = null;
-    state.selectedSlot = null;
-    state.selectedBookingDate = getTodayDateInputValue();
 
     renderSelectedOrganization();
     $('#booking-token-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -699,7 +579,6 @@ async function selectOrganization(orgId) {
     const privateServicesSnap = await db.ref(`users/${orgId}/services`).once('value');
     const privateServices = privateServicesSnap.val() || {};
 
-    // Prefer the public mirror, but fall back to the org's private services for older data.
     const services = Object.keys(publicServices).length > 0
       ? Object.values(publicServices)
       : Object.values(privateServices);
@@ -734,13 +613,8 @@ async function selectOrganization(orgId) {
   }
 }
 
-async function issueToken(service, buttonEl, selectedSlot = null) {
+async function issueToken(service, buttonEl) {
   if (!state.selectedOrg) return;
-
-  if (!state.selectedBookingDate || !getSelectedBookingDateTime()) {
-    updateResult('Select a booking date before choosing service and slot.', true);
-    return;
-  }
 
   const user = auth.currentUser;
   if (!user) {
@@ -751,10 +625,6 @@ async function issueToken(service, buttonEl, selectedSlot = null) {
   try {
     await user.reload();
   } catch (_) {}
-
-  if (user.email && !user.emailVerified) {
-    updateResult('Your email is not verified yet, but you can continue with booking for this session.', false);
-  }
 
   const appUserSnap = await db.ref(`appuser/${user.uid}`).once('value');
   const appUser = appUserSnap.val() || {};
@@ -794,17 +664,15 @@ async function issueToken(service, buttonEl, selectedSlot = null) {
   try {
     const orgId = state.selectedOrg.uid;
     
-    // Safety check on global token factories
     if (typeof tokenFactory === 'undefined') {
       throw new Error('Global tokenFactory helper is missing from script architecture.');
     }
 
     const prefix = await tokenFactory.resolveOrganizationTokenPrefix(db, orgId);
-    const bookingPrefix = `${prefix}OB`;
     const tokenId = tokenFactory.generateTokenId('TOKEN');
     const tokenNumber = await tokenFactory.generateSequentialTokenNumber(db, {
       organizationId: orgId,
-      prefix: bookingPrefix,
+      prefix: prefix,
       serviceId: service.id,
       skipOpenHoursCheck: true
     });
@@ -817,30 +685,13 @@ async function issueToken(service, buttonEl, selectedSlot = null) {
     const fullQueueSnap = await db.ref(`users/${orgId}/queue`).once('value');
     const fullQueueData = fullQueueSnap.val() || {};
     const counterInfo = (typeof resolveCounterForService === 'function') ? resolveCounterForService(service.id, fullQueueData) || {} : {};
-    const slotSettings = getOnlineBookingSlotSettings(service);
-
-    let slotData = null;
-    if (slotSettings.enabled) {
-      if (!selectedSlot) {
-        updateResult('Choose an available time slot before booking.', true);
-        return;
-      }
-
-      const availableSlots = (typeof loadServiceSlots === 'function') ? await loadServiceSlots(service) : [];
-      slotData = availableSlots.find((slot) => slot.key === selectedSlot.key) || null;
-      if (!slotData) {
-        updateResult('That slot is no longer available. Please choose another one.', true);
-        if (typeof openBookingSlotPicker === 'function') await openBookingSlotPicker(service);
-        return;
-      }
-    }
 
     const tokenData = tokenFactory.createBaseTokenData({
       tokenId,
       tokenNumber,
       organizationId: orgId,
-      kioskId: 'ONLINE_BOOKING',
-      kioskName: 'Online Booking',
+      kioskId: 'QR_BOOKING',
+      kioskName: 'QR Scan Booking',
       serviceId: service.id,
       serviceName: service.name,
       serviceEstimatedTime: Number(service?.estimatedTime || 0) || null,
@@ -849,16 +700,7 @@ async function issueToken(service, buttonEl, selectedSlot = null) {
       customerPhone,
       customerEmail,
       source: 'mobile-app',
-      status: 'waiting',
-      bookingSlotKey: slotData?.key || null,
-      bookingSlotStartMs: slotData?.startMs || null,
-      bookingSlotEndMs: slotData?.endMs || null,
-      bookingSlotPosition: slotData?.position || null,
-      bookingSlotCapacity: slotData?.capacity || null,
-      bookingSlotOccupied: slotData?.occupied || null,
-      bookingSlotEtaMs: slotData?.etaMs || null,
-      scheduledFor: slotData ? new Date(slotData.etaMs).toISOString() : null,
-      livePosition: slotData?.position || null
+      status: 'waiting'
     });
 
     const updates = {};
@@ -866,53 +708,24 @@ async function issueToken(service, buttonEl, selectedSlot = null) {
       ...tokenData,
       serviceId: service.id,
       serviceName: service.name,
-      kioskId: 'ONLINE_BOOKING',
-      kioskName: 'Online Booking',
+      kioskId: 'QR_BOOKING',
+      kioskName: 'QR Scan Booking',
       assignedCounterId: counterInfo.counterId || null,
       assignedCounterName: counterInfo.counterName || null,
-      livePosition: slotData?.position || null,
-      position: slotData?.position || null,
-      status: slotData ? 'scheduled' : 'waiting',
-      bookingSlotKey: slotData?.key || null,
-      bookingSlotStartMs: slotData?.startMs || null,
-      bookingSlotEndMs: slotData?.endMs || null,
-      bookingSlotPosition: slotData?.position || null,
-      bookingSlotCapacity: slotData?.capacity || null,
-      bookingSlotOccupied: slotData?.occupied || null,
-      bookingSlotEtaMs: slotData?.etaMs || null,
-      scheduledFor: slotData ? new Date(slotData.etaMs).toISOString() : null
+      livePosition: null,
+      position: null,
+      status: 'waiting'
     };
 
     updates[`users/${orgId}/queue/${service.id}/${tokenId}`] = basePayload;
 
-    if (slotData && customerUid && !customerUid.startsWith('guest:')) {
-      updates[`appuserTokens/${customerUid}/${orgId}/${tokenId}`] = {
-        ...basePayload,
-        organizationName: state.selectedOrg.organizationName || state.selectedOrg.name || orgId
-      };
-    }
+    // No need to add basic on-place/QR scanned tokens to appuserTokens / My Appointments
 
     await db.ref().update(updates);
 
     const queueSnap = await db.ref(`users/${orgId}/queue/${service.id}`).once('value');
     const queueData = queueSnap.val() || {};
     const livePosition = computeLivePositionForToken(queueData, tokenNumber);
-
-    if (slotData) {
-      const timeLabel = (typeof formatTimeLabel === 'function') ? formatTimeLabel(slotData.etaMs) : new Date(slotData.etaMs).toLocaleTimeString();
-      updateResult(`Token created: ${tokenNumber} | Customer: ${customerName || customerEmail || 'Customer'} | Counter: ${counterInfo.counterName || 'Waiting'} | ETA: ${timeLabel} | Live Position: ${livePosition}`);
-      
-      updateTokenOverlay({
-        tokenNumber,
-        serviceName: service.name,
-        orgId: orgId,
-        position: livePosition,
-        counter: counterInfo.counterName || 'Waiting',
-        status: 'scheduled',
-        estimateTimeLabel: timeLabel
-      });
-      return;
-    }
 
     const entries = Object.entries(queueData).map(([id, t]) => ({ id, ...(t || {}) }));
     const isPast = (s) => {
@@ -934,7 +747,7 @@ async function issueToken(service, buttonEl, selectedSlot = null) {
       ? waitingEntries.slice(0, targetIndex).reduce((sum, entry) => sum + (Number(entry.serviceEstimatedTime || entry.estimatedTime || 0) || 0), 0)
       : Number(service?.estimatedTime || 0) || 0;
 
-    const etaLabel = (typeof formatEtaLabel === 'function') ? formatEtaLabel(estimateMinutes) : `${estimateMinutes} mins`;
+    const etaLabel = `${estimateMinutes} mins`;
     updateResult(`Token created: ${tokenNumber} | Customer: ${customerName || customerEmail || 'Customer'} | Counter: ${counterInfo.counterName || 'Waiting'} | ETA: ${etaLabel} | Live Position: ${livePosition}`);
 
     updateTokenOverlay({
@@ -947,7 +760,7 @@ async function issueToken(service, buttonEl, selectedSlot = null) {
       estimateTimeLabel: etaLabel
     });
   } catch (err) {
-    console.error('online booking token failed', err);
+    console.error('QR booking token failed', err);
     updateResult('Failed to create token: ' + String(err.message || err), true);
   } finally {
     if (buttonEl) {
@@ -977,221 +790,29 @@ async function loadOrganizations() {
     );
     const orgs = snap.val() || {};
     const allowed = Object.entries(orgs)
-      .filter(([, profile]) => hasOnlineBooking(profile))
       .map(([uid, profile]) => {
         const meta = profile?.meta || {};
         return {
           uid,
           userName: profile?.displayName || meta.name || profile?.name || '',
-          organizationName: profile?.organizationName || profile?.displayName || meta.name || profile?.name || 'Unnamed organization',
-          name: getOrganizationTitle(uid, profile),
           email: getOrganizationEmail(profile),
-          role: meta.role || profile?.role || '',
+          name: getOrganizationTitle(uid, profile),
+          organizationName: profile?.organizationName || profile?.displayName || meta.name || profile?.name || uid,
           tokenPrefix: String(meta.tokenPrefix || profile?.tokenPrefix || '').trim(),
-          allowOnlineBooking: true
+          meta
         };
-      })
-      .sort((left, right) => left.name.localeCompare(right.name));
+      });
 
     state.organizations = allowed;
-
-    // Auto-select preselected organization from URL search params if present
-    const params = new URLSearchParams(window.location.search);
-    const orgId = params.get('orgId');
-    if (orgId) {
-      const matched = allowed.find(o => o.uid === orgId);
-      if (matched) {
-        selectOrganization(orgId);
-      }
-    }
-  } catch (err) {
-    console.error('online booking load failed', err);
-    state.organizations = [];
-    updateStatus('Failed to load organizations: ' + String(err.message || err));
-  } finally {
     state.loading = false;
+    updateStatus('');
+    renderOrgCards();
+  } catch (err) {
+    console.error('Failed to load public organizations', err);
+    state.loading = false;
+    updateStatus('Failed to load organizations.');
     renderOrgCards();
   }
-}
-
-async function loadServiceSlots(service) {
-  if (!state.selectedOrg || !state.selectedBookingDate) return [];
-  const org = state.selectedOrg;
-  const meta = org.meta || {};
-  const settings = state.settings || {};
-
-  const dateStr = state.selectedBookingDate;
-  const [year, month, day] = dateStr.split('-').map(Number);
-  const currentDate = new Date(year, month - 1, day);
-  const daysOfWeek = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
-  const selectedDayName = daysOfWeek[currentDate.getDay()];
-
-  let startHour = 9;
-  let startMin = 0;
-  let endHour = 17;
-  let endMin = 0;
-  let slotDuration = 30;
-  let slotCapacity = 1;
-
-  if (service && service.scheduledServiceEnabled) {
-    const schedule = service.schedule || {};
-    const days = Array.isArray(schedule.days) ? schedule.days : [];
-    if (!days.includes(selectedDayName)) {
-      return []; // Service not scheduled for this day
-    }
-    const openTime = schedule.open || '09:00';
-    const closeTime = schedule.close || '17:00';
-    const [hOpen, mOpen] = openTime.split(':').map(Number);
-    const [hClose, mClose] = closeTime.split(':').map(Number);
-    
-    startHour = hOpen;
-    startMin = mOpen;
-    endHour = hClose;
-    endMin = mClose;
-    slotDuration = Number(service.bookingSlotMinutes || schedule.slotMinutes || meta.onlineBookingSlotDurationMinutes) || 30;
-    slotCapacity = Number(service.bookingSlotCapacity || schedule.capacity || meta.onlineBookingSlotCapacity) || 1;
-  } else if (meta.onlineBookingSlotsEnabled) {
-    const openHours = settings.openHours || {};
-    const dayConfig = openHours[selectedDayName] || {};
-    const isDayEnabled = dayConfig.enabled !== undefined ? !!dayConfig.enabled : true;
-    if (!isDayEnabled) {
-      return []; // Business closed on this day
-    }
-    const openTime = dayConfig.open || '09:00';
-    const closeTime = dayConfig.close || '17:00';
-    const [hOpen, mOpen] = openTime.split(':').map(Number);
-    const [hClose, mClose] = closeTime.split(':').map(Number);
-
-    startHour = hOpen;
-    startMin = mOpen;
-    endHour = hClose;
-    endMin = mClose;
-    slotDuration = Number(meta.onlineBookingSlotDurationMinutes) || 30;
-    slotCapacity = Number(meta.onlineBookingSlotCapacity) || 1;
-  } else {
-    return []; // Slots not enabled
-  }
-
-  const serviceEst = Number(service?.estimatedTime) || 0;
-  const finalCapacity = (serviceEst > 0 && slotDuration > 0)
-    ? Math.max(1, Math.floor(slotDuration / serviceEst))
-    : slotCapacity;
-
-  const slots = [];
-  let current = new Date(year, month - 1, day, startHour, startMin, 0, 0);
-  const endLimit = new Date(year, month - 1, day, endHour, endMin, 0, 0);
-
-  let index = 0;
-  while (current < endLimit) {
-    const startMs = current.getTime();
-    const next = new Date(current.getTime() + slotDuration * 60000);
-    const endMs = next.getTime();
-
-    const formatTime = (d) => String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
-    const key = `${dateStr}_${formatTime(current)}`;
-
-    slots.push({
-      key,
-      label: `${formatTime(current)} - ${formatTime(next)}`,
-      startMs,
-      endMs,
-      etaMs: startMs,
-      position: index + 1,
-      capacity: finalCapacity,
-      occupied: 0
-    });
-
-    current = next;
-    index++;
-  }
-
-  // Count occupancy from actual database queue
-  try {
-    const queueSnap = await db.ref(`users/${org.uid}/queue/${service.id}`).once('value');
-    const queueData = queueSnap.val() || {};
-    Object.values(queueData).forEach(token => {
-      if (token.bookingSlotKey && token.status !== 'completed' && token.status !== 'cancelled' && token.status !== 'skipped') {
-        const matchedSlot = slots.find(s => s.key === token.bookingSlotKey);
-        if (matchedSlot) {
-          matchedSlot.occupied++;
-        }
-      }
-    });
-  } catch (err) {
-    console.warn('Failed to load occupancy from database', err);
-  }
-
-  // Filter out past slots for today
-  const now = Date.now();
-  return slots.filter(s => s.startMs > now);
-}
-
-async function openBookingSlotPicker(service) {
-  state.selectedService = service;
-  state.selectedSlot = null;
-
-  const slotPanel = $('#booking-slot-panel');
-  if (!slotPanel) return;
-
-  slotPanel.innerHTML = '<p class="booking-empty">Loading available time slots...</p>';
-  slotPanel.classList.remove('hidden');
-
-  // Smooth scroll to the slot picker
-  slotPanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-  const slots = await loadServiceSlots(service);
-
-  if (slots.length === 0) {
-    slotPanel.innerHTML = `
-      <h3>Available Time Slots for ${escapeHtml(service.name)}</h3>
-      <p class="booking-empty" style="color: var(--waitless-danger);">No available time slots left for today. Please choose a future booking date.</p>
-    `;
-    return;
-  }
-
-  slotPanel.innerHTML = `
-    <h3>Available Time Slots for ${escapeHtml(service.name)}</h3>
-    <div class="slots-grid" id="slots-grid-container"></div>
-    <div class="slot-confirm-row hidden" id="slot-confirm-row">
-      <button class="primary" id="slot-confirm-booking-btn" type="button">Confirm Appointment</button>
-    </div>
-  `;
-
-  const gridContainer = $('#slots-grid-container');
-  const confirmRow = $('#slot-confirm-row');
-  const confirmBtn = $('#slot-confirm-booking-btn');
-
-  slots.forEach(slot => {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'slot-btn';
-    const isFull = slot.occupied >= slot.capacity;
-    btn.disabled = isFull;
-
-    btn.innerHTML = `
-      <span>${escapeHtml(slot.label)}</span>
-      <span class="slot-occupancy" style="color: ${isFull ? 'var(--waitless-danger)' : 'var(--waitless-success)'}">
-        ${isFull ? 'Full' : `${slot.capacity - slot.occupied} left`}
-      </span>
-    `;
-
-    btn.addEventListener('click', () => {
-      // Toggle selection styling
-      gridContainer.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
-      btn.classList.add('selected');
-
-      state.selectedSlot = slot;
-      confirmRow.classList.remove('hidden');
-      updateResult(`Selected slot: ${slot.label}. Click Confirm Appointment below to book.`);
-    });
-
-    gridContainer.appendChild(btn);
-  });
-
-  confirmBtn?.addEventListener('click', async () => {
-    if (!state.selectedSlot) return;
-    await issueToken(service, confirmBtn, state.selectedSlot);
-  });
 }
 
 
@@ -1247,22 +868,21 @@ function bindEvents() {
         await user.reload();
       } catch (_) {}
 
-      try {
-        await withTimeout(
-          db.ref(`appuser/${user.uid}`).once('value'),
-          10000,
-          'Timed out while checking your app profile.'
-        );
-      } catch (profileErr) {
-        console.warn('App profile check failed, continuing to load organizations', profileErr);
+      // Handle direct orgId selection via QR query parameter
+      const urlParams = new URLSearchParams(window.location.search);
+      const orgIdParam = urlParams.get('orgId') || urlParams.get('organizationId') || urlParams.get('org');
+      if (orgIdParam) {
+        state.fromQr = true;
+        await selectOrganization(orgIdParam);
+      } else {
+        state.fromQr = false;
+        await loadOrganizations();
       }
-
-      await loadOrganizations();
     } catch (err) {
-      console.error('online booking bootstrap failed', err);
+      console.error('QR booking bootstrap failed', err);
       state.loading = false;
       state.organizations = [];
-      updateStatus('Failed to load organizations: ' + String(err.message || err));
+      updateStatus('Failed to initialize: ' + String(err.message || err));
       renderOrgCards();
     }
   });
@@ -1275,17 +895,19 @@ function bindEvents() {
   });
 
   backBtn?.addEventListener('click', () => {
+    if (state.fromQr) {
+      // Redirect back to QR scanner page
+      window.location.href = 'index.html';
+      return;
+    }
     state.selectedOrg = null;
     state.selectedOrgLoading = false;
     state.selectedServices = [];
     state.selectedServiceCategory = '';
     state.selectedService = null;
-    state.selectedSlot = null;
-    state.selectedBookingDate = '';
     renderSelectedOrganization();
     updateResult('Select a service to create a token.');
   });
 }
 
-// Initialize logic pipeline
 bindEvents();

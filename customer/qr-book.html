@@ -3,54 +3,26 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Online Booking</title>
+  <title>Instant Queue Booking</title>
   <link rel="stylesheet" href="../shared/css/customer.css" />
   <link rel="stylesheet" href="../shared/css/unified-ui.css" />
-  <style>
-    .date-panel {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      background: #f8fafc;
-      padding: 14px 18px;
-      border-radius: 16px;
-      border: 1px solid #e2e8f0;
-      margin-bottom: 24px;
-      max-width: fit-content;
-    }
-    .date-panel label {
-      font-weight: 700;
-      color: #334155;
-    }
-    .date-panel input[type="date"] {
-      padding: 8px 12px;
-      border: 1px solid #cbd5e1;
-      border-radius: 10px;
-      font-size: 1rem;
-      outline: none;
-      color: #0f172a;
-      transition: border-color 0.15s ease;
-    }
-    .date-panel input[type="date"]:focus {
-      border-color: #0284c7;
-    }
-  </style>
 </head>
 <body>
   <div class="app-shell booking-directory">
     <header class="app-hero">
       <div>
-        <p class="eyebrow">Public booking</p>
-        <h1>Online Booking</h1>
-        <p class="lead">Sign in with your app account first, then search for an organization that allows online booking and open its token page to continue.</p>
+        <p class="eyebrow">On-site queuing</p>
+        <h1>Instant Queue Booking</h1>
+        <p class="lead">Select the service you need to join the live queue immediately.</p>
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
         <div class="user-panel" id="user-panel" aria-live="polite"></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
-          <a class="secondary booking-link" href="index.html">Home</a>
+          <a class="secondary booking-link" href="index.html">Scan QR</a>
+          <a class="secondary booking-link" href="book.html">Online booking</a>
           <a class="secondary booking-link" href="track.html">My Appointments</a>
         </div>
-        <div class="app-badge">Booking</div>
+        <div class="app-badge">Instant</div>
       </div>
     </header>
 
@@ -58,8 +30,8 @@
       <section class="app-card booking-directory-top">
         <div class="card-copy">
           <p class="eyebrow">Find an organization</p>
-          <h2>Choose where to book</h2>
-          <p class="lead" style="color:#64748b;">Only approved organizations with online booking enabled are shown here.</p>
+          <h2>Choose where to queue</h2>
+          <p class="lead" style="color:#64748b;">Only approved organizations are shown here. You can scan a QR code to load an organization instantly.</p>
         </div>
         <div class="booking-search-row">
           <input id="booking-search-input" type="search" placeholder="Search by name, email, or organization ID" autocomplete="off" />
@@ -76,21 +48,18 @@
     <section id="booking-token-section" class="app-card booking-token-section hidden">
       <div class="card-header-row booking-token-header">
         <div>
-          <p class="eyebrow">Step 2</p>
+          <p class="eyebrow">Live Queue</p>
           <h2 id="booking-selected-org-title">Generate a token</h2>
           <p id="booking-selected-org-subtitle" class="lead" style="color:#64748b;">Choose a service to continue.</p>
         </div>
-        <button id="booking-back-btn" class="secondary" type="button">Back to organizations</button>
+        <button id="booking-back-btn" class="secondary" type="button">Change organization</button>
       </div>
       <div class="card-copy">
-        <p class="lead" style="color:#64748b;">This booking uses the online token prefix with <strong>OB</strong> appended after the organization prefix.</p>
+        <p class="lead" style="color:#64748b;">This booking is for today's live queue. You will be assigned a token instantly.</p>
       </div>
-      
-      <div id="booking-date-panel" class="date-panel hidden"></div>
 
       <div id="booking-categories-panel" class="service-grid hidden"></div>
       <div id="booking-services-grid" class="service-grid"></div>
-      <div id="booking-slot-panel" class="booking-slot-panel hidden"></div>
       <div id="booking-result" class="booking-result empty">Select a service to create a token.</div>
     </section>
 
@@ -131,7 +100,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
   <script src="../js/config/firebase-config.js"></script>
   <script src="../js/customer/token-factory.js"></script>
-  <script src="../js/customer/book.js"></script>
+  <script src="../js/customer/qr-book.js"></script>
   <script src="../shared/js/index-ui.js"></script>
 </body>
 </html>

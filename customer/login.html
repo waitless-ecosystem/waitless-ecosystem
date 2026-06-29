@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Waitless Customer Portal — Sign in</title>
+  <link rel="stylesheet" href="../css/global.css" />
+  <link rel="stylesheet" href="../css/auth.css" />
+  <link rel="stylesheet" href="../shared/css/redesign.css" />
+  <link rel="stylesheet" href="../shared/css/unified-ui.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="brand">
+      <a class="wl-brand" href="../index.html">
+        <img src="../images/new.png" alt="" />
+        <span>Waitless</span>
+      </a>
+    </div>
+
+    <div class="auth-card">
+      <div class="tabs customer-auth-tabs" role="tablist" aria-label="Customer authentication tabs">
+        <button class="tab active" data-view="login" role="tab" aria-selected="true">Sign In</button>
+        <button class="tab" data-view="register" role="tab" aria-selected="false">Create Account</button>
+        <button class="tab" data-view="reset" role="tab" aria-selected="false">Reset</button>
+      </div>
+
+      <div id="auth-sections">
+        <!-- Sign In Panel -->
+        <section id="login-panel" class="panel active" aria-label="Sign in panel">
+          <h2>Welcome Back</h2>
+          <p class="lead">Sign in to your customer account to book appointments or track your queue status.</p>
+          <form id="login-form">
+            <label for="login-email">Email Address</label>
+            <div class="input-wrap">
+              <input id="login-email" type="email" placeholder="you@example.com" required />
+            </div>
+
+            <label for="login-password">Password</label>
+            <div class="input-wrap">
+              <input id="login-password" type="password" placeholder="••••••••" required />
+            </div>
+
+            <button class="primary" type="submit">Sign In</button>
+          </form>
+        </section>
+
+        <!-- Register Panel -->
+        <section id="register-panel" class="panel" aria-label="Registration panel">
+          <h2>Create Customer Account</h2>
+          <p class="lead">Save your booking history, track tickets across devices, and receive appointment reminders.</p>
+          <form id="register-form">
+            <label for="register-name">Full Name</label>
+            <div class="input-wrap">
+              <input id="register-name" type="text" placeholder="John Doe" required />
+            </div>
+
+            <label for="register-email">Email Address</label>
+            <div class="input-wrap">
+              <input id="register-email" type="email" placeholder="you@example.com" required />
+            </div>
+
+            <label for="register-phone">Phone Number</label>
+            <div class="input-wrap">
+              <input id="register-phone" type="tel" placeholder="+1 (555) 000-0000" />
+            </div>
+
+            <label for="register-password">Password</label>
+            <div class="input-wrap">
+              <input id="register-password" type="password" placeholder="Choose a password" required />
+            </div>
+
+            <button class="primary" type="submit">Create Account</button>
+          </form>
+        </section>
+
+        <!-- Reset Panel -->
+        <section id="reset-panel" class="panel" aria-label="Reset password panel">
+          <h2>Reset Password</h2>
+          <p class="lead">Enter your email and we'll send you reset instructions.</p>
+          <form id="reset-form">
+            <label for="reset-email">Email Address</label>
+            <div class="input-wrap">
+              <input id="reset-email" type="email" placeholder="you@example.com" required />
+            </div>
+
+            <button class="primary ghost" type="submit">Send Reset Link</button>
+          </form>
+        </section>
+      </div>
+
+      <div id="message" class="message" role="status" aria-live="polite" style="margin-top: 1rem;"></div>
+      <p class="muted small" style="margin-top: 1.5rem;"><a href="index.html">← Back to Customer Portal</a></p>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="../js/config/firebase-config.js"></script>
+  <script src="../js/customer/login.js"></script>
+  <script src="../shared/js/index-ui.js"></script>
+</body>
+</html>

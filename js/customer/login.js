@@ -115,10 +115,37 @@
     });
   }
 
-  auth.onAuthStateChanged((user) => {
+  async function checkIsOrgUser(user) {
+    if (!user) return false;
+    const snap = await db.ref(`users/${user.uid}`).once('value');
+    const val = snap.val();
+    if (val && val.role) {
+      const role = String(val.role).toLowerCase();
+      return ['superadmin', 'admin', 'approved', 'staff', 'kiosk', 'pending'].includes(role);
+    }
+    return false;
+  }
+
+  auth.onAuthStateChanged(async (user) => {
     if (user) {
-      window.location.href = 'index.html';
-      return;
+      try {
+        const isOrg = await checkIsOrgUser(user);
+        if (isOrg) {
+          showMessage('Access denied. Organization accounts cannot access the customer portal.', 'error');
+          await auth.signOut();
+          wireForms();
+          setActiveView('login');
+          return;
+        }
+        window.location.href = 'index.html';
+        return;
+      } catch (err) {
+        showMessage('Authentication check failed: ' + err.message, 'error');
+        await auth.signOut();
+        wireForms();
+        setActiveView('login');
+        return;
+      }
     }
 
     wireForms();

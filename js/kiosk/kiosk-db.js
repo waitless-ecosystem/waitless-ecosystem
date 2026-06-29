@@ -11,6 +11,49 @@ if (!firebase.apps.length) {
 const auth = firebase.auth();
 const db = firebase.database();
 
+function getLeastQueueCounter(serviceId, assignments, counters, queueData) {
+  const candidateMatches = Object.values(assignments || {}).filter(
+    (assignment) => Array.isArray(assignment?.services) && assignment.services.includes(serviceId)
+  );
+
+  if (candidateMatches.length === 0) return null;
+  if (candidateMatches.length === 1) return candidateMatches[0];
+
+  let bestMatch = candidateMatches[0];
+  let minQueue = Infinity;
+
+  const isWaiting = (s) => {
+    const v = String(s || '').trim().toLowerCase();
+    return ['waiting', 'new', 'queued', 'pending'].includes(v) || !v;
+  };
+  const isPast = (s) => {
+    const v = String(s || '').trim().toLowerCase();
+    return ['completed', 'cancelled', 'canceled', 'done', 'removed', 'rejected', 'served', 'expired', 'missed', 'no-show', 'noshow'].includes(v);
+  };
+
+  candidateMatches.forEach((match) => {
+    let queueSize = 0;
+    if (queueData) {
+      Object.entries(queueData).forEach(([sId, sQueue]) => {
+        if (!sQueue) return;
+        Object.values(sQueue).forEach((token) => {
+          if (token && !isPast(token.status) && isWaiting(token.status)) {
+            if (token.assignedCounterId === match.counterId) {
+              queueSize += 1;
+            }
+          }
+        });
+      });
+    }
+    if (queueSize < minQueue) {
+      minQueue = queueSize;
+      bestMatch = match;
+    }
+  });
+
+  return bestMatch;
+}
+
 // ============================================================
 // KIOSK CRUD OPERATIONS
 // ============================================================
@@ -265,6 +308,24 @@ const kioskTokenDB = {
     if (!serviceData) throw new Error('Service not found');
     const serviceName = options.serviceName || serviceData.name || serviceId;
 
+    const [assignmentsSnap, countersSnap, queueSnap] = await Promise.all([
+      db.ref(`users/${organizationId}/assignments`).once('value'),
+      db.ref(`users/${organizationId}/counters`).once('value'),
+      db.ref(`users/${organizationId}/queue`).once('value')
+    ]);
+    const assignments = assignmentsSnap.val() || {};
+    const counters = countersSnap.val() || {};
+    const queueData = queueSnap.val() || {};
+
+    const match = getLeastQueueCounter(serviceId, assignments, counters, queueData);
+    let assignedCounterId = null;
+    let assignedCounterName = null;
+    if (match) {
+      assignedCounterId = match.counterId;
+      const counter = counters[match.counterId] || {};
+      assignedCounterName = counter.name || counter.counterName || match.counterId || 'Counter';
+    }
+
     try {
       const tokenData = tokenFactory.createBaseTokenData({
         tokenId,
@@ -274,7 +335,9 @@ const kioskTokenDB = {
         kioskName,
         serviceId,
         serviceName,
-        customerUid: auth.currentUser?.uid || `kiosk:${kioskId}`
+        customerUid: auth.currentUser?.uid || `kiosk:${kioskId}`,
+        assignedCounterId: assignedCounterId,
+        assignedCounterName: assignedCounterName
       });
 
       const activityId = this.generateActivityId();
@@ -425,6 +488,24 @@ const kioskTokenDB = {
 
     var customerUid = opts.customerUid || (cleanedCustomerDetails && cleanedCustomerDetails.uid) || (auth.currentUser ? auth.currentUser.uid : ('kiosk:' + kioskId));
 
+    const [assignmentsSnap, countersSnap, queueSnap] = await Promise.all([
+      db.ref(`users/${organizationId}/assignments`).once('value'),
+      db.ref(`users/${organizationId}/counters`).once('value'),
+      db.ref(`users/${organizationId}/queue`).once('value')
+    ]);
+    const assignments = assignmentsSnap.val() || {};
+    const counters = countersSnap.val() || {};
+    const queueData = queueSnap.val() || {};
+
+    const match = getLeastQueueCounter(primaryServiceId, assignments, counters, queueData);
+    let assignedCounterId = null;
+    let assignedCounterName = null;
+    if (match) {
+      assignedCounterId = match.counterId;
+      const counter = counters[match.counterId] || {};
+      assignedCounterName = counter.name || counter.counterName || match.counterId || 'Counter';
+    }
+
     var tokenData = tokenFactory.createBaseTokenData({
       tokenId: tokenId,
       tokenNumber: tokenNumber,
@@ -434,7 +515,9 @@ const kioskTokenDB = {
       kioskName: kioskName,
       serviceId: primaryServiceId,
       serviceName: primaryServiceName,
-      customerUid: customerUid
+      customerUid: customerUid,
+      assignedCounterId: assignedCounterId,
+      assignedCounterName: assignedCounterName
     });
 
     tokenData.primaryServiceId = primaryServiceId;

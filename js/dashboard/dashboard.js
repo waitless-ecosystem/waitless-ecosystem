@@ -83,20 +83,42 @@ async function checkApprovalStatus(user) {
       </div>
     `;
 
-    const queueBtn = $('#back-queue');
     const signoutBtn = $('#signout');
-
-    if (canAccess && queueBtn) {
-      queueBtn.style.display = 'block';
-      queueBtn.addEventListener('click', () => {
-        window.location.href = (window.WAITLESS_DASHBOARD_ROUTES && window.WAITLESS_DASHBOARD_ROUTES.queue) || 'queue.html';
-      });
-    }
 
     if (signoutBtn) {
       signoutBtn.addEventListener('click', async () => {
         await auth.signOut();
         window.location.href = '../index.html';
+      });
+    }
+
+    if (canAccess) {
+      const uid = user.uid;
+      
+      db.ref(`users/${uid}/services`).on('value', snap => {
+        const services = snap.val() || {};
+        const el = $('#stat-services-count');
+        if (el) el.textContent = Object.keys(services).length;
+      });
+
+      db.ref(`users/${uid}/counters`).on('value', snap => {
+        const counters = snap.val() || {};
+        const el = $('#stat-counters-count');
+        if (el) el.textContent = Object.keys(counters).length;
+      });
+
+      db.ref(`users/${uid}/kiosks`).on('value', snap => {
+        const kiosks = snap.val() || {};
+        const el = $('#stat-kiosks-count');
+        if (el) el.textContent = Object.keys(kiosks).length;
+      });
+
+      db.ref(`users/${uid}/tokens`).on('value', snap => {
+        const tokens = snap.val() || {};
+        const tokenList = Object.values(tokens);
+        const liveCount = tokenList.filter(t => t.status === 'waiting' || t.status === 'serving').length;
+        const el = $('#stat-live-queue-count');
+        if (el) el.textContent = liveCount;
       });
     }
 

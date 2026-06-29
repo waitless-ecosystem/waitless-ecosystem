@@ -231,12 +231,13 @@ if (isPastTokenStatus(status)) {
   return {
     tokenNumber: token?.tokenNumber || token?.id || '---',
     counterLabel: resolveCounterName(
-      queueState?.counter
+      (queueState?.counter && queueState.counter !== 'Waiting' ? queueState.counter : null)
       || token?.assignedCounterName
       || token?.counterName
       || token?.resolvedCounterName
       || token?.assignedCounterId
       || token?.counterId
+      || queueState?.counter
     ),
     livePositionLabel: isScheduled && Number.isFinite(livePositionValue) && livePositionValue > 0 ? `#${livePositionValue}` : livePositionLabel,
     estimateTimeLabel: scheduledAt || queueEtaLabel
@@ -276,10 +277,22 @@ function renderTokenItem(token, type = 'ongoing') {
   if (type === 'past') {
     return `
       <div class="token-item token-item-past">
-        <div class="token-item-number">${escapeHtml(displayData.tokenNumber)}</div>
+        <div class="token-item-top">
+          <div>
+            <div class="token-item-number">${escapeHtml(displayData.tokenNumber)}</div>
+            <div class="token-item-service">${escapeHtml(serviceName)}</div>
+          </div>
+          <div class="token-item-actions">
+            <span class="token-status-pill past">${escapeHtml(statusLabel)}</span>
+          </div>
+        </div>
+
+        <div class="ticket-divider"></div>
+
         <div class="token-item-meta">
           <div><strong>Token:</strong> ${escapeHtml(displayData.tokenNumber)}</div>
-                    <div><strong>Organization:</strong> ${escapeHtml(orgLabel)}</div>
+          <div><strong>Organization:</strong> ${escapeHtml(orgLabel)}</div>
+          <div><strong>Time:</strong> ${escapeHtml(formatTokenTimestamp(token?.timestamp))}</div>
         </div>
       </div>
     `;
@@ -290,7 +303,7 @@ function renderTokenItem(token, type = 'ongoing') {
       <div class="token-item-top">
         <div>
           <div class="token-item-number">${escapeHtml(displayData.tokenNumber)}</div>
-          <div class="token-item-meta">${escapeHtml(serviceName)}</div>
+          <div class="token-item-service">${escapeHtml(serviceName)}</div>
         </div>
         <div class="token-item-actions">
           <span class="token-status-pill ${type === 'past' ? 'past' : ''} ${isServingNow ? 'serving' : ''}">${escapeHtml(statusLabel)}</span>
@@ -305,6 +318,9 @@ function renderTokenItem(token, type = 'ongoing') {
           </button>
         </div>
       </div>
+
+      <div class="ticket-divider"></div>
+
       <div class="token-item-meta">
         <div><strong>Token:</strong> ${escapeHtml(displayData.tokenNumber)}</div>
         <div><strong>Counter:</strong> ${escapeHtml(displayData.counterLabel)}</div>
@@ -840,7 +856,19 @@ function setMobileAppBlocked(isBlocked) {
 async function loadAppUserProfile(user) {
   if (!user) return null;
   const snap = await db.ref(`appuser/${user.uid}`).once('value');
-  return snap.val() || null;
+  let data = snap.val();
+  if (!data) {
+    data = {
+      uid: user.uid,
+      name: user.displayName || String(user.email || '').split('@')[0] || 'App User',
+      email: user.email || '',
+      phone: '',
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    };
+    await db.ref(`appuser/${user.uid}`).set(data);
+  }
+  return data;
 }
 
 async function saveAppUserProfile(updates) {
@@ -928,16 +956,32 @@ function updateTokenOverlay({ tokenNumber, serviceName, orgId, position, counter
 
   if (!overlay || !numberEl || !metaEl || !positionEl || !counterEl || !estimateEl || !statusEl) return;
 
-  numberEl.textContent = tokenNumber || '---';
-  metaEl.innerHTML = `${escapeHtml(serviceName || 'Service')} • ${escapeHtml(resolveOrganizationName())}${message ? `<div class="token-overlay-message">${escapeHtml(message)}</div>` : ''}`;
-  const normalizedPosition = Number(position);
-  const normalizedStatus = String(status || '').trim().toLowerCase();
-  positionEl.textContent = normalizedStatus === 'serving'
-    ? 'Now serving'
-    : (Number.isFinite(normalizedPosition) && normalizedPosition > 0 ? `#${normalizedPosition}` : 'Waiting');
-  counterEl.textContent = resolveCounterName(counter);
-  estimateEl.textContent = estimateTimeLabel || 'N/A';
-  statusEl.textContent = status || 'waiting';
+  const isBasicMode = !!(state.orgMeta?.basicModeEnabled);
+  const titleEl = $('#token-overlay-title');
+  const statsContainer = overlay.querySelector('.token-overlay-stats');
+
+  if (isBasicMode) {
+    if (titleEl) titleEl.textContent = 'Please proceed to';
+    numberEl.textContent = resolveCounterName(counter) || 'Waiting';
+    numberEl.style.fontSize = '2.5rem';
+    metaEl.innerHTML = '';
+    if (statsContainer) statsContainer.style.display = 'none';
+  } else {
+    if (titleEl) titleEl.textContent = 'Your queue token is ready';
+    numberEl.textContent = tokenNumber || '---';
+    numberEl.style.fontSize = '';
+    metaEl.innerHTML = `${escapeHtml(serviceName || 'Service')} • ${escapeHtml(resolveOrganizationName())}${message ? `<div class="token-overlay-message">${escapeHtml(message)}</div>` : ''}`;
+    if (statsContainer) statsContainer.style.display = '';
+
+    const normalizedPosition = Number(position);
+    const normalizedStatus = String(status || '').trim().toLowerCase();
+    positionEl.textContent = normalizedStatus === 'serving'
+      ? 'Now serving'
+      : (Number.isFinite(normalizedPosition) && normalizedPosition > 0 ? `#${normalizedPosition}` : 'Waiting');
+    counterEl.textContent = resolveCounterName(counter);
+    estimateEl.textContent = estimateTimeLabel || 'N/A';
+    statusEl.textContent = status || 'waiting';
+  }
 }
 
 function showTokenOverlay(data) {
@@ -1247,31 +1291,79 @@ function renderServices() {
   grid.classList.remove('hidden');
 }
 
-function resolveCounterForService(serviceId) {
+function resolveCounterForService(serviceId, queueData = null) {
   const assignments = state.assignments || {};
   const counters = state.counters || {};
 
-  const match = Object.values(assignments).find((assignment) => Array.isArray(assignment?.services) && assignment.services.includes(serviceId));
-  if (!match) return null;
+  const candidateMatches = Object.values(assignments).filter(
+    (assignment) => Array.isArray(assignment?.services) && assignment.services.includes(serviceId)
+  );
 
-  const counter = counters[match.counterId] || {};
+  if (candidateMatches.length === 0) return null;
+
+  if (candidateMatches.length === 1) {
+    const match = candidateMatches[0];
+    const counter = counters[match.counterId] || {};
+    return {
+      counterId: match.counterId,
+      counterName: counter.name || counter.counterName || match.counterName || null
+    };
+  }
+
+  // Multiple candidates: find the one with the least queue size
+  let bestMatch = candidateMatches[0];
+  let minWorkload = Infinity;
+
+  const isWaiting = (s) => {
+    const v = String(s || '').trim().toLowerCase();
+    return ['waiting', 'new', 'queued', 'pending'].includes(v) || !v;
+  };
+  const isPast = (s) => {
+    const v = String(s || '').trim().toLowerCase();
+    return ['completed', 'cancelled', 'canceled', 'done', 'removed', 'rejected', 'served', 'expired', 'missed', 'no-show', 'noshow'].includes(v);
+  };
+
+  candidateMatches.forEach((match) => {
+    let workload = 0;
+    if (queueData) {
+      Object.entries(queueData).forEach(([sId, sQueue]) => {
+        if (!sQueue) return;
+        Object.values(sQueue).forEach((token) => {
+          if (token && !isPast(token.status) && isWaiting(token.status)) {
+            if (token.assignedCounterId === match.counterId) {
+              workload += 1;
+            }
+          }
+        });
+      });
+    }
+    if (workload < minWorkload) {
+      minWorkload = workload;
+      bestMatch = match;
+    }
+  });
+
+  const counter = counters[bestMatch.counterId] || {};
   return {
-    counterId: match.counterId,
-    counterName: counter.name || counter.counterName || match.counterId || 'Counter'
+    counterId: bestMatch.counterId,
+    counterName: counter.name || counter.counterName || bestMatch.counterName || null
   };
 }
 
 async function loadOrganizationContext() {
   if (!state.orgId) return;
 
-  const [publicServicesResult, privateServicesResult] = await Promise.allSettled([
+  const [publicServicesResult, privateServicesResult, publicMetaResult] = await Promise.allSettled([
     db.ref(`publicOrganizations/${state.orgId}/services`).once('value'),
-    db.ref(`users/${state.orgId}/services`).once('value')
+    db.ref(`users/${state.orgId}/services`).once('value'),
+    db.ref(`publicOrganizations/${state.orgId}/meta`).once('value')
   ]);
 
   const publicServices = publicServicesResult.status === 'fulfilled' ? (publicServicesResult.value.val() || {}) : {};
   const privateServices = privateServicesResult.status === 'fulfilled' ? (privateServicesResult.value.val() || {}) : {};
+  const publicMeta = publicMetaResult.status === 'fulfilled' ? (publicMetaResult.value.val() || {}) : {};
   state.services = Object.keys(publicServices).length > 0 ? publicServices : privateServices;
+  state.orgMeta = publicMeta;
 
   const optionalReads = await Promise.allSettled([
     db.ref(`users/${state.orgId}/profile`).once('value'),
@@ -1325,8 +1417,8 @@ async function issueToken(serviceId, service, buttonEl = null) {
     return;
   }
 
-  const kioskId = 'WALK_IN';
-  const kioskName = 'Walk-in';
+  const kioskId = state.onlineBookingMode ? 'ONLINE_BOOKING' : 'ONPLACE_BOOKING';
+  const kioskName = state.onlineBookingMode ? 'Online Booking' : 'Onplace Booking';
   const serviceName = service?.name || 'Service';
 
   if (buttonEl) {
@@ -1347,7 +1439,9 @@ async function issueToken(serviceId, service, buttonEl = null) {
       skipOpenHoursCheck: true
     });
 
-    const counterInfo = resolveCounterForService(serviceId) || {};
+    const fullQueueSnap = await db.ref(`users/${state.orgId}/queue`).once('value');
+    const fullQueueData = fullQueueSnap.val() || {};
+    const counterInfo = resolveCounterForService(serviceId, fullQueueData) || {};
     const customerUid = currentUid;
     const customerName = String(state.appUser?.name || state.appUser?.displayName || '').trim() || null;
     const customerPhone = String(state.appUser?.phone || '').trim() || null;
@@ -1390,16 +1484,7 @@ async function issueToken(serviceId, service, buttonEl = null) {
       }
     };
 
-    if (customerUid && !customerUid.startsWith('guest:')) {
-      updates[`appuserTokens/${customerUid}/${state.orgId}/${tokenId}`] = {
-        ...tokenData,
-        organizationName,
-        serviceId,
-        serviceName,
-        kioskId,
-        kioskName
-      };
-    }
+    // No need to add basic on-place/QR scanned tokens to appuserTokens / My Appointments
 
     await db.ref().update(updates);
 
@@ -1429,7 +1514,7 @@ async function issueToken(serviceId, service, buttonEl = null) {
         serviceName,
         orgId: state.orgId,
         position: 1,
-        counter: 'Scheduled',
+        counter: counterInfo.counterName || 'Scheduled',
         estimateTimeLabel: scheduledLabel,
         status: 'scheduled',
         message: serviceScheduleMessage
@@ -1526,7 +1611,7 @@ async function issueToken(serviceId, service, buttonEl = null) {
         serviceName,
         orgId: state.orgId,
         position: deferredUntil ? 1 : (Number.isFinite(targetIndex) ? targetIndex + 1 : 'Waiting'),
-        counter: deferredUntil ? 'Scheduled' : 'Waiting',
+        counter: counterInfo.counterName || (deferredUntil ? 'Scheduled' : 'Waiting'),
         estimateTimeLabel: estimateLabel,
         status: deferredUntil ? 'scheduled' : 'waiting',
         message: deferredUntil ? 'Service will be served at the scheduled time.' : ''
@@ -1537,7 +1622,7 @@ async function issueToken(serviceId, service, buttonEl = null) {
         serviceName,
         orgId: state.orgId,
         position: 'Waiting',
-        counter: 'Waiting',
+        counter: counterInfo.counterName || 'Waiting',
         estimateTimeLabel: formatEstimateTime(service?.estimatedTime),
         status: 'waiting'
       });
@@ -1642,16 +1727,16 @@ async function startScanner() {
   try {
     await state.scanner.start(
       { facingMode: 'environment' },
-      { fps: 10, qrbox: 220 },
+      { fps: 10 },
       async (decodedText) => {
         const orgId = parseScannedValue(decodedText);
         stopScanner();
         if (!orgId) return;
 
         if (isScanPage()) {
-          const appointmentUrl = new URL('appointment.html', window.location.href);
-          appointmentUrl.searchParams.set('orgId', orgId);
-          window.location.href = appointmentUrl.toString();
+          const bookingUrl = new URL('qr-book.html', window.location.href);
+          bookingUrl.searchParams.set('orgId', orgId);
+          window.location.href = bookingUrl.toString();
           return;
         }
 
@@ -1660,6 +1745,17 @@ async function startScanner() {
       },
       () => {}
     );
+
+    // Append dynamic, fully responsive visual target overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'custom-qr-overlay';
+    overlay.innerHTML = `
+      <div class="custom-qr-box">
+        <div class="laser-line"></div>
+      </div>
+    `;
+    readerEl.appendChild(overlay);
+
     showMessage('Scanner started. Point it at the organization QR.', 'info');
   } catch (err) {
     showMessage('Unable to start scanner: ' + err.message, 'error');
@@ -1819,7 +1915,9 @@ function renderUserPanel() {
       }
     });
   } else {
-    panel.innerHTML = '';
+    panel.innerHTML = `
+      <a href="${getLoginUrl()}" id="signin-btn" class="secondary booking-link" style="padding:6px 12px;font-size:0.85rem;margin:0;">Sign in</a>
+    `;
   }
 }
 
@@ -1844,6 +1942,17 @@ function renderProfileManager() {
   statusEl.textContent = '';
 }
 
+async function checkIsOrgUser(user) {
+  if (!user) return false;
+  const snap = await db.ref(`users/${user.uid}`).once('value');
+  const val = snap.val();
+  if (val && val.role) {
+    const role = String(val.role).toLowerCase();
+    return ['superadmin', 'admin', 'approved', 'staff', 'kiosk', 'pending'].includes(role);
+  }
+  return false;
+}
+
 async function bootstrapApp() {
   wireEvents();
   renderOrgSummary();
@@ -1856,7 +1965,14 @@ async function bootstrapApp() {
       window.location.replace(getLoginUrl());
       return;
     }
-<<<<<<< Updated upstream
+
+    const isOrg = await checkIsOrgUser(user);
+    if (isOrg) {
+      stopTokenHistoryListener();
+      await auth.signOut();
+      window.location.replace(getLoginUrl());
+      return;
+    }
     // Require email-verified accounts for app access
     if (user.email && !user.emailVerified) {
       try {
@@ -1870,9 +1986,6 @@ async function bootstrapApp() {
         return;
       }
     }
-=======
-
->>>>>>> Stashed changes
     try {
       const appUser = await loadAppUserProfile(user);
       if (!appUser) {
@@ -1893,6 +2006,12 @@ async function bootstrapApp() {
       await loadTokenHistory();
 
       if (state.orgId) {
+        if (isScanPage()) {
+          const bookingUrl = new URL('qr-book.html', window.location.href);
+          bookingUrl.searchParams.set('orgId', state.orgId);
+          window.location.replace(bookingUrl.toString());
+          return;
+        }
         await activateOrganization(state.orgId);
       } else {
         renderOrgSummary();

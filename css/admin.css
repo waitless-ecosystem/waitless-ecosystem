@@ -1,27 +1,27 @@
 /* Professional superadmin dashboard styles */
 
 :root {
-  --admin-bg: #f8fafc;
-  --admin-card: rgba(255, 255, 255, 0.85);
-  --admin-card-2: #f1f5f9;
-  --admin-border: rgba(226, 232, 240, 0.8);
-  --admin-border-strong: rgba(79, 70, 229, 0.2);
-  --admin-accent: #4f46e5;
-  --admin-accent-2: #3730a3;
+  --admin-bg: var(--waitless-bg);
+  --admin-card: var(--waitless-surface);
+  --admin-card-2: var(--waitless-surface-soft);
+  --admin-border: var(--waitless-line);
+  --admin-border-strong: rgba(79, 70, 229, 0.25);
+  --admin-accent: var(--waitless-primary);
+  --admin-accent-2: var(--waitless-primary-hover);
   --admin-accent-soft: rgba(79, 70, 229, 0.08);
-  --admin-text: #0f172a;
-  --admin-muted: #64748b;
-  --admin-success: #10b981;
-  --admin-warning: #f59e0b;
-  --admin-danger: #ef4444;
-  --admin-shadow: 0 20px 40px -15px rgba(15, 23, 42, 0.06), 0 0 0 1px rgba(15, 23, 42, 0.02);
+  --admin-text: var(--waitless-text);
+  --admin-muted: var(--waitless-muted);
+  --admin-success: var(--waitless-success);
+  --admin-warning: var(--waitless-warning);
+  --admin-danger: var(--waitless-danger);
+  --admin-shadow: var(--waitless-shadow-sm);
 }
 
 body {
   background:
     radial-gradient(circle at top left, rgba(99, 102, 241, 0.06), transparent 30rem),
     radial-gradient(circle at top right, rgba(16, 185, 129, 0.04), transparent 30rem),
-    #f8fafc;
+    var(--admin-bg);
   color: var(--admin-text);
   font-family: 'Inter', sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -43,7 +43,7 @@ body {
   justify-content: space-between;
   gap: 24px;
   padding: 26px 28px;
-  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  background: linear-gradient(135deg, var(--waitless-primary) 0%, var(--waitless-primary-dark) 100%) !important;
   color: #fff;
   border-radius: 26px;
   box-shadow: 0 24px 50px rgba(79, 70, 229, 0.18);
@@ -51,6 +51,7 @@ body {
 }
 
 .admin-brand {
+  display: flex;
   align-items: flex-start;
   gap: 16px;
   margin-bottom: 0;
@@ -206,7 +207,7 @@ body {
   min-height: 48px;
   border: 1px solid var(--admin-border);
   border-radius: 14px;
-  background: #fff;
+  background: var(--waitless-input-bg) !important;
   padding: 12px 14px;
   color: var(--admin-text);
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.65) inset;
@@ -395,7 +396,7 @@ body {
   padding: 18px;
   border-radius: 20px;
   border: 1px solid var(--admin-border);
-  background: #ffffff;
+  background: var(--admin-card) !important;
   box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
   text-align: left;
   cursor: pointer;
@@ -515,7 +516,7 @@ body {
 .org-manage-panel {
   display: grid;
   gap: 18px;
-  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+  background: var(--admin-card) !important;
   border: 1px solid rgba(148, 163, 184, 0.28);
   border-radius: 28px;
   box-shadow: 0 28px 70px rgba(15, 23, 42, 0.2);
@@ -626,7 +627,7 @@ body {
 .org-manage-grid > .org-manage-section {
   border: 1px solid rgba(148, 163, 184, 0.2);
   border-radius: 22px;
-  background: rgba(255, 255, 255, 0.82);
+  background: var(--admin-card) !important;
   box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
   padding: 18px;
 }
@@ -669,7 +670,7 @@ body {
 }
 
 .org-manage-summary-grid .summary-card {
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--admin-card-2) !important;
 }
 
 .org-manage-summary-grid .summary-card strong {
@@ -701,7 +702,7 @@ body {
   min-width: 0;
   border-radius: 14px;
   border: 1px solid var(--admin-border);
-  background: #fff;
+  background: var(--waitless-input-bg) !important;
   padding: 12px 14px;
   color: var(--admin-text);
   font: inherit;
@@ -743,7 +744,7 @@ body {
   grid-template-columns: 1.3fr 0.7fr auto;
   gap: 10px;
   align-items: center;
-  background: #fff;
+  background: var(--admin-card-2) !important;
   border: 1px solid var(--admin-border);
   border-radius: 12px;
   padding: 10px 12px;

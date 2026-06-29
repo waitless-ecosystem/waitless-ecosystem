@@ -8,21 +8,80 @@
   --waitless-muted: #64748b;
   --waitless-line: rgba(226, 232, 240, 0.8);
   --waitless-primary: #4f46e5;
+  --waitless-primary-hover: #4338ca;
   --waitless-primary-dark: #3730a3;
   --waitless-success: #10b981;
   --waitless-danger: #ef4444;
   --waitless-warning: #f59e0b;
+  --waitless-input-bg: #ffffff;
   --waitless-radius: 20px;
   --waitless-radius-sm: 12px;
   --waitless-shadow: 0 20px 40px -15px rgba(15, 23, 42, 0.06), 0 0 0 1px rgba(15, 23, 42, 0.02);
   --waitless-shadow-sm: 0 8px 20px -6px rgba(15, 23, 42, 0.04), 0 0 0 1px rgba(15, 23, 42, 0.01);
   --waitless-shadow-lg: 0 30px 60px -15px rgba(15, 23, 42, 0.12), 0 0 0 1px rgba(15, 23, 42, 0.03);
   font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --bg: var(--waitless-bg) !important;
+  --card: var(--waitless-surface) !important;
+  --accent: var(--waitless-primary) !important;
+  --muted: var(--waitless-muted) !important;
+  --text: var(--waitless-text) !important;
+  --wl-bg: var(--waitless-bg) !important;
+  --wl-surface: var(--waitless-surface) !important;
+  --wl-text: var(--waitless-text) !important;
+  --wl-muted: var(--waitless-muted) !important;
+  --wl-line: var(--waitless-line) !important;
+  --wl-primary: var(--waitless-primary) !important;
+  --wl-primary-dark: var(--waitless-primary-dark) !important;
+  --wl-shadow: var(--waitless-shadow) !important;
+}
+
+[data-theme="dark"] {
+  --waitless-bg: #0b0f19;
+  --waitless-surface: rgba(17, 24, 39, 0.82);
+  --waitless-surface-soft: #1f2937;
+  --waitless-text: #f3f4f6;
+  --waitless-muted: #9ca3af;
+  --waitless-line: rgba(75, 85, 99, 0.4);
+  --waitless-primary: #818cf8;
+  --waitless-primary-hover: #6366f1;
+  --waitless-primary-dark: #4f46e5;
+  --waitless-success: #34d399;
+  --waitless-danger: #f87171;
+  --waitless-warning: #fbbf24;
+  --waitless-input-bg: #1e293b;
+  --waitless-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  --waitless-shadow-sm: 0 8px 20px -6px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.02);
+  --waitless-shadow-lg: 0 30px 60px -15px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.08);
+  --bg: var(--waitless-bg) !important;
+  --card: var(--waitless-surface) !important;
+  --accent: var(--waitless-primary) !important;
+  --muted: var(--waitless-muted) !important;
+  --text: var(--waitless-text) !important;
+  --wl-bg: var(--waitless-bg) !important;
+  --wl-surface: var(--waitless-surface) !important;
+  --wl-text: var(--waitless-text) !important;
+  --wl-muted: var(--waitless-muted) !important;
+  --wl-line: var(--waitless-line) !important;
+  --wl-primary: var(--waitless-primary) !important;
+  --wl-primary-dark: var(--waitless-primary-dark) !important;
+  --wl-shadow: var(--waitless-shadow) !important;
+}
+
+[data-theme="dark"] body {
+  background:
+    radial-gradient(circle at 10% 20%, rgba(129, 140, 248, 0.08) 0%, transparent 40rem),
+    radial-gradient(circle at 90% 80%, rgba(52, 211, 153, 0.05) 0%, transparent 45rem),
+    var(--waitless-bg) !important;
 }
 
 html {
   background: var(--waitless-bg);
   scroll-behavior: smooth;
+}
+
+.wl-topbar {
+  background: var(--waitless-surface) !important;
+  border-bottom: 1px solid var(--waitless-line) !important;
 }
 
 body {
@@ -31,7 +90,7 @@ body {
   background:
     radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.06) 0%, transparent 40rem),
     radial-gradient(circle at 90% 80%, rgba(16, 185, 129, 0.04) 0%, transparent 45rem),
-    #f8fafc !important;
+    var(--waitless-bg) !important;
   color: var(--waitless-text);
   font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -168,7 +227,7 @@ textarea,
   padding: 10px 16px !important;
   border: 1px solid var(--waitless-line) !important;
   border-radius: var(--waitless-radius-sm) !important;
-  background: #ffffff !important;
+  background: var(--waitless-input-bg) !important;
   color: var(--waitless-text) !important;
   font: inherit !important;
   outline: none;
@@ -259,10 +318,10 @@ a.primary:hover,
 .wl-btn:not(.primary),
 button:not(.primary):not(.pin-button):not(.help-button):not(.nav-toggle):not(.qm-migrate-btn):not(.btn-delete):not(.approve-btn):not(.reject-btn),
 a.secondary {
-  background: #ffffff !important;
+  background: var(--waitless-surface) !important;
   border: 1px solid var(--waitless-line) !important;
   color: var(--waitless-text) !important;
-  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.02) !important;
+  box-shadow: var(--waitless-shadow-sm) !important;
 }
 
 .secondary:hover,
@@ -290,6 +349,9 @@ a.secondary:hover {
   border: 1px solid var(--waitless-line) !important;
   border-radius: var(--waitless-radius) !important;
   padding: 0.5rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
 }
 
 .tab,
@@ -298,18 +360,27 @@ a.secondary:hover {
   color: var(--waitless-muted) !important;
   background: transparent !important;
   border-radius: var(--waitless-radius-sm) !important;
-  padding: 10px 16px !important;
+  padding: 12px 18px !important;
   font-weight: 600 !important;
   width: 100%;
   text-align: left;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.tab:hover,
+.qm-tab:hover {
+  color: var(--waitless-text) !important;
+  background: rgba(79, 70, 229, 0.04) !important;
 }
 
 .tab.active,
 .qm-tab.active,
 .qm-tab[aria-current="page"] {
-  background: #ffffff !important;
+  background: var(--waitless-surface) !important;
   color: var(--waitless-primary) !important;
   box-shadow: var(--waitless-shadow-sm) !important;
+  font-weight: 700 !important;
 }
 
 .qm-layout-card {
@@ -372,6 +443,39 @@ a.secondary:hover {
 .wl-dashboard-grid,
 .wl-card-grid {
   gap: 1.25rem !important;
+}
+
+.stats-card {
+  padding: 1.5rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+}
+
+.stats-card h4 {
+  margin: 0 !important;
+  font-size: 0.85rem !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  color: var(--waitless-muted) !important;
+}
+
+.stats-card .stats-card-value,
+.stats-card .value {
+  font-size: 2.25rem !important;
+  font-weight: 900 !important;
+  color: var(--waitless-primary) !important;
+  margin: 0.5rem 0 0.25rem 0 !important;
+  line-height: 1.1 !important;
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+.stats-card p,
+.stats-card .small {
+  margin: 0 !important;
+  font-size: 0.85rem !important;
+  color: var(--waitless-muted) !important;
 }
 
 .app-hero,
@@ -441,6 +545,7 @@ a.secondary:hover {
     flex-direction: row !important;
     overflow-x: auto;
     white-space: nowrap;
+    gap: 8px !important;
   }
   
   .qm-tab {
@@ -466,8 +571,8 @@ body.waitless-index-ui {
   position: sticky !important;
   top: 1rem !important;
   z-index: 1000 !important;
-  background: rgba(255, 255, 255, 0.8) !important;
-  border: 1px solid rgba(226, 232, 240, 0.8) !important;
+  background: var(--waitless-surface) !important;
+  border: 1px solid var(--waitless-line) !important;
   border-radius: 24px !important;
   box-shadow: 0 10px 30px -10px rgba(15, 23, 42, 0.08) !important;
   backdrop-filter: blur(20px) !important;
@@ -519,7 +624,7 @@ body.waitless-index-ui > main {
 body.waitless-index-ui .container > .brand:first-child,
 body.waitless-index-ui .app-shell > .app-hero:first-child,
 body.waitless-index-ui .admin-shell > .admin-hero:first-child {
-  background: linear-gradient(135deg, rgba(239, 246, 255, 0.7) 0%, rgba(255, 255, 255, 0.9) 100%) !important;
+  background: var(--waitless-surface) !important;
   border: 1px solid var(--waitless-line) !important;
   border-radius: 28px !important;
   box-shadow: var(--waitless-shadow) !important;
@@ -574,9 +679,10 @@ body.waitless-index-ui .admin-hero h1 {
 .org-card,
 .kiosk-item,
 .booking-card,
+.booking-org-card,
 .service-card,
 .counter-card {
-  background: #ffffff !important;
+  background: var(--waitless-surface) !important;
   border: 1px solid var(--waitless-line) !important;
   border-radius: 18px !important;
   box-shadow: var(--waitless-shadow-sm) !important;
@@ -590,6 +696,7 @@ body.waitless-index-ui .admin-hero h1 {
 .org-card:hover,
 .kiosk-item:hover,
 .booking-card:hover,
+.booking-org-card:hover,
 .service-card:hover,
 .counter-card:hover {
   transform: translateY(-2px);
@@ -715,4 +822,61 @@ tr:last-child td:last-child {
     min-height: auto !important;
     margin: 1rem 0 !important;
   }
+}
+
+/* 15. Theme Toggle Button & Layout Controls */
+.waitless-theme-toggle {
+  background: transparent !important;
+  border: 1px solid var(--waitless-line) !important;
+  color: var(--waitless-text) !important;
+  width: 40px !important;
+  height: 40px !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 50% !important;
+  cursor: pointer !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: var(--waitless-shadow-sm) !important;
+}
+
+.waitless-theme-toggle svg {
+  stroke: var(--waitless-text) !important;
+  fill: none !important;
+}
+
+.waitless-theme-toggle:hover {
+  background: var(--waitless-surface-soft) !important;
+  transform: scale(1.05) !important;
+}
+
+/* Show/hide icons depending on active theme */
+[data-theme="dark"] .waitless-theme-toggle .theme-icon-moon {
+  display: none !important;
+}
+[data-theme="dark"] .waitless-theme-toggle .theme-icon-sun {
+  display: block !important;
+}
+[data-theme="light"] .waitless-theme-toggle .theme-icon-moon {
+  display: block !important;
+}
+[data-theme="light"] .waitless-theme-toggle .theme-icon-sun {
+  display: none !important;
+}
+
+/* Floating fallback theme switch if no topbar/header is present */
+body > .waitless-theme-toggle {
+  position: fixed !important;
+  bottom: 2rem !important;
+  right: 2rem !important;
+  z-index: 9999 !important;
+  background: var(--waitless-surface) !important;
+  box-shadow: var(--waitless-shadow-lg) !important;
+  border: 1px solid var(--waitless-line) !important;
+}
+
+/* 16. Landing Page Redesign Overrides */
+.wl-role-card.primary {
+  background: var(--waitless-surface) !important;
 }

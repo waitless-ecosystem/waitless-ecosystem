@@ -1,623 +1,1370 @@
-.qm-sidebar { display: flex; flex-direction: column; }
-    .qm-main { display: flex; flex-direction: column; }
-    .qm-nav { display: flex; gap: 8px; margin-bottom: 16px; border-bottom: 2px solid #e3eefc; overflow-x: auto; }
-    .qm-tab { padding: 12px 14px; border: 0; background: transparent; cursor: pointer; color: #6b7785; font-weight: 600; white-space: nowrap; transition: all 0.2s ease; border-left: 3px solid transparent; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
-    .qm-tab.active { border-left: 3px solid #0366d6; color: #0366d6; background: rgba(3,102,214,0.08); }
-    .qm-tab:hover { color: #0366d6; }
-    .qm-tab:focus { outline: none; }
-    .qm-content { display: none; }
-    .qm-content.active { display: block; animation: fadeIn 0.2s ease; }
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-    .qm-content h2 { margin: 0 0 12px 0; color: #0b1220; }
-    .qm-section { margin-bottom: 24px; padding: 16px; background: #fbfdff; border-radius: 10px; border: 1px solid #e8eef8; }
-    .qm-form { display: grid; gap: 12px; margin-bottom: 16px; }
-    .qm-form input, .qm-form select { padding: 10px 12px; border: 1px solid #dbe6ef; border-radius: 8px; font-family: inherit; }
-    .qm-form input:focus, .qm-form select:focus { outline: none; border-color: #0366d6; box-shadow: 0 0 0 3px rgba(3,102,214,0.1); }
-    .qm-form button { padding: 10px 14px; background: #0366d6; color: #fff; border: 0; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.2s ease; }
-    .qm-form button:hover { background: #0256ba; transform: translateY(-1px); }
-    .qm-list { display: grid; gap: 10px; }
-    .qm-item { padding: 14px; border: 1px solid #e6edf8; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; background: #fff; transition: all 0.2s ease; }
-    .qm-item:hover { box-shadow: 0 2px 8px rgba(10,20,40,0.08); }
-    .qm-item-info { flex: 1; }
-    .qm-item-name { font-weight: 600; color: #0b1220; margin-bottom: 4px; }
-    .qm-item-meta { font-size: 0.85rem; color: #6b7785; }
-    .qm-item-actions { display: flex; gap: 6px; flex-wrap: wrap; }
-    .qm-item-actions button { padding: 6px 10px; font-size: 0.85rem; border: 0; border-radius: 6px; cursor: pointer; font-weight: 500; transition: all 0.2s ease; }
-    .qm-item-actions button:hover { transform: translateY(-1px); }
-    .btn-edit { background: #0366d6; color: #fff; }
-    .btn-edit:hover { background: #0256ba; }
-    .btn-delete { background: #d03838; color: #fff; }
-    .btn-delete:hover { background: #c03030; }
-    .btn-assign { background: #0a8f47; color: #fff; }
-    .btn-assign:hover { background: #0a7a3d; }
-    .qm-table { width: 100%; border-collapse: collapse; margin-top: 12px; }
-    .qm-table th, .qm-table td { padding: 12px; text-align: left; border-bottom: 1px solid #e6edf8; }
-    .qm-table th { background: #fbfdff; font-weight: 600; color: #0b1220; }
-    .qm-table td { color: #6b7785; }
-    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 16px 0; }
-    .stats-card { padding: 16px; background: #fbfdff; border: 1px solid #e8eef8; border-radius: 8px; transition: all 0.2s ease; }
-    .stats-card:hover { box-shadow: 0 2px 8px rgba(10,20,40,0.08); }
-    .stats-card h4 { margin: 0 0 8px 0; color: #6b7785; font-size: 0.85rem; font-weight: 600; }
-    .stats-card .value { font-size: 1.8rem; font-weight: 700; color: #0366d6; }
-    .lead { color: #6b7785; margin: 0 0 14px 0; }
-    .qm-counter-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
-    .qm-counter-card { padding: 16px; border: 2px solid #e8eef8; border-radius: 10px; background: #fff; cursor: pointer; transition: all 0.2s ease; position: relative; }
-    .qm-counter-card:hover { border-color: #0366d6; box-shadow: 0 2px 8px rgba(3,102,214,0.1); }
-    .qm-counter-card.selected { border-color: #0366d6; background: rgba(3,102,214,0.08); box-shadow: 0 2px 8px rgba(3,102,214,0.15); }
-    .qm-counter-card h4 { margin: 0 0 8px 0; color: #0b1220; font-size: 1rem; }
-    .qm-counter-card .card-status { display: inline-block; padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; }
-    .qm-counter-card .status-active { background: #c6f6d5; color: #22543d; }
-    .qm-counter-card .status-inactive { background: #feebc8; color: #7c2d12; }
-    .qm-counter-card .checkmark { position: absolute; top: 8px; right: 8px; width: 24px; height: 24px; background: #0366d6; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
-    .qm-counter-card:not(.selected) .checkmark { display: none; }
-    .service-checkbox { display: flex; align-items: center; gap: 8px; padding: 8px; background: #fff; border: 1px solid #e3eefc; border-radius: 8px; }
-    .service-checkbox input { cursor: pointer; width: 18px; height: 18px; }
-    .service-checkbox label { cursor: pointer; flex: 1; margin: 0; }
-    .qm-actions-bar { margin-bottom: 16px; display: flex; gap: 10px; justify-content: space-between; }
-    .qm-signout { background: #d03838; }
-    .qm-layout-card { display: grid; grid-template-columns: 160px 1fr; gap: 24px; align-items: start; }
-    .qm-sidebar-nav { display: flex; flex-direction: column; gap: 0; border-bottom: none; border-right: 2px solid #e3eefc; }
-    .qm-assignment-counter-section { margin-bottom: 24px; }
-    .qm-assignment-panel { display: none; padding: 16px; background: #fbfdff; border: 1px solid #e8eef8; border-radius: 10px; margin-bottom: 24px; }
-    .qm-assignment-panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-    .qm-selected-name { margin: 0 0 4px 0; color: #0b1220; }
-    .qm-selected-status { margin: 0; color: #6b7785; font-size: 0.85rem; }
-    .qm-change-btn { padding: 8px 12px; background: #e0e0e0; border: 0; border-radius: 6px; cursor: pointer; }
-    .qm-service-selection { border-top: 1px solid #e3eefc; padding-top: 16px; }
-    .qm-service-selection-title { margin: 0 0 12px 0; color: #0b1220; }
-    .qm-service-checkbox-grid { display: grid; gap: 10px; margin-bottom: 16px; }
-    .qm-chart-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; margin-bottom: 24px; }
-    .qm-chart-panel { padding: 16px; background: #fbfdff; border: 1px solid #e8eef8; border-radius: 10px; }
-    .qm-chart-title { margin: 0 0 12px 0; color: #0b1220; }
-    .qm-kiosk-analytics { margin-top: 30px; padding-top: 20px; border-top: 2px solid #e8eef8; }
-    .qm-meta-highlight { color: #0366d6; font-weight: 600; }
-    .service-checkbox-meta { color: #6b7785; font-size: 0.85rem; }
-    .qm-schedule-badge {
-      display: inline-flex;
-      align-items: center;
-      padding: 3px 8px;
-      border-radius: 999px;
-      background: #d1fae5;
-      color: #065f46;
-      font-size: 0.72rem;
-      font-weight: 700;
-      margin-right: 6px;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
-    .qm-schedule-item {
-      flex-direction: column;
-      align-items: stretch;
-      gap: 14px;
-    }
-    .qm-schedule-form {
-      display: grid;
-      gap: 12px;
-      padding-top: 8px;
-      border-top: 1px solid #e8eef8;
-    }
-    .qm-schedule-enabled-row {
-      margin: 0;
-      width: 100%;
-      justify-content: flex-start;
-    }
-    .qm-schedule-hours {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 10px;
-    }
-    .qm-schedule-hours label {
-      display: grid;
-      gap: 6px;
-      font-weight: 600;
-      color: #0b1220;
-    }
-    .qm-schedule-hours input {
-      padding: 10px 12px;
-      border: 1px solid #dbe6ef;
-      border-radius: 8px;
-      font-family: inherit;
-    }
-    .qm-schedule-days {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-    .qm-schedule-day-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 8px 10px;
-      border: 1px solid #dbe6ef;
-      border-radius: 999px;
-      background: #fff;
-      cursor: pointer;
-      font-size: 0.85rem;
-      color: #0b1220;
-    }
-    .qm-schedule-day-pill input {
-      width: 16px;
-      height: 16px;
-    }
-    .qm-kiosk-summary { margin-top: 20px; }
-    .qm-kiosk-summary h3 { margin-bottom: 15px; }
-    .qm-kiosk-summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; }
-    .qm-kiosk-summary-card { padding: 12px; background: #fbfdff; border: 1px solid #e8eef8; border-radius: 8px; }
-    .qm-kiosk-summary-name { font-weight: 600; color: #0b1220; margin-bottom: 8px; }
-    .qm-kiosk-summary-meta { font-size: 0.9rem; color: #6b7785; margin-bottom: 4px; }
-    .qm-kiosk-summary-status { font-size: 0.85rem; color: #999; }
-    .qm-kiosk-summary-total { margin-top: 15px; padding: 10px; background: #e3f2fd; border-radius: 6px; text-align: center; }
+/* 
+ * Waitless Queue Manager Stylesheet
+ * Premium Slate-Indigo Theme & Glassmorphism Aesthetics
+ */
 
-    .qm-org-qr-card {
-      display: grid;
-      grid-template-columns: minmax(0, 1.1fr) minmax(220px, 0.9fr);
-      gap: 18px;
-      align-items: center;
-      margin-bottom: 18px;
-      padding: 18px;
-      border: 1px solid #e3eefc;
-      border-radius: 14px;
-      background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
-      box-shadow: 0 12px 28px rgba(10, 20, 40, 0.06);
-    }
+/* 1. Layout Shell & Main Container */
+.qm-layout-card {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 2.5rem;
+  align-items: start;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
 
-    .qm-org-qr-card h2 {
-      margin: 0 0 8px 0;
-      color: #0b1220;
-    }
+.qm-sidebar {
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 7rem;
+}
 
-    .qm-org-qr-body {
-      display: grid;
-      gap: 12px;
-      justify-items: center;
-    }
+.qm-sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--waitless-surface) !important;
+  border: 1px solid var(--waitless-line) !important;
+  border-radius: var(--waitless-radius) !important;
+  padding: 0.75rem !important;
+  box-shadow: var(--waitless-shadow-sm) !important;
+}
 
-    .qm-org-qr-code {
-      min-width: 210px;
-      min-height: 210px;
-      padding: 12px;
-      background: #fff;
-      border: 1px solid #e3eefc;
-      border-radius: 14px;
-      display: grid;
-      place-items: center;
-    }
+.qm-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  min-width: 0;
+}
 
-    .qm-org-qr-meta {
-      display: grid;
-      gap: 10px;
-      width: 100%;
-      text-align: center;
-    }
+/* 2. Tab Navigation Overrides */
+.qm-tab {
+  border: 0 !important;
+  color: var(--waitless-muted) !important;
+  background: transparent !important;
+  border-radius: var(--waitless-radius-sm) !important;
+  padding: 12px 18px !important;
+  font-weight: 600 !important;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
 
-    .qm-org-qr-url {
-      font-size: 0.85rem;
-      color: #6b7785;
-      word-break: break-all;
-    }
+.qm-tab:hover {
+  color: var(--waitless-text) !important;
+  background: rgba(79, 70, 229, 0.04) !important;
+}
 
-    .qm-org-qr-copy-btn {
-      padding: 10px 14px;
-      border: 0;
-      border-radius: 10px;
-      background: #0366d6;
-      color: #fff;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s ease, transform 0.2s ease;
-    }
+.qm-tab.active {
+  background: var(--waitless-surface) !important;
+  color: var(--waitless-primary) !important;
+  box-shadow: var(--waitless-shadow-sm) !important;
+  border-left: 3px solid var(--waitless-primary) !important;
+  border-top-left-radius: 4px !important;
+  border-bottom-left-radius: 4px !important;
+  font-weight: 700 !important;
+}
 
-    .qm-org-qr-copy-btn:hover {
-      background: #0256ba;
-      transform: translateY(-1px);
-    }
+.qm-content {
+  display: none;
+}
 
-    @media (max-width: 720px) {
-      .qm-org-qr-card {
-        grid-template-columns: 1fr;
-      }
+.qm-content.active {
+  display: block;
+  animation: qmFadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
 
-      .qm-org-qr-body {
-        justify-items: stretch;
-      }
+@keyframes qmFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
-      .qm-org-qr-code {
-        min-width: 0;
-      }
-    }
-    @media (max-width: 900px) {
-      .auth-card { grid-template-columns: 1fr !important; }
-      .qm-nav { border-bottom: 2px solid #e3eefc; border-right: none; }
-      .qm-tab { border-left: none; border-bottom: 3px solid transparent; }
-      .qm-tab.active { border-left: none; border-bottom: 3px solid #0366d6; background: transparent; }
-    }
+.qm-content h2 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--waitless-text);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  letter-spacing: -0.02em;
+}
 
-    /* ---- Inline edit form ---- */
-    .qm-inline-edit { width: 100%; }
-    .qm-inline-edit-fields { display: grid; gap: 8px; margin-bottom: 8px; }
-    .qm-edit-field { padding: 8px 10px; border: 1px solid #dbe6ef; border-radius: 6px; font-family: inherit; font-size: 0.9rem; width: 100%; box-sizing: border-box; }
-    .qm-edit-field:focus { outline: none; border-color: #0366d6; box-shadow: 0 0 0 2px rgba(3,102,214,0.12); }
-    .qm-edit-actions { margin-top: 8px; }
-    .btn-cancel { background: #888; color: #fff; padding: 6px 10px; font-size: 0.85rem; border: 0; border-radius: 6px; cursor: pointer; font-weight: 500; }
-    .btn-cancel:hover { background: #666; }
+/* 3. Forms and Inputs */
+.qm-form {
+  display: grid;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  background: var(--waitless-surface);
+  border: 1px solid var(--waitless-line);
+  border-radius: var(--waitless-radius);
+  padding: 1.5rem;
+  box-shadow: var(--waitless-shadow-sm);
+}
 
-    /* ---- Migrate test names button ---- */
-    .qm-migrate-row { margin-top: 12px; }
-    .qm-migrate-btn { padding: 8px 14px; background: #f59e0b; color: #fff; border: 0; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.85rem; transition: background 0.2s; }
-    .qm-migrate-btn:hover { background: #d97706; }
+.qm-form input,
+.qm-form select {
+  min-height: 46px;
+  padding: 10px 14px;
+  border: 1px solid var(--waitless-line);
+  border-radius: var(--waitless-radius-sm);
+  background: #ffffff;
+  color: var(--waitless-text);
+  font-family: inherit;
+  font-size: 0.95rem;
+  outline: none;
+  transition: all 0.2s ease;
+}
 
-    /* ---- Customize tab ---- */
-    .qm-customize-card {
-      background: #fbfdff;
-      border: 1px solid #e8eef8;
-      border-radius: 10px;
-      padding: 16px;
-      max-width: 720px;
-    }
+.qm-form input:focus,
+.qm-form select:focus {
+  border-color: var(--waitless-primary);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+}
 
-    .qm-booking-slot-card {
-      margin-top: 16px;
-      display: grid;
-      gap: 10px;
-    }
+.qm-form button {
+  min-height: 46px;
+  padding: 10px 24px;
+  background: linear-gradient(135deg, var(--waitless-primary) 0%, var(--waitless-primary-hover) 100%);
+  color: #ffffff;
+  border: 0;
+  border-radius: var(--waitless-radius-sm);
+  cursor: pointer;
+  font-weight: 700;
+  box-shadow: var(--waitless-shadow-sm);
+  transition: all 0.2s ease;
+  justify-self: start;
+  min-width: 160px;
+}
 
-    .qm-booking-slot-card h3 {
-      margin: 0;
-      color: #0b1220;
-    }
+.qm-form button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(79, 70, 229, 0.2);
+}
 
-    .qm-booking-slot-card .muted {
-      margin: 0;
-    }
+/* 4. Item Lists & Cards */
+.qm-list {
+  display: grid;
+  gap: 0.75rem;
+}
 
-    .qm-field-row {
-      display: grid;
-      gap: 6px;
-      color: #0b1220;
-    }
+.qm-item {
+  padding: 1.25rem;
+  border: 1px solid var(--waitless-line);
+  border-radius: var(--waitless-radius);
+  background: var(--waitless-surface);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: var(--waitless-shadow-sm);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
 
-    .qm-field-row input {
-      padding: 10px 12px;
-      border: 1px solid #dbe6ef;
-      border-radius: 8px;
-      font-family: inherit;
-    }
+.qm-item:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--waitless-shadow);
+  border-color: rgba(79, 70, 229, 0.15);
+}
 
-    .qm-field-row input:focus {
-      outline: none;
-      border-color: #0366d6;
-      box-shadow: 0 0 0 3px rgba(3,102,214,0.1);
-    }
+.qm-item-name {
+  font-weight: 700;
+  color: var(--waitless-text);
+  font-size: 1.05rem;
+  margin-bottom: 4px;
+}
 
-    .qm-online-bookings-summary {
-      margin: 14px 0;
-      padding: 12px 14px;
-      border: 1px solid #e3eefc;
-      border-radius: 10px;
-      background: #f8fbff;
-      color: #1f2d3d;
-      font-size: 0.92rem;
-    }
+.qm-item-meta {
+  font-size: 0.85rem;
+  color: var(--waitless-muted);
+}
 
-    .qm-online-bookings-summary.warning {
-      border-color: #f59e0b;
-      background: #fffbeb;
-      color: #92400e;
-    }
+.qm-item-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
 
-    .qm-online-bookings-table-wrap {
-      border: 1px solid #e6edf8;
-      border-radius: 10px;
-      overflow: auto;
-      background: #fff;
-    }
+.qm-item-actions button {
+  padding: 8px 14px;
+  font-size: 0.85rem;
+  border: 0;
+  border-radius: var(--waitless-radius-sm);
+  cursor: pointer;
+  font-weight: 700;
+  transition: all 0.2s ease;
+}
 
-    .qm-online-bookings-table {
-      width: 100%;
-      border-collapse: collapse;
-      min-width: 920px;
-    }
+.btn-edit {
+  background: rgba(79, 70, 229, 0.08);
+  color: var(--waitless-primary);
+}
 
-    .qm-online-bookings-table th,
-    .qm-online-bookings-table td {
-      padding: 10px 12px;
-      text-align: left;
-      border-bottom: 1px solid #edf3fb;
-      vertical-align: top;
-    }
+.btn-edit:hover {
+  background: var(--waitless-primary);
+  color: #ffffff;
+}
 
-    .qm-online-bookings-table th {
-      background: #fbfdff;
-      color: #0b1220;
-      font-size: 0.85rem;
-      font-weight: 700;
-    }
+.btn-delete {
+  background: rgba(239, 68, 68, 0.08);
+  color: #ef4444;
+}
 
-    .qm-online-bookings-table td {
-      color: #334155;
-      font-size: 0.88rem;
-    }
+.btn-delete:hover {
+  background: #ef4444;
+  color: #ffffff;
+}
 
-    .qm-booking-status-badge {
-      display: inline-flex;
-      align-items: center;
-      padding: 3px 8px;
-      border-radius: 999px;
-      font-size: 0.72rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
+.btn-assign {
+  background: rgba(16, 185, 129, 0.08);
+  color: #10b981;
+}
 
-    .qm-booking-status-scheduled { background: #dbeafe; color: #1e3a8a; }
-    .qm-booking-status-waiting { background: #ede9fe; color: #4c1d95; }
-    .qm-booking-status-serving { background: #dcfce7; color: #14532d; }
-    .qm-booking-status-done { background: #e2e8f0; color: #1e293b; }
+.btn-assign:hover {
+  background: #10b981;
+  color: #ffffff;
+}
 
-    .qm-reminder-state {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 3px 8px;
-      border-radius: 999px;
-      font-size: 0.72rem;
-      font-weight: 700;
-    }
+/* Inline Edit Controls */
+.qm-inline-edit {
+  width: 100%;
+}
 
-    .qm-reminder-state.sent { background: #dcfce7; color: #14532d; }
-    .qm-reminder-state.pending { background: #fef3c7; color: #92400e; }
-    .qm-reminder-state.failed { background: #fee2e2; color: #991b1b; }
+.qm-inline-edit-fields {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 8px;
+}
 
-    .qm-inline-reminder-btn {
-      padding: 6px 10px;
-      font-size: 0.8rem;
-      border: 0;
-      border-radius: 6px;
-      background: #0366d6;
-      color: #fff;
-      cursor: pointer;
-      font-weight: 600;
-    }
+.qm-edit-field {
+  padding: 10px 12px;
+  border: 1px solid var(--waitless-line);
+  border-radius: var(--waitless-radius-sm);
+  font-family: inherit;
+  font-size: 0.9rem;
+  width: 100%;
+  box-sizing: border-box;
+  outline: none;
+}
 
-    .qm-inline-reminder-btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
+.qm-edit-field:focus {
+  border-color: var(--waitless-primary);
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.12);
+}
 
-    .qm-customize-card h3 {
-      margin: 0 0 8px 0;
-      color: #0b1220;
-    }
+.qm-edit-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
 
-    .qm-customize-form {
-      margin-top: 12px;
-      gap: 12px;
-      display: flex;
-      flex-direction: column;
-    }
+.btn-cancel {
+  background: rgba(100, 116, 139, 0.08);
+  color: #64748b;
+  padding: 8px 14px;
+  font-size: 0.85rem;
+  border: 0;
+  border-radius: var(--waitless-radius-sm);
+  cursor: pointer;
+  font-weight: 700;
+}
 
-    .qm-toggle-ribbon {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      width: 100%;
-    }
+.btn-cancel:hover {
+  background: #64748b;
+  color: #ffffff;
+}
 
-    .qm-toggle-row {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      align-items: center;
-      gap: 18px;
-      width: 100%;
-      min-height: 104px;
-      padding: 18px 20px;
-      border: 1px solid #b9d3ef;
-      border-radius: 16px;
-      background: linear-gradient(135deg, #eff6ff 0%, #ffffff 55%, #f8fbff 100%);
-      cursor: pointer;
-      transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
-      box-shadow: 0 10px 24px rgba(37, 99, 235, 0.08);
-      position: relative;
-    }
+/* 5. Desk Cards & Checkmarks */
+.qm-counter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
 
-    .qm-toggle-row:hover {
-      border-color: #93c5fd;
-      box-shadow: 0 12px 26px rgba(37, 99, 235, 0.12);
-      transform: translateY(-1px);
-    }
+.qm-counter-card {
+  padding: 1.25rem;
+  border: 1.5px solid var(--waitless-line);
+  border-radius: var(--waitless-radius);
+  background: var(--waitless-surface);
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  box-shadow: var(--waitless-shadow-sm);
+}
 
-    .qm-toggle-row::before {
-      content: 'CUSTOMIZE';
-      position: absolute;
-      top: -10px;
-      left: 16px;
-      padding: 2px 8px;
-      border-radius: 999px;
-      background: #1d4ed8;
-      color: #fff;
-      font-size: 0.7rem;
-      font-weight: 800;
-      letter-spacing: 0.12em;
-    }
+.qm-counter-card:hover {
+  border-color: var(--waitless-primary);
+  box-shadow: var(--waitless-shadow);
+  transform: translateY(-2px);
+}
 
-    .qm-toggle-copy {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      min-width: 0;
-      max-width: 100%;
-    }
+.qm-counter-card.selected {
+  border-color: var(--waitless-primary);
+  background: rgba(79, 70, 229, 0.04);
+  box-shadow: 0 10px 24px rgba(79, 70, 229, 0.08);
+}
 
-    .qm-toggle-title {
-      font-weight: 700;
-      color: #0b1220;
-      font-size: 1rem;
-    }
+.qm-counter-card h4 {
+  margin: 0 0 10px 0;
+  color: var(--waitless-text);
+  font-size: 1.05rem;
+  font-weight: 750;
+}
 
-    .qm-toggle-desc {
-      color: #6b7785;
-      font-size: 0.85rem;
-    }
+.qm-counter-card .card-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
 
-    .qm-toggle-switch {
-      position: relative;
-      display: inline-flex;
-      align-items: center;
-      flex: 0 0 auto;
-    }
+.qm-counter-card .status-active {
+  background: rgba(16, 185, 129, 0.08);
+  color: #10b981;
+}
 
-    .qm-toggle-switch input {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      opacity: 0;
-      cursor: pointer;
-      margin: 0;
-      z-index: 2;
-    }
+.qm-counter-card .status-inactive {
+  background: rgba(245, 158, 11, 0.08);
+  color: #f59e0b;
+}
 
-    .qm-toggle-track {
-      width: 54px;
-      height: 30px;
-      border-radius: 999px;
-      background: #dbe7f5;
-      border: 1px solid #bfd1e4;
-      position: relative;
-      transition: background 0.2s ease, border-color 0.2s ease;
-    }
+.qm-counter-card .checkmark {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 22px;
+  height: 22px;
+  background: var(--waitless-primary);
+  color: #ffffff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: bold;
+}
 
-    .qm-toggle-track::after {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 3px;
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      background: #ffffff;
-      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.16);
-      transform: translateY(-50%);
-      transition: transform 0.2s ease;
-    }
+.qm-counter-card:not(.selected) .checkmark {
+  display: none;
+}
 
-    .qm-toggle-switch input:checked + .qm-toggle-track {
-      background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
-      border-color: #2563eb;
-    }
+/* 6. Assignments Panels */
+.qm-assignment-counter-section {
+  margin-bottom: 2rem;
+}
 
-    .qm-toggle-switch input:checked + .qm-toggle-track::after {
-      transform: translate(24px, -50%);
-    }
+.qm-assignment-panel {
+  display: none;
+  padding: 1.5rem;
+  background: var(--waitless-surface);
+  border: 1px solid var(--waitless-line);
+  border-radius: var(--waitless-radius);
+  margin-bottom: 2rem;
+  box-shadow: var(--waitless-shadow);
+  animation: qmFadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
 
-    .qm-toggle-switch input:focus-visible + .qm-toggle-track {
-      outline: 3px solid rgba(37, 99, 235, 0.22);
-      outline-offset: 2px;
-    }
+.qm-assignment-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
 
-    .qm-toggle-ribbon-note {
-      padding-left: 2px;
-      color: #6b7785;
-      font-size: 0.85rem;
-    }
+.qm-selected-name {
+  margin: 0 0 4px 0;
+  color: var(--waitless-text);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 800;
+}
 
-    .qm-checkbox-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 14px 16px;
-      border: 1px solid #dbe6ef;
-      border-radius: 12px;
-      background: #fff;
-      cursor: pointer;
-      color: #0b1220;
-      font-weight: 500;
-      width: 100%;
-      box-sizing: border-box;
-    }
+.qm-selected-status {
+  margin: 0;
+  color: var(--waitless-muted);
+  font-size: 0.85rem;
+}
 
-    .qm-checkbox-row input {
-      width: 18px;
-      height: 18px;
-      cursor: pointer;
-    }
+.qm-change-btn {
+  padding: 8px 14px;
+  background: rgba(100, 116, 139, 0.08);
+  color: #64748b;
+  border: 0;
+  border-radius: var(--waitless-radius-sm);
+  cursor: pointer;
+  font-weight: 700;
+  transition: all 0.2s ease;
+}
 
-    .qm-customize-status {
-      margin-top: 12px;
-      min-height: 20px;
-    }
+.qm-change-btn:hover {
+  background: #64748b;
+  color: #ffffff;
+}
 
-    .qm-customize-form button {
-      width: 100%;
-      padding: 14px 16px;
-      border-radius: 12px;
-    }
+.qm-service-selection {
+  border-top: 1px solid var(--waitless-line);
+  padding-top: 1.25rem;
+}
 
-    /* ---- Open Hours UI ---- */
-    .open-hours-row { padding: 8px 0; }
-    .open-hours-row label { display: flex; align-items: center; gap: 12px; width: 100%; }
-    .open-hours-row .oh-enabled { width: 20px; height: 20px; flex: 0 0 20px; }
-    .open-hours-row strong { width: 120px; display: inline-block; }
-    .open-hours-row .oh-open,
-    .open-hours-row .oh-close { padding: 8px 10px; border: 1px solid #dbe6ef; border-radius: 8px; background: #fff; font-family: inherit; width: 110px; }
-    .open-hours-row .oh-open:focus, .open-hours-row .oh-close:focus { outline: none; border-color: #0366d6; box-shadow: 0 0 0 3px rgba(3,102,214,0.08); }
+.qm-service-selection-title {
+  margin: 0 0 1rem 0;
+  color: var(--waitless-text);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 750;
+}
 
-    /* Action buttons for open hours */
-    #save-open-hours, #load-open-hours {
-      display: inline-block;
-      padding: 12px 16px;
-      border-radius: 12px;
-      border: 0;
-      cursor: pointer;
-      font-weight: 700;
-      color: #fff;
-      box-shadow: 0 8px 24px rgba(3,102,214,0.12);
-      margin-right: 8px;
-    }
+.qm-service-checkbox-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+  margin-bottom: 1.5rem;
+}
 
-    #save-open-hours { background: linear-gradient(180deg,#0b84ff,#0366d6); }
-    #save-open-hours:hover { transform: translateY(-2px); }
+.service-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--waitless-surface);
+  border: 1px solid var(--waitless-line);
+  border-radius: var(--waitless-radius-sm);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
 
-    #load-open-hours { background: #0a66d1; width: 100px; box-shadow: none; }
-    #load-open-hours:hover { transform: translateY(-1px); }
+.service-checkbox:hover {
+  border-color: var(--waitless-primary);
+  background: rgba(79, 70, 229, 0.02);
+}
 
-    /* Ensure responsive layout */
-    @media (max-width: 720px) {
-      .open-hours-row label { flex-direction: column; align-items: flex-start; gap: 8px; }
-      .open-hours-row strong { width: auto; }
-      .open-hours-row .oh-open, .open-hours-row .oh-close { width: 100%; }
-      #save-open-hours, #load-open-hours { width: 100%; margin-bottom: 8px; }
-    }
+.service-checkbox input {
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--waitless-primary);
+}
 
-    @media (max-width: 640px) {
-      .qm-toggle-row {
-        grid-template-columns: 1fr;
-        align-items: flex-start;
-        min-height: auto;
-      }
+.service-checkbox label {
+  cursor: pointer;
+  flex: 1;
+  margin: 0;
+  font-weight: 600;
+  color: var(--waitless-text);
+  font-size: 0.95rem;
+}
 
-      .qm-toggle-switch {
-        align-self: flex-end;
-        justify-self: end;
-      }
-    }
+/* 7. Kiosk Customizer Toggles */
+.qm-toggle-ribbon {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  margin-bottom: 1rem;
+}
 
-    /* ---- Queue status badges ---- */
-    .qm-status-badge { padding: 3px 8px; border-radius: 4px; font-size: 0.78rem; font-weight: 600; }
-    .qm-status-idle    { background: #f0f0f0; color: #888; }
-    .qm-status-busy    { background: #fee2e2; color: #b91c1c; }
-    .qm-status-serving { background: #dcfce7; color: #166534; }
+.qm-toggle-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1.5rem;
+  width: 100%;
+  padding: 1.25rem 1.5rem;
+  border: 1.5px solid var(--waitless-line);
+  border-radius: var(--waitless-radius);
+  background: var(--waitless-surface);
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: var(--waitless-shadow-sm);
+  position: relative;
+  box-sizing: border-box;
+}
 
-    /* ---- Per-service token list in Queue tab ---- */
-    .qm-queue-service-block { margin-top: 20px; }
-    .qm-queue-service-header { font-weight: 700; color: #0b1220; font-size: 0.95rem; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #e3eefc; }
-    .qm-token-rows { display: grid; gap: 6px; }
-    .qm-token-row { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: #fff; border: 1px solid #e6edf8; border-radius: 6px; font-size: 0.85rem; flex-wrap: wrap; }
-    .qm-token-row.qm-token-serving { background: #f0fdf4; border-color: #a7f3d0; }
-    .qm-token-num  { font-family: monospace; font-weight: 700; color: #0366d6; font-size: 1rem; min-width: 64px; }
-    .qm-token-svc  { flex: 1; color: #444; min-width: 100px; }
-    .qm-multi-badge  { background: #e0e7ff; color: #3730a3; padding: 2px 7px; border-radius: 10px; font-size: 0.75rem; font-weight: 600; white-space: nowrap; }
-    .qm-source-badge { background: #dbeafe; color: #1e40af; padding: 2px 7px; border-radius: 10px; font-size: 0.75rem; font-weight: 600; white-space: nowrap; }
-    .qm-token-stat { margin-left: auto; font-size: 0.75rem; font-weight: 600; padding: 2px 7px; border-radius: 10px; white-space: nowrap; }
-    .qm-stat-waiting { background: #fef3c7; color: #92400e; }
-    .qm-stat-serving { background: #dcfce7; color: #166534; }
+.qm-toggle-row:hover {
+  border-color: rgba(79, 70, 229, 0.25);
+  box-shadow: var(--waitless-shadow);
+  transform: translateY(-1px);
+}
+
+.qm-toggle-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.qm-toggle-title {
+  font-weight: 800;
+  color: var(--waitless-text);
+  font-size: 1rem;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+.qm-toggle-desc {
+  color: var(--waitless-muted);
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.qm-toggle-switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+.qm-toggle-switch input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  margin: 0;
+  z-index: 2;
+}
+
+.qm-toggle-track {
+  width: 50px;
+  height: 28px;
+  border-radius: 999px;
+  background: rgba(100, 116, 139, 0.12);
+  border: 1.5px solid var(--waitless-line);
+  position: relative;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.qm-toggle-track::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 2px 4px rgba(15, 23, 42, 0.1);
+  transform: translateY(-50%);
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.qm-toggle-switch input:checked + .qm-toggle-track {
+  background: var(--waitless-primary);
+  border-color: var(--waitless-primary);
+}
+
+.qm-toggle-switch input:checked + .qm-toggle-track::after {
+  transform: translate(22px, -50%);
+}
+
+.qm-toggle-ribbon-note {
+  padding-left: 4px;
+  color: var(--waitless-muted);
+  font-size: 0.85rem;
+  margin-top: -4px;
+  margin-bottom: 1.25rem;
+}
+
+.qm-checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border: 1px solid var(--waitless-line);
+  border-radius: var(--waitless-radius-sm);
+  background: var(--waitless-surface);
+  cursor: pointer;
+  color: var(--waitless-text);
+  font-weight: 600;
+  width: 100%;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+
+.qm-checkbox-row:hover {
+  border-color: var(--waitless-primary);
+  background: rgba(79, 70, 229, 0.02);
+}
+
+.qm-checkbox-row input {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--waitless-primary);
+}
+
+/* 8. Online Bookings Summary & Table */
+.qm-online-bookings-summary {
+  margin: 1rem 0;
+  padding: 12px 18px;
+  border: 1px solid var(--waitless-line);
+  border-radius: var(--waitless-radius);
+  background: var(--waitless-surface-soft);
+  color: var(--waitless-text);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.qm-online-bookings-summary.warning {
+  border-color: rgba(245, 158, 11, 0.3) !important;
+  background: rgba(245, 158, 11, 0.04) !important;
+  color: #b45309 !important;
+}
+
+.qm-online-bookings-table-wrap {
+  border: 1px solid var(--waitless-line);
+  border-radius: var(--waitless-radius);
+  overflow: auto;
+  background: var(--waitless-surface);
+  box-shadow: var(--waitless-shadow-sm);
+}
+
+.qm-online-bookings-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 920px;
+}
+
+.qm-online-bookings-table th,
+.qm-online-bookings-table td {
+  padding: 14px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--waitless-line);
+  vertical-align: middle;
+}
+
+.qm-online-bookings-table th {
+  background: var(--waitless-surface-soft);
+  color: var(--waitless-text);
+  font-size: 0.85rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.qm-online-bookings-table td {
+  color: var(--waitless-text);
+  font-size: 0.9rem;
+}
+
+.qm-booking-status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.qm-booking-status-scheduled { background: rgba(59, 130, 246, 0.08); color: #2563eb; }
+.qm-booking-status-waiting { background: rgba(139, 92, 246, 0.08); color: #7c3aed; }
+.qm-booking-status-serving { background: rgba(16, 185, 129, 0.08); color: #10b981; }
+.qm-booking-status-done { background: rgba(100, 116, 139, 0.08); color: #64748b; }
+
+.qm-reminder-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.qm-reminder-state.sent { background: rgba(16, 185, 129, 0.08); color: #10b981; }
+.qm-reminder-state.pending { background: rgba(245, 158, 11, 0.08); color: #f59e0b; }
+.qm-reminder-state.failed { background: rgba(239, 68, 68, 0.08); color: #ef4444; }
+
+.qm-inline-reminder-btn {
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  border: 0;
+  border-radius: var(--waitless-radius-sm);
+  background: var(--waitless-primary);
+  color: #ffffff;
+  cursor: pointer;
+  font-weight: 700;
+  transition: all 0.2s ease;
+}
+
+.qm-inline-reminder-btn:hover:not(:disabled) {
+  background: var(--waitless-primary-hover);
+}
+
+.qm-inline-reminder-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* 9. Open Hours timing UI */
+.open-hours-row {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--waitless-line);
+}
+
+.open-hours-row:last-of-type {
+  border-bottom: none;
+}
+
+.open-hours-row label {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  flex-wrap: wrap;
+  cursor: pointer;
+}
+
+.open-hours-row .oh-enabled {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+  accent-color: var(--waitless-primary);
+  cursor: pointer;
+}
+
+.open-hours-row strong {
+  width: 120px;
+  display: inline-block;
+  color: var(--waitless-text);
+  font-weight: 700;
+}
+
+.open-hours-row .oh-open,
+.open-hours-row .oh-close {
+  padding: 8px 12px;
+  border: 1px solid var(--waitless-line);
+  border-radius: var(--waitless-radius-sm);
+  background: #ffffff;
+  font-family: inherit;
+  width: 120px;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.open-hours-row .oh-open:focus,
+.open-hours-row .oh-close:focus {
+  border-color: var(--waitless-primary);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+#save-open-hours,
+#load-open-hours {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 18px;
+  border-radius: var(--waitless-radius-sm);
+  border: 0;
+  cursor: pointer;
+  font-weight: 700;
+  color: #fff;
+  transition: all 0.2s ease;
+  margin-right: 8px;
+}
+
+#save-open-hours {
+  background: linear-gradient(135deg, var(--waitless-primary) 0%, var(--waitless-primary-hover) 100%);
+  box-shadow: 0 6px 16px rgba(79, 70, 229, 0.15);
+}
+
+#save-open-hours:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(79, 70, 229, 0.22);
+}
+
+#load-open-hours {
+  background: rgba(100, 116, 139, 0.08);
+  color: #64748b;
+  box-shadow: none;
+}
+
+#load-open-hours:hover {
+  background: #64748b;
+  color: #ffffff;
+}
+
+/* 10. Reports & Analytics Chart styling */
+.qm-chart-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.qm-chart-panel {
+  padding: 1.5rem;
+  background: var(--waitless-surface) !important;
+  border: 1px solid var(--waitless-line) !important;
+  border-radius: var(--waitless-radius) !important;
+  box-shadow: var(--waitless-shadow-sm) !important;
+  transition: all 0.25s ease;
+}
+
+.qm-chart-panel:hover {
+  box-shadow: var(--waitless-shadow) !important;
+  border-color: rgba(79, 70, 229, 0.15) !important;
+}
+
+.qm-chart-title {
+  margin: 0 0 1rem 0;
+  color: var(--waitless-text);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 800;
+  font-size: 1.1rem;
+}
+
+.qm-kiosk-analytics {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1.5px solid var(--waitless-line);
+}
+
+/* 11. Lobby QR code card layout */
+.qm-org-qr-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(240px, 0.8fr);
+  gap: 2rem;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding: 2rem !important;
+  border: 1px solid var(--waitless-line) !important;
+  border-radius: var(--waitless-radius) !important;
+  background: var(--waitless-surface) !important;
+  box-shadow: var(--waitless-shadow-sm) !important;
+}
+
+.qm-org-qr-card h2 {
+  margin: 0 0 10px 0;
+  color: var(--waitless-text);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 800;
+  font-size: 1.5rem;
+}
+
+.qm-org-qr-body {
+  display: grid;
+  gap: 12px;
+  justify-items: center;
+}
+
+.qm-org-qr-code {
+  width: 220px;
+  height: 220px;
+  padding: 12px;
+  background: #ffffff;
+  border: 1.5px solid var(--waitless-line);
+  border-radius: var(--waitless-radius);
+  display: grid;
+  place-items: center;
+  box-shadow: var(--waitless-shadow-sm);
+}
+
+.qm-org-qr-meta {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+  text-align: center;
+}
+
+.qm-org-qr-url {
+  font-size: 0.85rem;
+  color: var(--waitless-muted);
+  word-break: break-all;
+}
+
+.qm-org-qr-copy-btn {
+  padding: 10px 18px;
+  border: 0;
+  border-radius: var(--waitless-radius-sm);
+  background: var(--waitless-primary);
+  color: #ffffff;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: var(--waitless-shadow-sm);
+}
+
+.qm-org-qr-copy-btn:hover {
+  background: var(--waitless-primary-hover);
+  transform: translateY(-1px);
+}
+
+/* 12. Live Queue Per-service rows */
+.qm-queue-service-block {
+  margin-top: 1.5rem;
+  background: var(--waitless-surface);
+  border: 1px solid var(--waitless-line);
+  border-radius: var(--waitless-radius);
+  padding: 1.5rem;
+  box-shadow: var(--waitless-shadow-sm);
+}
+
+.qm-queue-service-header {
+  font-weight: 800;
+  color: var(--waitless-text);
+  font-size: 1.1rem;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1.5px solid var(--waitless-line);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+.qm-token-rows {
+  display: grid;
+  gap: 8px;
+}
+
+.qm-token-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--waitless-surface);
+  border: 1px solid var(--waitless-line);
+  border-radius: var(--waitless-radius-sm);
+  font-size: 0.9rem;
+  flex-wrap: wrap;
+  transition: all 0.2s ease;
+}
+
+.qm-token-row:hover {
+  border-color: rgba(79, 70, 229, 0.15);
+  box-shadow: var(--waitless-shadow-sm);
+}
+
+.qm-token-row.qm-token-serving {
+  background: rgba(16, 185, 129, 0.03) !important;
+  border-color: rgba(16, 185, 129, 0.25) !important;
+}
+
+.qm-token-num {
+  font-family: monospace;
+  font-weight: 750;
+  color: var(--waitless-primary);
+  font-size: 1.1rem;
+  min-width: 64px;
+}
+
+.qm-token-svc {
+  flex: 1;
+  color: var(--waitless-text);
+  font-weight: 600;
+  min-width: 100px;
+}
+
+.qm-multi-badge {
+  background: rgba(99, 102, 241, 0.08);
+  color: #4f46e5;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.qm-source-badge {
+  background: rgba(59, 130, 246, 0.08);
+  color: #2563eb;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.qm-token-stat {
+  margin-left: auto;
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+  text-transform: uppercase;
+}
+
+.qm-stat-waiting {
+  background: rgba(245, 158, 11, 0.08);
+  color: #f59e0b;
+}
+
+.qm-stat-serving {
+  background: rgba(16, 185, 129, 0.08);
+  color: #10b981;
+}
+
+/* 13. Scheduled Services Days and availability mapping */
+.qm-schedule-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(16, 185, 129, 0.08);
+  color: #10b981;
+  font-size: 0.72rem;
+  font-weight: 800;
+  margin-right: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.qm-schedule-item {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 1rem;
+}
+
+.qm-schedule-form {
+  display: grid;
+  gap: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--waitless-line);
+}
+
+.qm-schedule-enabled-row {
+  margin: 0;
+  width: 100%;
+  justify-content: flex-start;
+}
+
+.qm-schedule-hours {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.qm-schedule-hours label {
+  display: grid;
+  gap: 6px;
+  font-weight: 700;
+  color: var(--waitless-text);
+  font-size: 0.9rem;
+}
+
+.qm-schedule-hours input {
+  padding: 10px 12px;
+  border: 1px solid var(--waitless-line);
+  border-radius: var(--waitless-radius-sm);
+  font-family: inherit;
+  outline: none;
+}
+
+.qm-schedule-hours input:focus {
+  border-color: var(--waitless-primary);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.qm-schedule-days {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.qm-schedule-day-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: 1.5px solid var(--waitless-line);
+  border-radius: 999px;
+  background: #ffffff;
+  cursor: pointer;
+  font-size: 0.88rem;
+  color: var(--waitless-text);
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.qm-schedule-day-pill:hover {
+  border-color: var(--waitless-primary);
+}
+
+.qm-schedule-day-pill input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--waitless-primary);
+  cursor: pointer;
+}
+
+/* 14. Action buttons rows and generic classes */
+.qm-actions-bar {
+  margin-bottom: 2rem;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.qm-actions-bar button {
+  min-height: 44px;
+  padding: 10px 18px;
+  border-radius: var(--waitless-radius-sm);
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.qm-actions-bar .primary.ghost {
+  border: 1.5px solid var(--waitless-line);
+  background: var(--waitless-surface);
+  color: var(--waitless-text);
+}
+
+.qm-actions-bar .primary.ghost:hover {
+  border-color: var(--waitless-primary);
+  color: var(--waitless-primary);
+}
+
+.qm-signout {
+  background: rgba(239, 68, 68, 0.08) !important;
+  color: #ef4444 !important;
+  border: 0 !important;
+}
+
+.qm-signout:hover {
+  background: #ef4444 !important;
+  color: #ffffff !important;
+  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.15) !important;
+}
+
+.qm-migrate-row {
+  margin-top: 1.5rem;
+}
+
+.qm-migrate-btn {
+  padding: 10px 16px;
+  background: rgba(245, 158, 11, 0.08);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.15);
+  border-radius: var(--waitless-radius-sm);
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+}
+
+.qm-migrate-btn:hover {
+  background: #f59e0b;
+  color: #ffffff;
+  box-shadow: 0 6px 14px rgba(245, 158, 11, 0.15);
+}
+
+.qm-status-badge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.qm-status-idle {
+  background: rgba(100, 116, 139, 0.08);
+  color: #64748b;
+}
+
+.qm-status-busy {
+  background: rgba(239, 68, 68, 0.08);
+  color: #ef4444;
+}
+
+.qm-status-serving {
+  background: rgba(16, 185, 129, 0.08);
+  color: #10b981;
+}
+
+/* Responsive Overrides */
+@media (max-width: 900px) {
+  .qm-layout-card {
+    grid-template-columns: 1fr !important;
+    gap: 1.5rem;
+  }
+  .qm-sidebar {
+    position: static;
+  }
+  .qm-sidebar-nav {
+    flex-direction: row !important;
+    overflow-x: auto;
+    white-space: nowrap;
+    padding: 0.5rem !important;
+    border-radius: var(--waitless-radius-sm) !important;
+  }
+  .qm-tab {
+    width: auto !important;
+    border-left: none !important;
+    border-bottom: 3px solid transparent !important;
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+  }
+  .qm-tab.active {
+    border-bottom: 3px solid var(--waitless-primary) !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+}
+
+/* 15. KIOSK Management Dashboard Elements */
+.kiosks-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.kiosk-card {
+  background: var(--waitless-surface) !important;
+  border: 1px solid var(--waitless-line) !important;
+  border-radius: var(--waitless-radius) !important;
+  box-shadow: var(--waitless-shadow-sm) !important;
+  padding: 1.5rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1rem !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.kiosk-card:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: var(--waitless-shadow) !important;
+  border-color: rgba(79, 70, 229, 0.15) !important;
+}
+
+.kiosk-card-header {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  border-bottom: 1px solid var(--waitless-line) !important;
+  padding-bottom: 8px !important;
+  margin-bottom: 4px !important;
+  background: transparent !important;
+}
+
+.kiosk-card-title {
+  font-size: 1.1rem !important;
+  font-weight: 800 !important;
+  color: var(--waitless-text) !important;
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+.kiosk-card-info {
+  display: grid !important;
+  gap: 8px !important;
+}
+
+.kiosk-card-info .info-row {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  font-size: 0.9rem !important;
+}
+
+.kiosk-card-info .info-row strong {
+  color: var(--waitless-muted) !important;
+  font-weight: 600 !important;
+}
+
+.kiosk-card-info .info-row span {
+  color: var(--waitless-text) !important;
+  font-weight: 700 !important;
+}
+
+.kiosk-card-actions {
+  display: flex !important;
+  gap: 8px !important;
+  margin-top: auto !important;
+  border-top: 1px solid var(--waitless-line) !important;
+  padding-top: 10px !important;
+}
+
+.kiosk-card-actions button {
+  flex: 1 !important;
+  padding: 8px 12px !important;
+  font-size: 0.85rem !important;
+  font-weight: 700 !important;
+}
+
+.kiosk-section-title {
+  margin: 0 0 1rem 0 !important;
+  font-size: 1.25rem !important;
+  font-weight: 800 !important;
+  color: var(--waitless-text) !important;
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+}
+
+.kiosk-filter-row {
+  display: flex !important;
+  gap: 12px !important;
+  align-items: center !important;
+  margin-bottom: 1.5rem !important;
+  flex-wrap: wrap !important;
+  background: var(--waitless-surface) !important;
+  border: 1px solid var(--waitless-line) !important;
+  padding: 1rem !important;
+  border-radius: var(--waitless-radius) !important;
+  box-shadow: var(--waitless-shadow-sm) !important;
+}
+
+.kiosk-filter-row input,
+.kiosk-filter-row select {
+  padding: 8px 12px !important;
+  border: 1px solid var(--waitless-line) !important;
+  border-radius: var(--waitless-radius-sm) !important;
+  background: #ffffff !important;
+  outline: none !important;
+  font-size: 0.9rem !important;
+  min-height: auto !important;
+}
+
+.kiosk-filter-row button {
+  padding: 8px 16px !important;
+  background: var(--waitless-primary) !important;
+  color: #ffffff !important;
+  border: 0 !important;
+  border-radius: var(--waitless-radius-sm) !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  min-height: auto !important;
+}
+
+.kiosk-filter-row button:hover {
+  background: var(--waitless-primary-hover) !important;
+}
+
+/* Force Customize cards to take full container width */
+.qm-customize-card {
+  max-width: 100% !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  padding: 1.5rem !important;
+  margin-top: 1.5rem !important;
+}
+
+.qm-booking-slots-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)) !important;
+  gap: 1.5rem !important;
+  margin-top: 1rem !important;
+  margin-bottom: 1.5rem !important;
+  grid-column: 1 / -1 !important;
+}
+
+.qm-booking-slot-card {
+  margin: 0 !important;
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1rem !important;
+}
+
