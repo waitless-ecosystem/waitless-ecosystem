@@ -3,12 +3,13 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Waitless — Sign in</title>
+  <title>Waitless - Sign in</title>
   <link rel="stylesheet" href="../css/global.css" />
   <link rel="stylesheet" href="../css/auth.css" />
   <link rel="stylesheet" href="../shared/css/redesign.css" />
   <link rel="stylesheet" href="../shared/css/unified-ui.css" />
 </head>
+<<<<<<< Updated upstream
 <body>
   <div class="container">
     <div class="brand">
@@ -18,6 +19,10 @@
       </a>
     </div>
 
+=======
+<body class="customer-auth-page business-auth-page">
+  <div class="container">
+>>>>>>> Stashed changes
     <div class="auth-card">
       <div class="tabs" role="tablist" aria-label="Authentication tabs">
         <button id="show-login" class="tab active" role="tab">Login</button>
@@ -35,8 +40,13 @@
 
             <label for="login-password">Password</label>
             <div class="input-wrap">
+<<<<<<< Updated upstream
               <input id="login-password" type="password" placeholder="••••••••" required />
               <button type="button" class="pwd-toggle" data-target="#login-password" aria-label="Show password">👁️</button>
+=======
+              <input id="login-password" type="password" placeholder="Password" required />
+              <button type="button" class="pwd-toggle" data-target="#login-password" aria-label="Show password">Show</button>
+>>>>>>> Stashed changes
             </div>
 
             <button class="primary" type="submit">Sign in</button>
@@ -48,6 +58,7 @@
           <h2>Register your organization</h2>
           <p class="lead">Create a business account. A platform admin will approve it before queue tools unlock.</p>
           <form id="register-form">
+<<<<<<< Updated upstream
             <label for="register-email">Email</label>
             <div class="input-wrap"><input id="register-email" type="email" placeholder="you@example.com" required /></div>
 
@@ -67,6 +78,188 @@
             </div>
 
             <button class="primary" type="submit">Create account</button>
+=======
+            <div class="register-progress" aria-label="Registration progress">
+              <div class="register-progress-top">
+                <span id="register-progress-label">Step 1 of 8</span>
+                <span id="register-progress-percent">13%</span>
+              </div>
+              <div class="register-progress-track"><div id="register-progress-fill"></div></div>
+            </div>
+
+            <div class="register-step active" data-step="basic">
+              <h3>Business details</h3>
+              <p class="step-help">Start with the account and organization details. These are sent to the platform admin for review before your business tools are unlocked.</p>
+
+              <label for="register-email">Email</label>
+              <div class="input-wrap"><input id="register-email" type="email" placeholder="you@example.com" required /></div>
+
+              <label for="register-organization">Organization Name</label>
+              <div class="input-wrap"><input id="register-organization" type="text" placeholder="Company or Organization" required /></div>
+
+              <label for="register-organization-type">Organization Type</label>
+              <div class="input-wrap">
+                <select id="register-organization-type" required>
+                  <option value="">Select organization type</option>
+                  <option value="Healthcare">Healthcare</option>
+                  <option value="Banking">Banking</option>
+                  <option value="Clinic">Clinic</option>
+                  <option value="Salon">Salon</option>
+                  <option value="University">University</option>
+                  <option value="Government office">Government office</option>
+                  <option value="Service center">Service center</option>
+                  <option value="Repair center">Repair center</option>
+                  <option value="Restaurant">Restaurant</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              <div id="register-organization-type-other-wrap" class="input-wrap hidden">
+                <input id="register-organization-type-other" type="text" placeholder="Enter organization type" />
+              </div>
+
+              <label for="register-contact">Contact Number</label>
+              <div class="input-wrap"><input id="register-contact" type="tel" placeholder="+1 (555) 000-0000" required /></div>
+
+              <label for="register-address">Address</label>
+              <div class="input-wrap"><input id="register-address" type="text" placeholder="123 Main St, City, Country" required /></div>
+
+              <label for="register-password">Password</label>
+              <div class="input-wrap">
+                <input id="register-password" type="password" placeholder="Choose a password" required />
+                <button type="button" class="pwd-toggle" data-target="#register-password" aria-label="Show password">Show</button>
+              </div>
+            </div>
+
+            <div class="register-step" data-step="service-availability">
+              <div class="question-label">
+                <span>Are there any services that are available only during a specific time, or are all services available throughout your opening hours?</span>
+                <button type="button" class="info-button" data-info="Some organizations have services that are available only during certain hours. For example, Dr. Pasan may be available only from 2:00 PM to 4:00 PM, while a Registration Desk may be available anytime during opening hours." aria-label="Service availability information">i</button>
+              </div>
+              <p class="step-help">Choose this based on how your services actually run. If every service follows your normal business hours, choose the first option. If some services have separate schedules, choose the second option and add examples so the admin understands your setup.</p>
+              <label class="choice-row"><input type="radio" name="service-availability" value="all" checked /> All services are available throughout opening hours</label>
+              <label class="choice-row"><input type="radio" name="service-availability" value="scheduled" /> Some services are available only during specific times</label>
+              <div id="scheduled-services-wrap" class="conditional-panel hidden">
+                <div id="scheduled-services-list">
+                  <div class="scheduled-service-row">
+                    <input type="text" data-scheduled-field="serviceName" placeholder="Service name" />
+                    <input type="text" data-scheduled-field="availableDays" placeholder="Available days" />
+                    <input type="time" data-scheduled-field="startTime" aria-label="Start time" />
+                    <input type="time" data-scheduled-field="endTime" aria-label="End time" />
+                  </div>
+                </div>
+                <button type="button" class="secondary compact" id="add-scheduled-service">Add another scheduled service</button>
+              </div>
+            </div>
+
+            <div class="register-step" data-step="customer-info">
+              <div class="question-label">
+                <span>Do you need to collect customer information before issuing a token?</span>
+                <button type="button" class="info-button" data-info="This controls whether customers must enter details before receiving a queue token. For example, a hospital may collect name and phone number, while a simple walk-in counter may not need customer information." aria-label="Customer information collection details">i</button>
+              </div>
+              <p class="step-help">Use this if your staff needs customer details before serving them. For example, a clinic may need a name and phone number, while a quick repair counter may only need a token number.</p>
+              <label class="choice-row"><input type="radio" name="customer-info-needed" value="yes" /> Yes</label>
+              <label class="choice-row"><input type="radio" name="customer-info-needed" value="no" checked /> No</label>
+              <div id="customer-info-wrap" class="conditional-panel hidden">
+                <p class="muted small">Which details should customers enter?</p>
+                <div class="checkbox-grid">
+                  <label><input type="checkbox" name="customer-info-fields" value="name" /> Customer name</label>
+                  <label><input type="checkbox" name="customer-info-fields" value="phone" /> Phone number</label>
+                  <label><input type="checkbox" name="customer-info-fields" value="email" /> Email address</label>
+                  <label><input type="checkbox" name="customer-info-fields" value="note" /> Reason for visit / note</label>
+                </div>
+                <p class="muted small">Which selected fields should be required?</p>
+                <div class="checkbox-grid">
+                  <label><input type="checkbox" name="customer-info-required" value="name" /> Name required</label>
+                  <label><input type="checkbox" name="customer-info-required" value="phone" /> Phone number required</label>
+                  <label><input type="checkbox" name="customer-info-required" value="email" /> Email required</label>
+                  <label><input type="checkbox" name="customer-info-required" value="note" /> Note required</label>
+                </div>
+              </div>
+            </div>
+
+            <div class="register-step" data-step="token-recall">
+              <div class="question-label">
+                <span>Should staff be allowed to recall a token from the counter screen?</span>
+                <button type="button" class="info-button" data-info="Recall allows staff to call the same token again if the customer missed the first call. For example, if token A005 was called but the customer did not notice, staff can recall A005 again." aria-label="Token recall information">i</button>
+              </div>
+              <p class="step-help">This is useful in noisy or busy locations. For example, a bank counter can call A005 again if the customer missed the first announcement.</p>
+              <label class="choice-row"><input type="radio" name="token-recall" value="yes" checked /> Yes, allow staff to recall tokens</label>
+              <label class="choice-row"><input type="radio" name="token-recall" value="no" /> No, do not allow token recall</label>
+            </div>
+
+            <div class="register-step" data-step="service-categories">
+              <div class="question-label">
+                <span>Do you want to group services by category?</span>
+                <button type="button" class="info-button" data-info="Service categories help customers find the correct service easily. For example, a hospital may use categories such as Consultation, Pharmacy, Laboratory, and Payments. A bank may use Accounts, Loans, Deposits, and Customer Support." aria-label="Service category information">i</button>
+              </div>
+              <p class="step-help">Categories help customers choose the right service faster. A hospital might use Consultation, Pharmacy, Laboratory, and Payments. A salon might use Hair, Nails, Skin Care, and Bridal Services.</p>
+              <label class="choice-row"><input type="radio" name="service-categories" value="yes" /> Yes</label>
+              <label class="choice-row"><input type="radio" name="service-categories" value="no" checked /> No</label>
+              <div id="service-categories-wrap" class="conditional-panel hidden">
+                <div id="service-categories-list">
+                  <input type="text" data-category-name placeholder="Category name" />
+                </div>
+                <button type="button" class="secondary compact" id="add-service-category">Add another category</button>
+              </div>
+            </div>
+
+            <div class="register-step" data-step="mobile-qr">
+              <div class="question-label">
+                <span>Do you want to allow customers to access queue updates using mobile or QR access?</span>
+                <button type="button" class="info-button" data-info="If enabled, customers can scan a QR code and view live queue updates from their phone. For example, a customer with token A012 can check the current serving token, their queue position, and queue status updates." aria-label="Mobile and QR access information">i</button>
+              </div>
+              <p class="step-help">Choose yes if customers should be able to scan a QR code or use their phone to follow their turn from outside the waiting area.</p>
+              <label class="choice-row"><input type="radio" name="mobile-qr-access" value="yes" checked /> Yes, allow mobile / QR access</label>
+              <label class="choice-row"><input type="radio" name="mobile-qr-access" value="no" /> No, block mobile / QR access for this organization</label>
+            </div>
+
+            <div class="register-step" data-step="online-booking">
+              <div class="question-label">
+                <span>Do you want to allow customers to make online bookings through the app?</span>
+                <button type="button" class="info-button" data-info="Online booking allows customers to book a service before arriving. For example, a customer can book a doctor consultation, salon appointment, or service center visit for a selected date and time." aria-label="Online booking information">i</button>
+              </div>
+              <p class="step-help">Bookings are useful when customers need a planned date or time, such as consultations, salon appointments, repairs, or scheduled office visits. You can choose maybe later if you want to start with queues first.</p>
+              <label class="choice-row"><input type="radio" name="online-booking" value="yes" /> Yes</label>
+              <label class="choice-row"><input type="radio" name="online-booking" value="no" checked /> No</label>
+              <label class="choice-row"><input type="radio" name="online-booking" value="later" /> Maybe later</label>
+            </div>
+
+            <div class="register-step" data-step="booking-slots" data-conditional="booking">
+              <div class="question-label">
+                <span>How should online booking time slots work?</span>
+                <button type="button" class="info-button" data-info="This controls the general booking slot setup. For example, a 30-minute slot may allow 3 bookings, a 15-minute slot may allow 1 booking, and a 60-minute slot may allow 5 bookings. Individual service availability can still be handled separately under scheduled services." aria-label="Booking slot information">i</button>
+              </div>
+              <p class="step-help">Pick a general booking slot length and how many customers can book the same slot. For example, a doctor may accept 1 booking every 15 minutes, while a service center may accept 5 bookings every 60 minutes.</p>
+              <div id="booking-slots-wrap" class="conditional-panel">
+                <div class="two-column-fields">
+                  <label for="booking-slot-length">Default booking slot length</label>
+                  <select id="booking-slot-length">
+                    <option value="15">15 minutes</option>
+                    <option value="30" selected>30 minutes</option>
+                    <option value="45">45 minutes</option>
+                    <option value="60">60 minutes</option>
+                    <option value="custom">Custom</option>
+                  </select>
+                  <label for="booking-slot-custom" class="hidden" id="booking-slot-custom-label">Custom slot length in minutes</label>
+                  <input id="booking-slot-custom" class="hidden" type="number" min="5" step="5" placeholder="Custom minutes" />
+                  <label for="booking-slot-capacity">Maximum bookings allowed per slot</label>
+                  <input id="booking-slot-capacity" type="number" min="1" step="1" placeholder="Example: 3" />
+                </div>
+              </div>
+            </div>
+
+            <div class="register-step" data-step="review">
+              <h3>Ready to submit</h3>
+              <p class="step-help">Your business details and preferences will be sent to the platform admin for review. These answers help the admin understand how your organization wants to use Waitless, without forcing you to configure services, counters, staff, bookings, or kiosks right now.</p>
+            </div>
+
+            <div class="register-actions">
+              <button class="secondary" type="button" id="register-back">Back</button>
+              <button class="primary" type="button" id="register-next">Next</button>
+              <button class="primary hidden" type="submit" id="register-submit">Submit registration</button>
+            </div>
+>>>>>>> Stashed changes
           </form>
           <p class="muted small">Already have an account? <a href="#" id="show-login-link">Sign in</a></p>
         </section>
@@ -96,7 +289,11 @@
       </div>
 
       <div id="message" class="message" role="status" aria-live="polite"></div>
+<<<<<<< Updated upstream
       <p class="muted small"><a href="../index.html">← Back to workspace selection</a></p>
+=======
+      <p class="muted small"><a href="../index.html">Back to workspace selection</a></p>
+>>>>>>> Stashed changes
     </div>
   </div>
 
